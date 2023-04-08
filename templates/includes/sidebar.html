@@ -1,0 +1,244 @@
+{% load static %}
+
+{% block scripts_css %}
+<style>
+@media screen and (max-width: 480px) {
+    .offcanvas{
+        max-width: 75%;
+    }
+}
+.offcanvas{
+    max-width: 330px;
+    border-top-right-radius: 24px;
+    border-bottom-right-radius: 24px;
+    background: #0F4C75;
+    color: white;
+}
+.menu{
+    margin: 20px 0;
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.dropdown-category{
+    margin: 10px 20px;
+
+}
+[class*="dropdown-child-"] {
+  margin: 10px 20px;
+}
+
+.logout-menu{
+    margin: 20px 0;
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: #BBE1FA;
+    /* color: #000; */
+    color: #212529;
+    font-weight: bold;
+}
+
+.hr-sidebar{
+    border-top: 5px solid #fff;
+    border-radius: 24px;
+}
+.selected{
+    background: #fff;
+    border-radius: 6px;
+    color: #0F4C75;
+}
+.menu:hover{
+    background: #fff;
+    color: #0F4C75;
+}
+.rotate {
+  transform: rotate(180deg);
+}
+</style>
+
+<script>
+    $(function () {
+
+        if ('{{request.path}}'.includes('category')) {
+            $('.dropdown-category').show();  
+            $('#icon-category-dropdown > i').addClass('fa-caret-up')
+        } 
+        else{
+            $('.dropdown-category').hide();
+            $('#icon-category-dropdown > i').addClass('fa-caret-down')
+        }
+
+        $('body').on('click','.dropdown-parent',function(){
+            var id = $(this).attr('id');
+            console.log($(this).attr('id'));
+            console.log('.dropdown-child-' + id);
+            $('.dropdown-child-' + id).slideToggle('fast');
+            
+            console.log(($(this).find('div > i')));
+            if ($(this).find('div.icon-category-dropdown > i').hasClass('fa-caret-up')){
+                $(this).find('div.icon-category-dropdown > i').removeClass('fa-caret-up');
+                $(this).find('div.icon-category-dropdown > i').addClass('fa-caret-down');
+            } else{
+                $(this).find('div.icon-category-dropdown > i').addClass('fa-caret-up');
+                $(this).find('div.icon-category-dropdown > i').removeClass('fa-caret-down');
+            }
+            
+        });
+        $('body').on('click','#logout',function(){
+            if (confirm('Are You Sure You Want to Logout ?')){
+                window.location.href = "{% url 'main_app:logout' %}"
+            }
+        });
+    });
+</script>
+{% endblock scripts_css %}
+<div class="offcanvas offcanvas-start" data-bs-scroll="true" id="sidebar">
+    <div class="offcanvas-header">
+        <a href="{% url 'main_app:home' %}">
+            <img src="{% static 'main_app/find-me-white-ver.png' %}" width="120" alt="">
+        </a>
+        <div class="btn text-white" data-bs-dismiss="offcanvas">
+            <i class="fa-solid fa-bars" ></i>
+        </div>
+    </div>
+    <div class="offcanvas-body">
+        <div class="col-12">
+            <div class="row text-center">
+                <p><b>Hi, {{ user }}</b></p>
+            </div>
+            
+        </div>
+        <hr class="hr-sidebar">
+        <a class="dropdown-item {% if request.path == '/' %} selected {% endif %}" href="{% url 'main_app:home' %}">
+            <div class="row menu">
+                <div class="col-2" style="padding-left: 9px;">
+                    <i class="fa-solid fa-house"></i>
+                </div>
+                <div class="col-10">
+                    Home
+                </div>
+            </div>
+        </a>
+        <a class="dropdown-item {% if 'upload' in request.path %} selected {% endif %}" href="{% url 'main_app:upload' %}">
+            <div class="row menu">
+                <div class="col-2">
+                    <i class="fa-solid fa-question"></i>
+                </div>
+                <div class="col-10">
+                    File Upload
+                </div>
+            </div>
+        </a>
+        <a class="dropdown-item">
+            <div class="row menu">
+                <div class="col-2">
+                    <i class="fa-solid fa-heart"></i>
+                </div>
+                <div class="col-10">
+                    Favorite
+                </div>
+            </div>
+        </a>
+        <div class="row menu dropdown-parent" id="category">
+            <div class="col-2">
+                <i class="fa-solid fa-clipboard"></i>
+            </div>
+            <div class="col-8">
+                Category
+            </div>
+            <div class="col-2 icon-category-dropdown">
+                <i class="fa-solid fa-caret-up"></i>
+            </div>
+        </div>
+        <div class="wrapper-dropdown-category">
+            <a class="dropdown-item">
+                <div class="row menu dropdown-child-category">
+                    <div class="col-2">
+                        <i class="fa-solid fa-faucet-drip"></i>
+                    </div>
+                    <div class="col-10">
+                        Kamar Mandi
+                    </div>
+                </div>
+            </a>
+            <a class="dropdown-item">
+                <div class="row menu dropdown-child-category">
+                    <div class="col-2">
+                        <i class="fa-solid fa-bed"></i>
+                    </div>
+                    <div class="col-10">
+                        Kamar Tidur
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="row menu dropdown-parent" id="category-1">
+            <div class="col-2">
+                <i class="fa-solid fa-clipboard"></i>
+            </div>
+            <div class="col-8">
+                Category
+            </div>
+            <div class="col-2 icon-category-dropdown">
+                <i class="fa-solid fa-caret-up"></i>
+            </div>
+        </div>
+        <div>
+            <a class="dropdown-item">
+                <div class="row menu dropdown-child-category-1">
+                    <div class="col-2">
+                        <i class="fa-solid fa-faucet-drip"></i>
+                    </div>
+                    <div class="col-10">
+                        Kamar Mandi
+                    </div>
+                </div>
+            </a>
+            <a class="dropdown-item">
+                <div class="row menu dropdown-child-category-1">
+                    <div class="col-2">
+                        <i class="fa-solid fa-bed"></i>
+                    </div>
+                    <div class="col-10">
+                        Kamar Tidur
+                    </div>
+                </div>
+            </a>
+            <a class="dropdown-item">
+                <div class="row menu dropdown-child-category-1">
+                    <div class="col-2">
+                        <i class="fa-solid fa-utensils"></i>
+                    </div>
+                    <div class="col-10">
+                        Ruang Makan
+                    </div>
+                </div>
+            </a>
+        
+        </div>
+        {% if user.is_superuser %}
+        <a class="dropdown-item {% if 'employees' in request.path %} selected {% endif %}" href="{% url 'main_app:employees' %}">
+            <div class="row menu">
+                <div class="col-2">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div class="col-10">
+                    Employees
+                </div>
+            </div>
+        </a>
+        {% endif %}
+        <hr class="hr-sidebar">
+        <a class="dropdown-item" id="logout">
+            <div class="row logout-menu">
+                <div class="col-2">
+                    <i class="fa-solid fa-power-off"></i>
+                </div>
+                <div class="col-10">
+                    Logout
+                </div>
+            </div>
+        </a>
+    </div>
+</div>

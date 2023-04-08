@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+Find Me
+{% endblock title %}
+
+{% block script_css %}
+<script>
+    $(function () {
+    });
+</script>
+<style>
+    body {
+        -ms-overflow-style: none;
+        /* IE and Edge */
+        scrollbar-width: none;
+        /* Firefox */
+        background-color: #B9D7EA;
+
+    }
+
+    ::-webkit-scrollbar {
+        display: none;
+    }
+
+    div.stock-wrapper {
+        background-color: white;
+        padding: 20px;
+        border-radius: 16px;
+    }
+
+    tfoot {
+        display: table-header-group;
+    }
+</style>
+{% endblock script_css %}
+
+{% block content %}
+{% include 'includes/navbar.html' %}
+{% include 'includes/sidebar.html' %}
+
+<div class="container">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="file_upload" multiple>
+        <button type="submit">Upload</button>
+    </form>
+</div>
+{% endblock content %}
