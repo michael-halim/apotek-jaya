@@ -6,6 +6,7 @@ from django.forms.fields import EmailField
 from django.forms.forms import Form  
 from django import forms
 
+import re
 
 class FileFieldForm(forms.Form):
     file_upload = forms.FileField(
@@ -13,46 +14,153 @@ class FileFieldForm(forms.Form):
     )
 
 class CreateUserForm(UserCreationForm):
-    username = forms.CharField(label='username', min_length=5, max_length=150)  
-    email = forms.EmailField(label='email')  
-    password1 = forms.CharField(label='password', widget=forms.PasswordInput)  
-    password2 = forms.CharField(label='Confirm password', widget=forms.PasswordInput)  
+    password1 = forms.CharField(
+                    label='Password',
+                    error_messages={
+                        'required': 'Password Cannot be Empty',
+                        'min_length': 'Password Must be At Least 8 Characters Long',
+
+                    }, 
+                    widget=forms.PasswordInput(attrs={
+                        'autofocus': False, 
+                        'placeholder':'Enter Password',
+                        'class': 'form-control',
+                        'required': True,
+                        'id':'password1',
+                        'type':'password'
+                    })
+                )  
+    
+    password2 = forms.CharField(
+                    label=  'Confirmation Password',
+                    error_messages={
+                        'required': 'Please Confirm Your Password',
+                    },
+                    widget=forms.PasswordInput(attrs={
+                        'autofocus': False, 
+                        'placeholder':'Enter Password Again',
+                        'class': 'form-control',
+                        'required': True,
+                        'id':'password2',
+                    })
+                )  
 
     def clean_username(self):  
-        username = self.cleaned_data['username'].lower()  
-        new = User.objects.filter(username = username)  
-        
-        if new.count():
-            raise ValidationError("User Already Exist")
-        
+        print('Enter Clean Username')
+        cleaned_data = super().clean()
+        username = cleaned_data.get('username')
+        errors = []
+
+        if username is None:
+            errors.append('Username Cannot be Empty')
+
+        else:
+            username = username.lower()
+            found_username = User.objects.filter(username = username)  
+            if found_username.count():
+                errors.append("User Already Exist")
+
+            elif len(username.split()) > 1:
+                errors.append('Username Must be 1 Word')
+
+            elif len(username) > 150:
+                errors.append('Username Cannot be More Than 150 Characters')
+
+
+        if errors:
+            raise forms.ValidationError(errors)
+
         return username  
   
     def clean_email(self):  
-        email = self.cleaned_data['email'].lower()  
-        new = User.objects.filter(email=email)  
+        print('Enter Clean Email')
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        errors = []
+        
+        if email is None:
+            email = ''
 
-        if new.count():  
-            raise ValidationError(" Email Already Exist")  
+        else:
+            email = email.lower()
+            email_found = User.objects.filter(email=email)  
 
+            if email_found.count():  
+                errors.append('Email Already Exist')
+
+            if not re.match(pattern=r'^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$', string=email):
+                errors.append('Email is Not Valid')
+
+        if errors:
+            raise forms.ValidationError(errors)
+        
         return email  
   
     def clean_password2(self):  
+        print('Enter Clean Password')
         password1 = self.cleaned_data['password1']  
         password2 = self.cleaned_data['password2']  
+        errors = []
 
-        if password1 and password2 and password1 != password2:  
-            raise ValidationError("Password don't match")  
+        if password1 and password2 and (password1 != password2):  
+            errors.append('Password Does Not Match')
 
+        if errors:
+            raise forms.ValidationError(errors)
         return password2  
 
     class Meta:
         model = User
         fields = ['username','email','password1','password2']
+        
+        widgets= {
+            'username': forms.TextInput(attrs={
+                'class': 'form-control',
+                'autofocus': False, 
+                'placeholder':'Enter Unique Lowercase Characters',
+                'required': True,
+                'id':'username',
+                
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder':'Enter Email',
+                'autofocus': False, 
+                'required': True,
+                'id':'email',
+                'type':'email'
+                
+            }),
+            'password1': forms.PasswordInput(attrs={
+                'class': 'form-control',
+                'placeholder':'Enter Password',
+                'autofocus': False, 
+                'required': True,
+                'id':'password1',
+                'type':'password'
+                
+            }),
+            'password2': forms.PasswordInput(attrs={
+                'class': 'form-control',
+                'placeholder':'Enter Confirmation Password',
+                'autofocus': False, 
+                'required': True,
+                'id':'password2',
+                'type':'password'
+                
+            }),
+        }
+        error_messages = {
+            'username': {
+                'required': 'Username is Required'
+            },
+            'email': {
+                'required': 'Email is Required'
+            }
+        }
 
-    def __init__(self, *args, **kwargs):
-        super(UserCreationForm, self).__init__(*args, **kwargs)
-
-        self.fields['username'].widget.attrs = {'autofocus': False, 'placeholder':'Username'}
-        self.fields['email'].widget.attrs = {'autofocus': False, 'placeholder':'Email'}
-        self.fields['password1'].widget.attrs = {'autofocus': False, 'placeholder':'Password'}
-        self.fields['password2'].widget.attrs = {'autofocus': False, 'placeholder':'Confirm Password'}
+        labels = {
+            'username': 'Username',
+            'email': 'Email',
+        }
+    

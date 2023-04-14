@@ -20,13 +20,12 @@
     border-radius: 6px;
     cursor: pointer;
 }
-.dropdown-category{
-    margin: 10px 20px;
 
+.menu:hover{
+    background: #fff;
+    color: #0F4C75;
 }
-[class*="dropdown-child-"] {
-  margin: 10px 20px;
-}
+
 
 .logout-menu{
     margin: 20px 0;
@@ -48,10 +47,11 @@
     border-radius: 6px;
     color: #0F4C75;
 }
-.menu:hover{
-    background: #fff;
-    color: #0F4C75;
+
+[class*="dropdown-child-"] {
+  margin: 10px 20px;
 }
+
 .rotate {
   transform: rotate(180deg);
 }
@@ -59,29 +59,26 @@
 
 <script>
     $(function () {
-
-        if ('{{request.path}}'.includes('category')) {
-            $('.dropdown-category').show();  
-            $('#icon-category-dropdown > i').addClass('fa-caret-up')
-        } 
-        else{
-            $('.dropdown-category').hide();
-            $('#icon-category-dropdown > i').addClass('fa-caret-down')
-        }
+        $('[class*="dropdown-child-"]').hide();
+        // if ('{{request.path}}'.includes('category')) {
+        //     $('.dropdown-category').show();  
+        //     $('#icon-category-dropdown > i').addClass('fa-caret-up')
+        // } 
+        // else{
+        //     $('.dropdown-category').hide();
+        //     $('#icon-category-dropdown > i').addClass('fa-caret-down')
+        // }
 
         $('body').on('click','.dropdown-parent',function(){
             var id = $(this).attr('id');
-            console.log($(this).attr('id'));
-            console.log('.dropdown-child-' + id);
             $('.dropdown-child-' + id).slideToggle('fast');
             
-            console.log(($(this).find('div > i')));
-            if ($(this).find('div.icon-category-dropdown > i').hasClass('fa-caret-up')){
-                $(this).find('div.icon-category-dropdown > i').removeClass('fa-caret-up');
-                $(this).find('div.icon-category-dropdown > i').addClass('fa-caret-down');
+            if ($(this).find('div.icon-dropdown > i').hasClass('fa-caret-up')){
+                $(this).find('div.icon-dropdown > i').removeClass('fa-caret-up');
+                $(this).find('div.icon-dropdown > i').addClass('fa-caret-down');
             } else{
-                $(this).find('div.icon-category-dropdown > i').addClass('fa-caret-up');
-                $(this).find('div.icon-category-dropdown > i').removeClass('fa-caret-down');
+                $(this).find('div.icon-dropdown > i').addClass('fa-caret-up');
+                $(this).find('div.icon-dropdown > i').removeClass('fa-caret-down');
             }
             
         });
@@ -140,39 +137,30 @@
                 </div>
             </div>
         </a>
-        <div class="row menu dropdown-parent" id="category">
+        <div class="row menu dropdown-parent" id="employees">
             <div class="col-2">
-                <i class="fa-solid fa-clipboard"></i>
+                <i class="fa-solid fa-users"></i>
             </div>
             <div class="col-8">
-                Category
+                Employees
             </div>
-            <div class="col-2 icon-category-dropdown">
-                <i class="fa-solid fa-caret-up"></i>
+            <div class="col-2 icon-dropdown">
+                <i class="fa-solid fa-caret-down"></i>
             </div>
         </div>
-        <div class="wrapper-dropdown-category">
-            <a class="dropdown-item">
-                <div class="row menu dropdown-child-category">
+        <div class="wrapper-dropdown-employees">
+            <a class="dropdown-item" href="{% url 'employees:employees' %}">
+                <div class="row menu dropdown-child-employees {% if 'employees' in request.path %} selected {% endif %}">
                     <div class="col-2">
-                        <i class="fa-solid fa-faucet-drip"></i>
+                        <i class="fa-solid fa-users"></i>
                     </div>
                     <div class="col-10">
-                        Kamar Mandi
-                    </div>
-                </div>
-            </a>
-            <a class="dropdown-item">
-                <div class="row menu dropdown-child-category">
-                    <div class="col-2">
-                        <i class="fa-solid fa-bed"></i>
-                    </div>
-                    <div class="col-10">
-                        Kamar Tidur
+                        Employees
                     </div>
                 </div>
             </a>
         </div>
+
         <div class="row menu dropdown-parent" id="category-1">
             <div class="col-2">
                 <i class="fa-solid fa-clipboard"></i>
@@ -180,8 +168,8 @@
             <div class="col-8">
                 Category
             </div>
-            <div class="col-2 icon-category-dropdown">
-                <i class="fa-solid fa-caret-up"></i>
+            <div class="col-2 icon-dropdown">
+                <i class="fa-solid fa-caret-down"></i>
             </div>
         </div>
         <div>
@@ -218,13 +206,13 @@
         
         </div>
         {% if user.is_superuser %}
-        <a class="dropdown-item {% if 'employees' in request.path %} selected {% endif %}" href="{% url 'main_app:employees' %}">
+        <a class="dropdown-item ">
             <div class="row menu">
                 <div class="col-2">
                     <i class="fa-solid fa-users"></i>
                 </div>
                 <div class="col-10">
-                    Employees
+                    NOTHING
                 </div>
             </div>
         </a>

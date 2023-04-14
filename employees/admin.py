@@ -5,6 +5,7 @@ from .models import Employees
 
 class EmployeesAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
+        
         if not change:
             obj.created_by = request.user
 
