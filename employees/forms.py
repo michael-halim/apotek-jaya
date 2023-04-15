@@ -8,13 +8,7 @@ from zoneinfo import ZoneInfo
 import re
 
 class EmployeesForm(forms.ModelForm):
-    def clean(self):
-        cleaned_data = super().clean()
-        print('Enter Clean')
-        print(cleaned_data)
 
-        return cleaned_data
-    
     def clean_name(self):
         print('Enter Clean Name')
         cleaned_data = super().clean()
@@ -353,7 +347,7 @@ class EmployeesForm(forms.ModelForm):
         # Error Messages Here's Defined Because in models.py it is set to null=False implicitly
         error_messages = {
             'nik': {
-                'required': 'This is My bUiltd in'
+                'required': 'NIK is Required'
             },
             'name': {
                 'required': 'Name is Required'

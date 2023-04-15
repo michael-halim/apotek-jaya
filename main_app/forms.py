@@ -14,6 +14,17 @@ class FileFieldForm(forms.Form):
     )
 
 class CreateUserForm(UserCreationForm):
+
+    is_updating = False
+
+    def __init__(self, *args, **kwargs):
+        self.is_updating = kwargs.pop('is_updating', False)
+        super().__init__(*args, **kwargs)
+
+        if self.is_updating:
+            self.fields['password1'].required = False
+            self.fields['password2'].required = False
+
     password1 = forms.CharField(
                     label='Password',
                     error_messages={
@@ -44,7 +55,7 @@ class CreateUserForm(UserCreationForm):
                         'id':'password2',
                     })
                 )  
-
+    
     def clean_username(self):  
         print('Enter Clean Username')
         cleaned_data = super().clean()
@@ -57,7 +68,7 @@ class CreateUserForm(UserCreationForm):
         else:
             username = username.lower()
             found_username = User.objects.filter(username = username)  
-            if found_username.count():
+            if found_username.count() and not self.is_updating:
                 errors.append("User Already Exist")
 
             elif len(username.split()) > 1:
@@ -85,7 +96,7 @@ class CreateUserForm(UserCreationForm):
             email = email.lower()
             email_found = User.objects.filter(email=email)  
 
-            if email_found.count():  
+            if email_found.count() and not self.is_updating:  
                 errors.append('Email Already Exist')
 
             if not re.match(pattern=r'^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$', string=email):
@@ -129,24 +140,6 @@ class CreateUserForm(UserCreationForm):
                 'required': True,
                 'id':'email',
                 'type':'email'
-                
-            }),
-            'password1': forms.PasswordInput(attrs={
-                'class': 'form-control',
-                'placeholder':'Enter Password',
-                'autofocus': False, 
-                'required': True,
-                'id':'password1',
-                'type':'password'
-                
-            }),
-            'password2': forms.PasswordInput(attrs={
-                'class': 'form-control',
-                'placeholder':'Enter Confirmation Password',
-                'autofocus': False, 
-                'required': True,
-                'id':'password2',
-                'type':'password'
                 
             }),
         }
