@@ -15,6 +15,7 @@ Find Me
 {% include 'includes/sidebar.html' %}
 
 <div class="container-fluid my-1" style="width: 90%;">
+    
     {% include 'employees/includes/add_employees_modal.html' %}
     
     <div class="row">
@@ -32,6 +33,8 @@ Find Me
         </div>
     </div>
     <hr class="mt-0 mb-4">
+    
+    {% csrf_token %}
     {% include 'employees/includes/employees_table.html' %}
 
     <script src="{% static 'employees/employees.js' %}" defer></script>

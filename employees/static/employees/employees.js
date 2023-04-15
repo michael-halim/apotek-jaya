@@ -60,13 +60,13 @@ $(function () {
                     render: function (data, type, row) {
                         let element = `
                             <div class="d-flex justify-content-center">
-                                <span data-uq=${data.hash} class="view-employees btn text-primary me-3">
+                                <span data-uq=${data.hash} data-link=${data.view_link} class="view-employees btn text-primary me-3">
                                     <i class="bi bi-eye"></i>
                                 </span>
                                 <span data-uq=${data.hash} data-link=${data.update_link} class="update-employees btn text-warning me-3">
                                     <i class="bi bi-pencil"></i>
                                 </span>
-                                <span data-uq=${data.hash} class="delete-employees btn text-danger">
+                                <span data-uq=${data.hash} data-link=${data.delete_link} class="delete-employees btn text-danger">
                                     <i class="bi bi-trash"></i>
                                 </span>
                             </div>`;
@@ -100,8 +100,43 @@ $(function () {
         showMethod: 'fadeIn',
         hideMethod: 'fadeOut',
     };
+    $('body').on('click', '.delete-employees', function () {
+        if (confirm('Do You Want to Deactivate this Employee ?')){
+            let employee_uuid = $(this).data('uq');
+            let url = $(this).data('link');
+            url = url.replace('@@', employee_uuid);
 
+            $.ajax({
+              url: url,
+              method: 'POST',
+              data:{
+                csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+              },
+              success: function (result) {
+                initDataTable();
+              },
+              error: function (result) {},
+            });
+        }
     
+    });
+    $('body').on('click','.view-employees',function(){
+        let employee_uuid = $(this).data('uq');
+        let url = $(this).data('link');
+        url = url.replace('@@', employee_uuid);
+
+        $.ajax({
+            url : url, 
+            method : 'GET', 
+            success:function(result){
+                $('#add-employees-modal .modal-content').html(result.form);
+                $('#add-employees-modal').modal('show');
+            },
+            error:function(result){
+                
+            }
+        });
+    });
     $('body').on('click', '.update-employees', function () {
         let employee_uuid = $(this).data('uq');
         let url = $(this).data('link');

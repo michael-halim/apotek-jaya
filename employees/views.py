@@ -29,7 +29,9 @@ class FetchEmployees(LoginRequiredMixin, View):
                 'created_at': employee.created_at.date(),
                 'uq': {
                    'hash': employee.hash_uuid,
+                   'view_link':str(reverse_lazy('employees:detail-employees', args=["@@"])),
                    'update_link': str(reverse_lazy('employees:update-employees', args=["@@"])),
+                   'delete_link':str(reverse_lazy('employees:delete-employees', args=["@@"])),
                 }, 
                 
             })
@@ -38,7 +40,7 @@ class FetchEmployees(LoginRequiredMixin, View):
             'employees_data': employees_data
         }
 
-        return JsonResponse(response, safe=False)
+        return JsonResponse(response)
     
     def post(self, request):
         pass
@@ -252,32 +254,70 @@ class UpdateEmployeesView(LoginRequiredMixin, View):
             }
 
             return JsonResponse(response)
+
+class DetailEmployeesView(LoginRequiredMixin, View):
+    login_url = '/login/'
+
+    def get(self, request, employee_uuid):
+
+        employee = get_object_or_404(Employees, hash_uuid=employee_uuid)
+        user = get_object_or_404(User, id=employee.auth_user_id.id)
+
+        user_form = CreateUserForm(instance=user)
+        employees_form = EmployeesForm(instance=employee)
+
+        user_form.fields.pop('password1', None)
+        user_form.fields.pop('password2', None)
+
+        for key in user_form.fields:
+            user_form.fields[key].widget.attrs['disabled'] = True
+            user_form.fields[key].widget.attrs['placeholder'] = ''
+
+        for key in employees_form.fields:
+            employees_form.fields[key].widget.attrs['disabled'] = True
+            employees_form.fields[key].widget.attrs['placeholder'] = ''
+
+        context = {
+            'mode':'view',
+            'user_form':user_form,
+            'employees_form':employees_form,
+            'modal_title':'view employees',
+            'uq':{
+                'hash': employee_uuid,
+                'update_link':str(reverse_lazy('employees:update-employees', args=["@@"])),
+            }
+        }
         
+        form = render_to_string('employees/includes/form.html', context, request=request)
+        response = {
+            'form': form
+        }
+        return JsonResponse(response)
+
+    def post(self, request):
+        pass
+
+class DeleteEmployeesView(LoginRequiredMixin, View):
+    def post(self, request, employee_uuid):
+        
+        employee = get_object_or_404(Employees, hash_uuid=employee_uuid)
+        employee.status = 0
+        employee.save()
+
+        response = {
+            
+        }
+
+        return JsonResponse(response)
+
 class EmployeesView(LoginRequiredMixin, View):
     """Handles Employees Page"""
 
     login_url = '/login/'
 
     def get(self, request):
-        user_form = CreateUserForm()
-        employees_form = EmployeesForm()
-        # username_context = form.fields['username'].widget.get_context('username', form['username'].value(), form['username'].attrs)['widget']
-        print('LOOK HERE')
-        print(employees_form.errors)
-        print(employees_form.fields['nik'].error_messages)
-        print(employees_form.fields['nik'].widget.attrs)
-        print(employees_form.fields['nik'].widget.input_type)
-        print(employees_form.fields['nik'].label)
-        print('BIRTHDATE')
-        print(employees_form.fields['birthdate'].widget.format)
-        print(employees_form.fields['birthdate'].widget.input_type)
-        # print(form.fields['username'].widget.attrs)
-        
-        print('URL LAZY')
-        print(str(reverse_lazy('employees:update-employees', args=["@@"])))
-        # employees_form['widget'] = 
-        context = {
-        }
+        context = {}
+
         return render(request, 'employees/employees.html', context)
 
     def post(self, request):
