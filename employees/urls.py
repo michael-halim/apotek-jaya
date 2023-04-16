@@ -6,7 +6,7 @@ from employees.views import EmployeesView
 app_name = 'employees'
 urlpatterns = [
     path('',views.EmployeesView.as_view(), name='employees'),
-    path('fetch-employees/',views.FetchEmployees.as_view(), name='fetch-employees'),
+    path('fetch-employees/',views.ListEmployeesView.as_view(), name='fetch-employees'),
     path('create/',views.CreateEmployeesView.as_view(), name='create-employees'),
     path('detail/<str:employee_uuid>',views.DetailEmployeesView.as_view(), name='detail-employees'),
     path('delete/<str:employee_uuid>',views.DeleteEmployeesView.as_view(), name='delete-employees'),

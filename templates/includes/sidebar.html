@@ -60,15 +60,6 @@
 <script>
     $(function () {
         $('[class*="dropdown-child-"]').hide();
-        // if ('{{request.path}}'.includes('category')) {
-        //     $('.dropdown-category').show();  
-        //     $('#icon-category-dropdown > i').addClass('fa-caret-up')
-        // } 
-        // else{
-        //     $('.dropdown-category').hide();
-        //     $('#icon-category-dropdown > i').addClass('fa-caret-down')
-        // }
-
         $('body').on('click','.dropdown-parent',function(){
             var id = $(this).attr('id');
             $('.dropdown-child-' + id).slideToggle('fast');
@@ -137,29 +128,69 @@
                 </div>
             </div>
         </a>
-        <div class="row menu dropdown-parent" id="employees">
-            <div class="col-2">
-                <i class="fa-solid fa-users"></i>
-            </div>
-            <div class="col-8">
-                Employees
-            </div>
-            <div class="col-2 icon-dropdown">
-                <i class="fa-solid fa-caret-down"></i>
-            </div>
-        </div>
-        <div class="wrapper-dropdown-employees">
-            <a class="dropdown-item" href="{% url 'employees:employees' %}">
-                <div class="row menu dropdown-child-employees {% if 'employees' in request.path %} selected {% endif %}">
-                    <div class="col-2">
-                        <i class="fa-solid fa-users"></i>
-                    </div>
-                    <div class="col-10">
-                        Employees
-                    </div>
+        {% if perms.employees.read_employees %}
+            <div class="row menu dropdown-parent" id="employees">
+                <div class="col-2">
+                    <i class="fa-solid fa-users"></i>
                 </div>
-            </a>
-        </div>
+                <div class="col-8">
+                    Employees
+                </div>
+                <div class="col-2 icon-dropdown">
+                    <i class="fa-solid fa-caret-down"></i>
+                </div>
+            </div>
+        
+            <div class="wrapper-dropdown-employees">
+                <a class="dropdown-item" href="{% url 'employees:employees' %}">
+                    <div class="row menu dropdown-child-employees {% if 'employees' in request.path %} selected {% endif %}">
+                        <div class="col-2">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <div class="col-10">
+                            Employees
+                        </div>
+                    </div>
+                </a>
+            </div>
+        {% endif %}
+
+        {% if perms.employees.view_permission %}
+            <div class="row menu dropdown-parent" id="permission">
+                <div class="col-2">
+                    <i class="fa-solid fa-user-lock"></i>
+                </div>
+                <div class="col-8">
+                    Permission
+                </div>
+                <div class="col-2 icon-dropdown">
+                    <i class="fa-solid fa-caret-down"></i>
+                </div>
+            </div>
+        
+            <div class="wrapper-dropdown-employees">
+                <a class="dropdown-item" href="{% url 'permission:permission' %}">
+                    <div class="row menu dropdown-child-permission">
+                        <div class="col-2">
+                            <i class="fa-solid fa-user-lock"></i>
+                        </div>
+                        <div class="col-10">
+                            Permission
+                        </div>
+                    </div>
+                </a>
+                <a class="dropdown-item" href="#">
+                    <div class="row menu dropdown-child-permission">
+                        <div class="col-2">
+                            <i class="fa-solid fa-user-group"></i>
+                        </div>
+                        <div class="col-10">
+                            Group Permission
+                        </div>
+                    </div>
+                </a>
+            </div>
+        {% endif %}
 
         <div class="row menu dropdown-parent" id="category-1">
             <div class="col-2">

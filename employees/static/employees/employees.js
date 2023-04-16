@@ -57,22 +57,6 @@ $(function () {
                 },
                 {
                     data: 'uq',
-                    render: function (data, type, row) {
-                        let element = `
-                            <div class="d-flex justify-content-center">
-                                <span data-uq=${data.hash} data-link=${data.view_link} class="view-employees btn text-primary me-3">
-                                    <i class="bi bi-eye"></i>
-                                </span>
-                                <span data-uq=${data.hash} data-link=${data.update_link} class="update-employees btn text-warning me-3">
-                                    <i class="bi bi-pencil"></i>
-                                </span>
-                                <span data-uq=${data.hash} data-link=${data.delete_link} class="delete-employees btn text-danger">
-                                    <i class="bi bi-trash"></i>
-                                </span>
-                            </div>`;
-                        return element;
-
-                    }
                 },
             ],
             dom: 'lBfrtip',
@@ -81,8 +65,6 @@ $(function () {
         });
     }
     
-    initDataTable();
-
     toastr.options = {
         closeButton: false,
         debug: false,
@@ -100,6 +82,9 @@ $(function () {
         showMethod: 'fadeIn',
         hideMethod: 'fadeOut',
     };
+
+    initDataTable();
+
     $('body').on('click', '.delete-employees', function () {
         if (confirm('Do You Want to Deactivate this Employee ?')){
             let employee_uuid = $(this).data('uq');
@@ -113,31 +98,20 @@ $(function () {
                 csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
               },
               success: function (result) {
-                initDataTable();
+                if (result.success === true){
+                    initDataTable();
+
+                } else if (result.success === false){
+                    toastr['error'](result.toast_message);
+                }
+                
               },
               error: function (result) {},
             });
         }
     
     });
-    $('body').on('click','.view-employees',function(){
-        let employee_uuid = $(this).data('uq');
-        let url = $(this).data('link');
-        url = url.replace('@@', employee_uuid);
-
-        $.ajax({
-            url : url, 
-            method : 'GET', 
-            success:function(result){
-                $('#add-employees-modal .modal-content').html(result.form);
-                $('#add-employees-modal').modal('show');
-            },
-            error:function(result){
-                
-            }
-        });
-    });
-    $('body').on('click', '.update-employees', function () {
+    $('body').on('click', '.update-employees, .view-employees, #add-employees', function () {
         let employee_uuid = $(this).data('uq');
         let url = $(this).data('link');
         url = url.replace('@@', employee_uuid);
@@ -146,25 +120,29 @@ $(function () {
             url: url,
             method: 'GET',
             success: function (result) {
-                $('#add-employees-modal .modal-content').html(result.form);
-                $('#add-employees-modal').modal('show');
+                if (result.success === true){
+                    $('#form-employees-modal .modal-content').html(result.form);
+                    $('#form-employees-modal').modal('show');
+
+                } else if (result.success === false){
+                    toastr['error'](result.toast_message);
+                }
+                
+                
             },
             error: function (result) {
-
+            
             },
         });
     });
-    $('body').on('click', '#submit-update-employees', function () {
+    $('body').on('click', '#submit-form-employees', function () {
         let form = document.getElementById('add_employees_form');
         let form_data = new FormData(form);
-        form_data.append(
-            'csrfmiddlewaretoken',
-            $('input[name=csrfmiddlewaretoken]').val()
-        );
+        form_data.append('csrfmiddlewaretoken',$('input[name=csrfmiddlewaretoken]').val());
+
         let employee_uuid = $(this).data('uq');
         let url = $(this).data('link');
         url = url.replace('@@', employee_uuid);
-        
         $.ajax({
             url: url,
             method: 'POST',
@@ -204,83 +182,13 @@ $(function () {
                     toastr['error'](result.toast_message);
                 }
                 
-                $('#add-employees-modal').modal(result.is_close_modal === true ? 'hide' : 'show');
+                $('#form-employees-modal').modal(result.is_close_modal === true ? 'hide' : 'show');
             },
             error: function (result) { 
 
             },
         });
     });
-    $('body').on('click', '#add-employees', function () {
-        const url = $(this).data('link');
-        $.ajax({
-            url: url,
-            method: 'GET',
-            success: function (result) {
-                $('#add-employees-modal .modal-content').html(result.form);
-                $('#add-employees-modal').modal('show');
-            },
-            error: function (result) {
-
-            },
-        });
-    });
-    $('body').on('click', '#submit-add-employees', function () {
-        let form = document.getElementById('add_employees_form');
-        let form_data = new FormData(form);
-        form_data.append(
-            'csrfmiddlewaretoken',
-            $('input[name=csrfmiddlewaretoken]').val()
-        );
-        const url = $(this).data('link');
-
-        $.ajax({
-            url: url,
-            method: 'POST',
-            processData: false,
-            contentType: false,
-            data: form_data,
-            success: function (result) {
-                $('.form-error').html('');
-                $('.is-invalid').removeClass('is-invalid');
-
-                if (result.success === true){
-                    $('.modal-messages').css({ display: 'none' }).html('');
-                    toastr['success'](result.toast_message);
-
-                    initDataTable();
-                    
-                }
-                else if (result.success === false) {
-                    for (const keys in result.errors) {
-                        $('#' + keys).addClass('is-invalid');
-
-                        let error_list = '';
-                        for (const err of result.errors[keys]) {
-                            error_list += err + '<br>';
-                        }
-
-                        $('#' + keys).next('.form-error').html(error_list);
-                    }
-
-                    let messages_element = '';
-                    for (const message of result.modal_messages) {
-                        messages_element += `<li class= "${message.tags}">${message.message}</li>`;
-                    }
-
-                    $('.modal-messages').css({ display: 'block' }).html(messages_element);
-
-                    toastr['error'](result.toast_message);
-                }
-                
-                $('#add-employees-modal').modal(result.is_close_modal === true ? 'hide' : 'show');
-            },
-            error: function (result) { 
-
-            },
-        });
-    });
-
     $('#emp tfoot th.search-text').each(function () {
         var title = $(this).text();
         $(this).html('<input class="form-control" type="text" placeholder="Search ' + title + '" />');

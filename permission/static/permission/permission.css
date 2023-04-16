@@ -1,0 +1,17 @@
+body{
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+    background-color: #B9D7EA;
+}
+::-webkit-scrollbar {
+    display: none;
+}
+
+div.permission-wrapper{
+    background-color: white;
+    padding: 20px;
+    border-radius: 16px;
+}
+ tfoot {
+    display: table-header-group;
+}

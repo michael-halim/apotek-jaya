@@ -5,6 +5,7 @@ from .constants import PROVINCE
 from datetime import date, timedelta, datetime
 from zoneinfo import ZoneInfo
 import uuid
+
 class Employees(models.Model):
     # If null=True, in forms is allowed to enter None, if not validators will come into play
     auth_user_id = models.OneToOneField(User, 
@@ -60,3 +61,10 @@ class Employees(models.Model):
     class Meta:
         db_table = 'employees'
         verbose_name_plural = 'Employees'
+        default_permissions = ()
+        permissions = (
+            ("create_employees", "Create Employees"),
+            ("read_employees", "Read Employees"),
+            ("update_employees", "Update Employees"),
+            ("delete_employees", "Delete Employees"),
+        )

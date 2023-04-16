@@ -1,11 +1,12 @@
-from django.shortcuts import get_object_or_404, render
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views.generic import ListView,View, TemplateView
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.template.loader import render_to_string
+from django.core.exceptions import PermissionDenied
 
 from main_app.forms import CreateUserForm
 from .forms import EmployeesForm
@@ -14,29 +15,48 @@ from .models import Employees
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-class FetchEmployees(LoginRequiredMixin, View):
+class ListEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['employees.read_employees']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
     def get(self, request):
+        context = {
+            'view_link':str(reverse_lazy('employees:detail-employees', args=["@@"])),
+            'update_link': str(reverse_lazy('employees:update-employees', args=["@@"])),
+            'delete_link':str(reverse_lazy('employees:delete-employees', args=["@@"])),
+        }
+
         employees_object = Employees.objects.all()
         employees_data = []
+
         for employee in employees_object:
+            context['hash'] = employee.hash_uuid
+            form_action = render_to_string('employees/includes/form_action_button.html', context, request=request)
+            
             employees_data.append({
                 'nik':employee.nik,
                 'name':employee.name,
                 'address':employee.address,
                 'status':employee.status,
                 'created_at': employee.created_at.date(),
-                'uq': {
-                   'hash': employee.hash_uuid,
-                   'view_link':str(reverse_lazy('employees:detail-employees', args=["@@"])),
-                   'update_link': str(reverse_lazy('employees:update-employees', args=["@@"])),
-                   'delete_link':str(reverse_lazy('employees:delete-employees', args=["@@"])),
-                }, 
-                
+                'uq': form_action, 
             })
 
         response = {
+            'success':True,
             'employees_data': employees_data
         }
 
@@ -45,14 +65,29 @@ class FetchEmployees(LoginRequiredMixin, View):
     def post(self, request):
         pass
 
-class CreateEmployeesView(LoginRequiredMixin, View):
+class CreateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin ,View):
     login_url = '/login/'
+    permission_required = ['employees.create_employees']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
     def get(self, request):
         user_form = CreateUserForm()
         employees_form = EmployeesForm()
 
         context = {
+            'success':True,
             'mode':'create',
             'modal_title':'create employees',
             'user_form':user_form,
@@ -64,6 +99,7 @@ class CreateEmployeesView(LoginRequiredMixin, View):
         
         form = render_to_string('employees/includes/form.html', context, request=request)
         response = {
+            'success':True,
             'form': form
             
         }
@@ -144,8 +180,22 @@ class CreateEmployeesView(LoginRequiredMixin, View):
 
             return JsonResponse(response)
         
-class UpdateEmployeesView(LoginRequiredMixin, View):
+class UpdateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['employees.update_employees']
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+            
+            return JsonResponse(response)
 
     def get(self, request, employee_uuid):
         # TODO: Add Exception if Something Goes Wrong
@@ -172,8 +222,10 @@ class UpdateEmployeesView(LoginRequiredMixin, View):
         
         form = render_to_string('employees/includes/form.html', context, request=request)
         response = {
+            'success':True,
             'form': form
         }
+
         return JsonResponse(response)
 
     def post(self, request, employee_uuid):
@@ -183,12 +235,6 @@ class UpdateEmployeesView(LoginRequiredMixin, View):
 
         employees_form = EmployeesForm(request.POST or None, instance=employee)
         user_form = CreateUserForm(request.POST or None, instance=user, is_updating=True)
-
-        print('UPDATED EMPLOYEE FORM')
-        print(employees_form)
-        print('UPDATED USER FORM')
-        print(user_form)
-        # employees_form = EmployeesForm(request.POST or None)
 
         if user_form.is_valid() and employees_form.is_valid():
             print('Form is Valid')
@@ -255,9 +301,23 @@ class UpdateEmployeesView(LoginRequiredMixin, View):
 
             return JsonResponse(response)
 
-class DetailEmployeesView(LoginRequiredMixin, View):
+class DetailEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['employees.read_employees']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
     def get(self, request, employee_uuid):
 
         employee = get_object_or_404(Employees, hash_uuid=employee_uuid)
@@ -290,6 +350,7 @@ class DetailEmployeesView(LoginRequiredMixin, View):
         
         form = render_to_string('employees/includes/form.html', context, request=request)
         response = {
+            'success':True,
             'form': form
         }
         return JsonResponse(response)
@@ -297,7 +358,22 @@ class DetailEmployeesView(LoginRequiredMixin, View):
     def post(self, request):
         pass
 
-class DeleteEmployeesView(LoginRequiredMixin, View):
+class DeleteEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = ['employees.delete_employees']
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
     def post(self, request, employee_uuid):
         
         employee = get_object_or_404(Employees, hash_uuid=employee_uuid)
@@ -305,18 +381,29 @@ class DeleteEmployeesView(LoginRequiredMixin, View):
         employee.save()
 
         response = {
-            
+            'success': True, 
+            'toast_message':'Employee Deactivated Successfuly',
+            'is_close_modal':True
         }
 
         return JsonResponse(response)
 
-class EmployeesView(LoginRequiredMixin, View):
+class EmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """Handles Employees Page"""
 
     login_url = '/login/'
+    permission_required = ['employees.read_employees']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
+        
+        return redirect(reverse_lazy('main_app:login'))
+        
     def get(self, request):
-        context = {}
+        context = {
+            'title':'Employees',
+        }
 
         return render(request, 'employees/employees.html', context)
 
