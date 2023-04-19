@@ -24,11 +24,11 @@ $(function () {
             responsive: true,
             columnDefs: [
                 { targets: 4, width: "80px" },
-                { targets: 5, width: "100px" },
+                { targets: 5, width: "90px" },
             ],
             columns: [
                 {
-                    data: 'nik',
+                    data: 'nik_email',
                     defaultContent: '-',
                 },
                 {

@@ -191,7 +191,40 @@
                 </a>
             </div>
         {% endif %}
-
+        <div class="row menu dropdown-parent" id="departments">
+            <div class="col-2">
+                <i class="fa-solid fa-user-lock"></i>
+            </div>
+            <div class="col-8">
+                Departments
+            </div>
+            <div class="col-2 icon-dropdown">
+                <i class="fa-solid fa-caret-down"></i>
+            </div>
+        </div>
+        
+        <div class="wrapper-dropdown-employees">
+            <a class="dropdown-item" href="{% url 'departments:departments' %}">
+                <div class="row menu dropdown-child-departments">
+                    <div class="col-2">
+                        <i class="fa-solid fa-user-lock"></i>
+                    </div>
+                    <div class="col-10">
+                        Departments
+                    </div>
+                </div>
+            </a>
+            <a class="dropdown-item" href="#">
+                <div class="row menu dropdown-child-departments">
+                    <div class="col-2">
+                        <i class="fa-solid fa-user-group"></i>
+                    </div>
+                    <div class="col-10">
+                        Group Departments
+                    </div>
+                </div>
+            </a>
+        </div>
         <div class="row menu dropdown-parent" id="category-1">
             <div class="col-2">
                 <i class="fa-solid fa-clipboard"></i>

@@ -46,8 +46,10 @@ class ListEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             context['hash'] = employee.hash_uuid
             form_action = render_to_string('employees/includes/form_action_button.html', context, request=request)
             
+            nik = employee.nik if employee.nik != '' else '-'
+            nik_email = nik + '<br>' + employee.auth_user_id.email
             employees_data.append({
-                'nik':employee.nik,
+                'nik_email': nik_email,
                 'name':employee.name,
                 'address':employee.address,
                 'status':employee.status,
@@ -342,10 +344,6 @@ class DetailEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             'user_form':user_form,
             'employees_form':employees_form,
             'modal_title':'view employees',
-            'uq':{
-                'hash': employee_uuid,
-                'update_link':str(reverse_lazy('employees:update-employees', args=["@@"])),
-            }
         }
         
         form = render_to_string('employees/includes/form.html', context, request=request)

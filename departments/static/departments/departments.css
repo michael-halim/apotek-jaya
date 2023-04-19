@@ -2,27 +2,21 @@ body{
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
     background-color: #B9D7EA;
+
 }
 ::-webkit-scrollbar {
     display: none;
 }
 
-div.permission-wrapper{
+div.departments-wrapper{
     background-color: white;
     padding: 20px;
     border-radius: 16px;
 }
-tfoot {
+ tfoot {
     display: table-header-group;
 }
 
-input[type="checkbox"]{
-    width: 25px;
-    height: 25px;
-}
-input[type="checkbox"] + label{
-    margin-left: 10px;
-}
 li.error{
     border: 1px solid #f1aeb5;
     background-color: #f8d7da;
