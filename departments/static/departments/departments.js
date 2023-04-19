@@ -1,5 +1,77 @@
 $(function () {
-  function initDataTable() {
+  function initEmployeessDataTable(){
+    $('#emp').DataTable().destroy();
+    $('#emp').DataTable({
+        initComplete: function () {
+            // Apply the search
+            this.api()
+                .columns()
+                .every(function () {
+                    var that = this;
+
+                    $('input', this.footer()).on('keyup change clear', function () {
+                        if (that.search() !== this.value) {
+                            that.search(this.value).draw();
+                        }
+                    });
+                });
+        },
+
+        ajax: {
+            url: '/employees/fetch-employees/',
+            dataSrc: 'employees_data',
+        },
+        responsive: true,
+        columnDefs: [
+            { targets: 4, width: "80px" },
+            { targets: 5, width: "90px" },
+        ],
+        columns: [
+            {
+                data: 'nik_email',
+                defaultContent: '-',
+            },
+            {
+                data: 'name',
+                defaultContent: '-',
+            },
+            {
+                data: 'address',
+                defaultContent: '-',
+            },
+            {
+                data: 'created_at',
+                defaultContent: '-',
+            },
+            {
+                data: 'status',
+                render: function (data, type, row) {
+                    if (data === 1) {
+                        return '<span class="badge bg-success">Active</span>';
+                    } else if (data === 0) {
+                        return '<span class="badge bg-danger">Inactive</span>';
+                    } else {
+                        return '<span class="badge bg-secondary">Unknown</span>';
+                    }
+                }
+            },
+            {
+                data: 'uq',
+            },
+        ],
+        dom: 'lBfrtip',
+        buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+
+    });
+}
+
+function initEmployeesFooter(){
+    $('#emp tfoot th.search-text').each(function () {
+        var title = $(this).text();
+        $(this).html('<input class="form-control" type="text" placeholder="Search ' + title + '" />');
+    });
+}
+  function initDepartmentsDataTable() {
     $('#departments-table').DataTable().destroy();
     $('#departments-table').DataTable({
       initComplete: function () {
@@ -71,7 +143,7 @@ $(function () {
     hideMethod: 'fadeOut',
   };
 
-  initDataTable();
+  initDepartmentsDataTable();
 
   $('body').on('click', '.delete-departments', function () {
     if (confirm('Do You Want to Deactivate this Department ?')) {
@@ -107,7 +179,14 @@ $(function () {
         success: function (result) {
           if (result.success === true) {
             $('#form-departments-modal .modal-content').html(result.form);
+            initEmployeessDataTable();
+            $('#emp').css({
+              'width':'100%',
+            });
+            initEmployeesFooter();
             $('#form-departments-modal').modal('show');
+
+            
           } else if (result.success === false) {
             toastr['error'](result.toast_message);
           }
@@ -178,4 +257,5 @@ $(function () {
         '" />'
     );
   });
+  
 });

@@ -13,6 +13,14 @@ div.departments-wrapper{
     padding: 20px;
     border-radius: 16px;
 }
+
+div.emp-wrapper{
+    background-color: white;
+    padding: 20px;
+    border-radius: 16px;
+    width: 75%;
+}
+
  tfoot {
     display: table-header-group;
 }

@@ -12,7 +12,11 @@
             <span class="form-error text-danger"></span>
         </div>
         {% endfor %}
-
+        
+        <div class="mb-3">
+            {% include 'employees/includes/employees_table.html' %} 
+        </div>
+        
         <div class="mb-3 d-flex justify-content-end">
             {% if mode == 'create' %}
                 <input type="button" value="Create Departments" data-link="{{uq.create_link}}" class="btn btn-success" id="submit-form-departments">
@@ -20,5 +24,8 @@
                 <input type="button" value="Update Departments" data-uq="{{uq.hash}}" data-link="{{uq.update_link}}" class="btn btn-success" id="submit-form-departments">
             {% endif %}
         </div>
+
+        
     </form>
+
 </div>
