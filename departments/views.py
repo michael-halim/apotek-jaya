@@ -10,8 +10,11 @@ from django.urls import reverse_lazy
 from django.template.loader import render_to_string
 from django.core.exceptions import PermissionDenied
 
+from employees.models import Employees
+
 from .forms import DepartmentsForm
 from .models import Departments
+
 class ListDepartmentsView(LoginRequiredMixin, View):
     login_url = '/login/'
 
@@ -45,6 +48,54 @@ class ListDepartmentsView(LoginRequiredMixin, View):
 
     def post(self, request):
         pass
+
+class AddEmployeeDepartmentsView(LoginRequiredMixin, View):
+    def get(self, request):
+        pass
+        
+    
+    def post(self, request):
+        print(request.POST)
+        
+        user = request.POST['user']
+
+        if user.isnumeric():
+            print('WORKS')
+            employee = get_object_or_404(Employees, auth_user_id=user)
+            
+            nik = employee.nik if employee.nik != '' else '-'
+            nik_email = nik + '<br>' + employee.auth_user_id.email
+            trash_icon = '''
+                <div class="d-flex justify-content-center">
+                    <span class="delete-departments-employees btn text-danger w-100">
+                        <i class="bi bi-trash"></i>
+                    </span>
+                </div>
+            '''
+            employee_data = {
+                'nik_email':nik_email,
+                'name': employee.name,
+                'address': employee.address,
+                'education': employee.education,
+                'join_date': employee.created_at.date(),
+                'expired_at': employee.expired_at,
+                'action':trash_icon,
+
+            }
+
+            response = {
+                'success':True,
+                'employee_data':employee_data,
+            }
+            return JsonResponse(response)
+
+        else:
+            response = {
+                'success':False,
+                'toast_message':'Please review the form and correct any errors before resubmitting',
+            }
+            return JsonResponse(response)
+            
 
 class CreateDepartmentsView(LoginRequiredMixin, View):
     login_url = '/login/'

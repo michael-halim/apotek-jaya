@@ -34,9 +34,9 @@ class ListEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
         
     def get(self, request):
         context = {
-            'view_link':str(reverse_lazy('employees:detail-employees', args=["@@"])),
-            'update_link': str(reverse_lazy('employees:update-employees', args=["@@"])),
-            'delete_link':str(reverse_lazy('employees:delete-employees', args=["@@"])),
+            'view_link':str(reverse_lazy('employees:detail-employees', args=['@@'])),
+            'update_link': str(reverse_lazy('employees:update-employees', args=['@@'])),
+            'delete_link':str(reverse_lazy('employees:delete-employees', args=['@@'])),
         }
 
         employees_object = Employees.objects.all()

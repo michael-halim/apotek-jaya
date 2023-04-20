@@ -1,7 +1,7 @@
 $(function () {
   function initEmployeessDataTable(){
-    $('#emp').DataTable().destroy();
-    $('#emp').DataTable({
+    $('#departments-employees-table').DataTable().destroy();
+    let employee_datatable = $('#departments-employees-table').DataTable({
         initComplete: function () {
             // Apply the search
             this.api()
@@ -16,57 +16,14 @@ $(function () {
                     });
                 });
         },
-
-        ajax: {
-            url: '/employees/fetch-employees/',
-            dataSrc: 'employees_data',
-        },
+        index:true,
         responsive: true,
-        columnDefs: [
-            { targets: 4, width: "80px" },
-            { targets: 5, width: "90px" },
-        ],
-        columns: [
-            {
-                data: 'nik_email',
-                defaultContent: '-',
-            },
-            {
-                data: 'name',
-                defaultContent: '-',
-            },
-            {
-                data: 'address',
-                defaultContent: '-',
-            },
-            {
-                data: 'created_at',
-                defaultContent: '-',
-            },
-            {
-                data: 'status',
-                render: function (data, type, row) {
-                    if (data === 1) {
-                        return '<span class="badge bg-success">Active</span>';
-                    } else if (data === 0) {
-                        return '<span class="badge bg-danger">Inactive</span>';
-                    } else {
-                        return '<span class="badge bg-secondary">Unknown</span>';
-                    }
-                }
-            },
-            {
-                data: 'uq',
-            },
-        ],
-        dom: 'lBfrtip',
-        buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
-
     });
-}
+    return employee_datatable;
+  }
 
 function initEmployeesFooter(){
-    $('#emp tfoot th.search-text').each(function () {
+    $('#departments-employees-table tfoot th.search-text').each(function () {
         var title = $(this).text();
         $(this).html('<input class="form-control" type="text" placeholder="Search ' + title + '" />');
     });
@@ -142,9 +99,8 @@ function initEmployeesFooter(){
     showMethod: 'fadeIn',
     hideMethod: 'fadeOut',
   };
-
+  let employee_datatable = null;
   initDepartmentsDataTable();
-
   $('body').on('click', '.delete-departments', function () {
     if (confirm('Do You Want to Deactivate this Department ?')) {
       let department_uuid = $(this).data('uq');
@@ -179,13 +135,19 @@ function initEmployeesFooter(){
         success: function (result) {
           if (result.success === true) {
             $('#form-departments-modal .modal-content').html(result.form);
-            initEmployeessDataTable();
+            dselect(document.querySelector('select#user'), {
+              search: true,
+            });
+
+            employee_datatable = initEmployeessDataTable();
+
             $('#emp').css({
               'width':'100%',
             });
-            initEmployeesFooter();
-            $('#form-departments-modal').modal('show');
 
+            initEmployeesFooter();
+            
+            $('#form-departments-modal').modal('show');
             
           } else if (result.success === false) {
             toastr['error'](result.toast_message);
@@ -245,6 +207,44 @@ function initEmployeesFooter(){
         $('#form-departments-modal').modal(
           result.is_close_modal === true ? 'hide' : 'show'
         );
+      },
+      error: function (result) {},
+    });
+  });
+  $('body').on('click', '#add-employee-departments', function () {
+    $.ajax({
+      url: 'add-employees/',
+      method: 'POST',
+      data: {
+        user: $('select#user').val(),
+        csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+      },
+      success: function (result) {
+        if (result.success === true) {
+            const dept_emp_data = [];
+            for (const key in result.employee_data) {
+                dept_emp_data.push(result.employee_data[key]);
+            }
+            let current_data = employee_datatable.rows().data();
+
+            let is_exist = false;
+            for (const key of current_data.toArray()){
+                if (key[0] === dept_emp_data[0]){
+                    is_exist = true;
+                    break;
+                }
+            }
+
+            if (!is_exist){
+              employee_datatable.row.add(dept_emp_data).draw(true);
+              employee_datatable = initEmployeessDataTable();
+            }
+            else{
+              toastr['error']('Employee Already Exist in This Departments');
+            }
+          
+        } else if (result.success === false) {
+        }
       },
       error: function (result) {},
     });

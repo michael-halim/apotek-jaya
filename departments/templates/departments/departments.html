@@ -6,8 +6,10 @@
 {% endblock title %}
 
 {% block script_css %}
-
+<link rel="stylesheet" href="https://unpkg.com/@jarstone/dselect/dist/css/dselect.css">
+<script src="https://unpkg.com/@jarstone/dselect/dist/js/dselect.js"></script>
 <link rel="stylesheet" href="{% static 'departments/departments.css' %}">
+
 {% endblock script_css %}
 
 {% block content %}
@@ -38,5 +40,6 @@
     {% include 'departments/includes/departments_table.html' %}
 
     <script src="{% static 'departments/departments.js' %}" defer></script>
+    
 </div>
 {% endblock content %}

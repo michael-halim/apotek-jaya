@@ -1,12 +1,22 @@
 from django import forms
-
 from .models import Departments
-
+from django.contrib.auth.models import User, Permission
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import re
 
 class DepartmentsForm(forms.ModelForm):
+    employees = forms.ModelChoiceField(
+        queryset = User.objects.filter(is_superuser=False),
+        widget=forms.Select(
+            attrs = {
+                'id':'user',
+            }),
+        error_messages={
+            'required':'User Cannot be Empty',
+        })
+    
+
     def clean_name(self):
         print('Enter Clean Department Name')
         cleaned_data = super().clean()

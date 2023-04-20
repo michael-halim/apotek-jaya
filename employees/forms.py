@@ -8,7 +8,6 @@ from zoneinfo import ZoneInfo
 import re
 
 class EmployeesForm(forms.ModelForm):
-
     def clean_name(self):
         print('Enter Clean Name')
         cleaned_data = super().clean()
