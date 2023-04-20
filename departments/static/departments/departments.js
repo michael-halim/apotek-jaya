@@ -1,23 +1,24 @@
 $(function () {
-  function initEmployeessDataTable(){
+  function initEmployeessDataTable(options = { columnDefs :{}}) {
     $('#departments-employees-table').DataTable().destroy();
     let employee_datatable = $('#departments-employees-table').DataTable({
-        initComplete: function () {
-            // Apply the search
-            this.api()
-                .columns()
-                .every(function () {
-                    var that = this;
+      initComplete: function () {
+        // Apply the search
+        this.api()
+          .columns()
+          .every(function () {
+            var that = this;
 
-                    $('input', this.footer()).on('keyup change clear', function () {
-                        if (that.search() !== this.value) {
-                            that.search(this.value).draw();
-                        }
-                    });
-                });
-        },
-        index:true,
-        responsive: true,
+            $('input', this.footer()).on('keyup change clear', function () {
+              if (that.search() !== this.value) {
+                that.search(this.value).draw();
+              }
+            });
+          });
+      },
+      index: true,
+      columnDefs: options.columnDefs,
+      responsive: true,
     });
     return employee_datatable;
   }
@@ -99,8 +100,10 @@ function initEmployeesFooter(){
     showMethod: 'fadeIn',
     hideMethod: 'fadeOut',
   };
+
   let employee_datatable = null;
   initDepartmentsDataTable();
+
   $('body').on('click', '.delete-departments', function () {
     if (confirm('Do You Want to Deactivate this Department ?')) {
       let department_uuid = $(this).data('uq');
@@ -124,6 +127,7 @@ function initEmployeesFooter(){
       });
     }
   });
+
   $('body').on('click','.update-departments, .view-departments, #add-departments', function () {
       let department_uuid = $(this).data('uq');
       let url = $(this).data('link');
@@ -135,7 +139,7 @@ function initEmployeesFooter(){
         success: function (result) {
           if (result.success === true) {
             $('#form-departments-modal .modal-content').html(result.form);
-            dselect(document.querySelector('select#user'), {
+            dselect(document.querySelector('select#employees'), {
               search: true,
             });
 
@@ -144,7 +148,9 @@ function initEmployeesFooter(){
             $('#emp').css({
               'width':'100%',
             });
-
+            $('th#uq').css({
+              'display':'none',
+            })
             initEmployeesFooter();
             
             $('#form-departments-modal').modal('show');
@@ -157,9 +163,13 @@ function initEmployeesFooter(){
       });
     }
   );
+
   $('body').on('click', '#submit-form-departments', function () {
     let form = document.getElementById('add_departments_form');
     let form_data = new FormData(form);
+    
+    employees = employee_datatable.rows().data().toArray();
+    console.log(employees);
     form_data.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val());
 
     let department_uuid = $(this).data('uq');
@@ -211,20 +221,28 @@ function initEmployeesFooter(){
       error: function (result) {},
     });
   });
+
   $('body').on('click', '#add-employee-departments', function () {
     $.ajax({
       url: 'add-employees/',
       method: 'POST',
       data: {
-        user: $('select#user').val(),
+        employees: $('select#employees').val(),
         csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
       },
       success: function (result) {
         if (result.success === true) {
-            const dept_emp_data = [];
-            for (const key in result.employee_data) {
-                dept_emp_data.push(result.employee_data[key]);
-            }
+            let dept_emp_data = [
+              result.employee_data['uq'],
+              result.employee_data['nik_email'],
+              result.employee_data['name'],
+              result.employee_data['address'],
+              result.employee_data['education'],
+              result.employee_data['join_date'],
+              result.employee_data['expired_at'],
+              result.employee_data['action'],
+            ];
+
             let current_data = employee_datatable.rows().data();
 
             let is_exist = false;
@@ -236,18 +254,38 @@ function initEmployeesFooter(){
             }
 
             if (!is_exist){
+              options_datatables = {
+                columnDefs: [
+                  {
+                    targets: 0,
+                    visible:false,
+                    searchable:false,
+                  },
+                  {
+                    targets: 7,
+                    width: '30px',
+                  },
+                ],
+              };
+              employee_datatable = initEmployeessDataTable(options_datatables);
               employee_datatable.row.add(dept_emp_data).draw(true);
-              employee_datatable = initEmployeessDataTable();
+            
             }
             else{
               toastr['error']('Employee Already Exist in This Departments');
             }
           
         } else if (result.success === false) {
+          toastr['error'](result.toast_message);
         }
       },
       error: function (result) {},
     });
+  });
+
+  $('body').on('click', '.delete-departments-employees', function () {
+      employee_datatable.row($(this).parents('tr')).remove().draw();
+
   });
   $('#departments-table tfoot th.search-text').each(function () {
     var title = $(this).text();

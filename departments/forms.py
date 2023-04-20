@@ -1,4 +1,6 @@
 from django import forms
+
+from employees.models import Employees
 from .models import Departments
 from django.contrib.auth.models import User, Permission
 from datetime import datetime, timedelta
@@ -7,10 +9,10 @@ import re
 
 class DepartmentsForm(forms.ModelForm):
     employees = forms.ModelChoiceField(
-        queryset = User.objects.filter(is_superuser=False),
+        queryset = Employees.objects.all(),
         widget=forms.Select(
             attrs = {
-                'id':'user',
+                'id':'employees',
             }),
         error_messages={
             'required':'User Cannot be Empty',

@@ -57,11 +57,11 @@ class AddEmployeeDepartmentsView(LoginRequiredMixin, View):
     def post(self, request):
         print(request.POST)
         
-        user = request.POST['user']
+        employees = request.POST['employees']
 
-        if user.isnumeric():
+        if employees.isnumeric():
             print('WORKS')
-            employee = get_object_or_404(Employees, auth_user_id=user)
+            employee = get_object_or_404(Employees, id=employees)
             
             nik = employee.nik if employee.nik != '' else '-'
             nik_email = nik + '<br>' + employee.auth_user_id.email
@@ -73,6 +73,7 @@ class AddEmployeeDepartmentsView(LoginRequiredMixin, View):
                 </div>
             '''
             employee_data = {
+                'uq':employee.hash_uuid,
                 'nik_email':nik_email,
                 'name': employee.name,
                 'address': employee.address,
