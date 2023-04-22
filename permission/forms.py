@@ -9,15 +9,16 @@ import re
 
 
 class PermissionForm(forms.Form):
-    user = forms.ModelChoiceField(queryset=User.objects.filter(is_superuser=False),
-                                  widget=forms.Select(
-                                        attrs = {
-                                            'class': 'form-control',
-                                            'id':'user',
-                                        }),
-                                error_messages={
-                                    'required':'User Cannot be Empty',
-                                })
+    user = forms.ModelChoiceField(
+            queryset=User.objects.filter(is_superuser=False),
+            widget=forms.Select(
+                attrs = {
+                    'class': 'form-control',
+                    'id':'user',
+                }),
+            error_messages={
+                'required':'User Cannot be Empty',
+            })
     
     permissions = forms.ModelMultipleChoiceField(
         queryset = Permission.objects.all(),

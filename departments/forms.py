@@ -1,23 +1,64 @@
 from django import forms
 
 from employees.models import Employees
-from .models import Departments
+from .models import DepartmentMembers, Departments
 from django.contrib.auth.models import User, Permission
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import re
 
-class DepartmentsForm(forms.ModelForm):
-    employees = forms.ModelChoiceField(
-        queryset = Employees.objects.all(),
-        widget=forms.Select(
-            attrs = {
-                'id':'employees',
-            }),
-        error_messages={
-            'required':'User Cannot be Empty',
-        })
+class DepartmentMembersForm(forms.ModelForm):
+    employees = forms.ModelMultipleChoiceField(
+                    queryset = Employees.objects.all(),
+                    widget=forms.Select(
+                        attrs = {
+                            'id':'employees',
+                            'disabled':True,
+                        }),
+                    error_messages={
+                        'required':'User Cannot be Empty',
+                    },
+                    required=False,
+                    to_field_name='hash_uuid')
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['employees'].required = False
+
+    def clean_employees(self):
+        print('Enter Clean Employees')
+        cleaned_data = super().clean()
+        employees = cleaned_data.get('employees')
+        errors = []
+        print(employees)
+
+        if employees is None:
+            employees = ''
+
+        else:
+            # TODO: check if this user already in this departments or not
+
+            print('clean else')
+            # for 
+            # email_found = User.objects.filter(email=email)  
+
+            # if email_found.count() and not self.is_updating:  
+            #     errors.append('Email Already Exist')
+            print(employees)
+
+        if errors:
+            raise forms.ValidationError(errors)
+
+        return employees
+    
+    class Meta:
+        model = DepartmentMembers
+        exclude = ['updated_at', 'updated_by', 'created_by', 'created_at', 
+                   'department_id', 'employee_id', 'status']
+        
+
+class DepartmentsForm(forms.ModelForm):
 
     def clean_name(self):
         print('Enter Clean Department Name')

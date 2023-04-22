@@ -8,19 +8,6 @@
     <form id="add_departments_form" method="POST">
         {% for field in departments_form %}
         <div class="row">
-            {% if field.label|lower == 'employees' %}
-                <div class="col-6">
-                    <div class="mb-3">
-                        <label for="{{field.id_for_label}}" class="form-label"><b>{{field.label}}</b></label>
-                        {{field}}
-                        <span class="form-error text-danger"></span>
-                    </div>
-                    <div class="mb-3">
-                        <input type="button" class="btn btn-success" id="add-employee-departments" role="button" value="Add Employee">
-                    </div>
-
-                </div>
-            {% else %}
             <div class="col-12">
                 <div class="mb-3">
                     <label for="{{field.id_for_label}}" class="form-label"><b>{{field.label}}</b></label>
@@ -28,12 +15,25 @@
                     <span class="form-error text-danger"></span>
                 </div>
             </div>
+        </div>
+        {% endfor %}
 
-            {% endif %}
-
+        {% for field in department_members_form %}
+        <div class="row">
+            <div class="col-6">
+                <div class="mb-3">
+                    <label for="{{field.id_for_label}}" class="form-label"><b>{{field.label}}</b></label>
+                    <span class="form-error text-danger"></span>
+                    {{field}}
+                </div>
+                <div class="mb-3">
+                    <input type="button" class="btn btn-success" id="add-employee-departments" role="button" value="Add Employee">
+                </div>
+            </div>
         </div>
 
         {% endfor %}
+
         <div class="mb-3">
             {% include 'departments/includes/departments_employees_table.html' %} 
         </div>

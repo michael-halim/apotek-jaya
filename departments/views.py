@@ -12,8 +12,11 @@ from django.core.exceptions import PermissionDenied
 
 from employees.models import Employees
 
-from .forms import DepartmentsForm
+from .forms import DepartmentMembersForm, DepartmentsForm
 from .models import Departments
+
+
+import uuid
 
 class ListDepartmentsView(LoginRequiredMixin, View):
     login_url = '/login/'
@@ -59,9 +62,9 @@ class AddEmployeeDepartmentsView(LoginRequiredMixin, View):
         
         employees = request.POST['employees']
 
-        if employees.isnumeric():
+        if uuid.UUID(employees, version=4):
             print('WORKS')
-            employee = get_object_or_404(Employees, id=employees)
+            employee = get_object_or_404(Employees, hash_uuid=employees)
             
             nik = employee.nik if employee.nik != '' else '-'
             nik_email = nik + '<br>' + employee.auth_user_id.email
@@ -103,12 +106,14 @@ class CreateDepartmentsView(LoginRequiredMixin, View):
 
     def get(self, request):
         departments_form = DepartmentsForm()
+        department_members_form = DepartmentMembersForm()
 
         context = {
             'success':True,
             'mode':'create',
             'modal_title':'create departments',
             'departments_form':departments_form,
+            'department_members_form':department_members_form,
             'uq':{
                 'create_link':str(reverse_lazy('departments:create-departments')),
             }
@@ -124,7 +129,20 @@ class CreateDepartmentsView(LoginRequiredMixin, View):
 
     def post(self, request):
         print(request.POST)
-        departments_form = DepartmentsForm(request.POST or None)
+        employees = request.POST['employees[]']
+
+        form_request = request.POST.copy()
+
+        print('employees')
+        print(employees)
+        print(type(employees))
+        print(len(employees))
+        if employees != '':
+            form_request['employees'] = employees.split(',')
+        
+        del form_request['employees[]']
+
+        departments_form = DepartmentsForm(form_request or None)
 
         if departments_form.is_valid():
             print('Departments Form is Valid')
@@ -141,6 +159,8 @@ class CreateDepartmentsView(LoginRequiredMixin, View):
                 departments_data['deleted_at'] = None
                 departments_data['deleted_by'] = None
                 
+                print('departments')
+                print(departments_data)
                 # Saving Employees to Database
                 Departments(**departments_data).save()
 
@@ -166,7 +186,6 @@ class CreateDepartmentsView(LoginRequiredMixin, View):
 
         else:
             messages.error(request,'Please Correct The Errors Below')
-            print(messages)
             
             modal_messages = []
             for message in messages.get_messages(request):
@@ -180,6 +199,7 @@ class CreateDepartmentsView(LoginRequiredMixin, View):
             for field, error_list in departments_form.errors.items():
                 errors[field] = error_list
             
+            print(errors)
             response = {
                 'success': False, 
                 'errors': errors, 

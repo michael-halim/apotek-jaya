@@ -16,7 +16,6 @@ $(function () {
             });
           });
       },
-      index: true,
       columnDefs: options.columnDefs,
       responsive: true,
     });
@@ -118,7 +117,7 @@ function initEmployeesFooter(){
         },
         success: function (result) {
           if (result.success === true) {
-            initDataTable();
+            initDepartmentsDataTable();
           } else if (result.success === false) {
             toastr['error'](result.toast_message);
           }
@@ -138,25 +137,25 @@ function initEmployeesFooter(){
         method: 'GET',
         success: function (result) {
           if (result.success === true) {
-            $('#form-departments-modal .modal-content').html(result.form);
-            dselect(document.querySelector('select#employees'), {
-              search: true,
-            });
+              $('#form-departments-modal .modal-content').html(result.form);
+              dselect(document.querySelector('select#employees'), {
+                search: true,
+              });
 
-            employee_datatable = initEmployeessDataTable();
+              employee_datatable = initEmployeessDataTable();
 
-            $('#emp').css({
-              'width':'100%',
-            });
-            $('th#uq').css({
-              'display':'none',
-            })
-            initEmployeesFooter();
-            
-            $('#form-departments-modal').modal('show');
+              $('#emp').css({
+                'width':'100%',
+              });
+              $('th#uq').css({
+                'display':'none',
+              })
+              initEmployeesFooter();
+              
+              $('#form-departments-modal').modal('show');
             
           } else if (result.success === false) {
-            toastr['error'](result.toast_message);
+              toastr['error'](result.toast_message);
           }
         },
         error: function (result) {},
@@ -169,8 +168,15 @@ function initEmployeesFooter(){
     let form_data = new FormData(form);
     
     employees = employee_datatable.rows().data().toArray();
-    console.log(employees);
+    let employees_data = [];
+    for (const emp of employees) {
+        employees_data.push(emp[0]);
+    }
+
     form_data.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val());
+    form_data.delete('employees');
+    form_data.delete('departments-employees-table_length');
+    form_data.append('employees[]',employees_data);
 
     let department_uuid = $(this).data('uq');
     let url = $(this).data('link');
@@ -190,30 +196,30 @@ function initEmployeesFooter(){
           $('.modal-messages').css({ display: 'none' }).html('');
           toastr['success'](result.toast_message);
 
-          initDataTable();
+          initDepartmentsDataTable();
         } else if (result.success === false) {
-          for (const keys in result.errors) {
-            $('#' + keys).addClass('is-invalid');
+              for (const keys in result.errors) {
+                $('#' + keys).addClass('is-invalid');
 
-            let error_list = '';
-            for (const err of result.errors[keys]) {
-              error_list += err + '<br>';
-            }
-            $('#' + keys)
-              .next('.form-error')
-              .html(error_list);
-          }
+                let error_list = '';
+                for (const err of result.errors[keys]) {
+                  error_list += err + '<br>';
+                }
+                $('#' + keys)
+                  .next('.form-error')
+                  .html(error_list);
+              }
 
-          let messages_element = '';
-          for (const message of result.modal_messages) {
-            messages_element += `<li class= "${message.tags}">${message.message}</li>`;
-          }
+              let messages_element = '';
+              for (const message of result.modal_messages) {
+                messages_element += `<li class= "${message.tags}">${message.message}</li>`;
+              }
 
-          $('.modal-messages').css({ display: 'block' }).html(messages_element);
+              $('.modal-messages').css({ display: 'block' }).html(messages_element);
 
-          toastr['error'](result.toast_message);
+              toastr['error'](result.toast_message);
         }
-
+        
         $('#form-departments-modal').modal(
           result.is_close_modal === true ? 'hide' : 'show'
         );
