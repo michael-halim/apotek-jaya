@@ -13,7 +13,7 @@ from django.core.exceptions import PermissionDenied
 from employees.models import Employees
 
 from .forms import DepartmentMembersForm, DepartmentsForm
-from .models import Departments
+from .models import DepartmentMembers, Departments
 
 
 import uuid
@@ -132,37 +132,59 @@ class CreateDepartmentsView(LoginRequiredMixin, View):
         employees = request.POST['employees[]']
 
         form_request = request.POST.copy()
-
-        print('employees')
-        print(employees)
-        print(type(employees))
-        print(len(employees))
-        if employees != '':
-            form_request['employees'] = employees.split(',')
-        
         del form_request['employees[]']
 
-        departments_form = DepartmentsForm(form_request or None)
+        if employees != '':
+            form_request['employee_id'] = employees.split(',')
 
-        if departments_form.is_valid():
+            employees = []
+            for emp in form_request['employee_id']:
+                employees.append(get_object_or_404(Employees, hash_uuid = emp))
+
+        departments_form = DepartmentsForm(form_request or None)
+        department_members_form = DepartmentMembersForm(form_request or None)
+
+        if departments_form.is_valid() and department_members_form.is_valid():
             print('Departments Form is Valid')
             
             try:
                 # Saving User to Database
                 departments_data = departments_form.cleaned_data
+                department_members_data = department_members_form.cleaned_data
 
-                # Add Additional Field to Database
+                # Add Additional Departments Field to Database
                 departments_data['created_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
                 departments_data['created_by'] = request.user
                 departments_data['updated_at'] = None
                 departments_data['updated_by'] = None
                 departments_data['deleted_at'] = None
                 departments_data['deleted_by'] = None
-                
+
                 print('departments')
                 print(departments_data)
-                # Saving Employees to Database
-                Departments(**departments_data).save()
+
+                created_department = Departments(**departments_data)
+                created_department.save()
+
+                print('created_department')
+                print(created_department)
+                print(type(created_department))
+                print(created_department.id)
+                
+                print('department members')
+                print(department_members_data)
+
+                # Add Additional Department Members Field to Database
+                department_members_data['department_id'] = created_department
+                department_members_data['created_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
+                department_members_data['created_by'] = request.user
+                department_members_data['updated_at'] = None
+                department_members_data['updated_by'] = None
+
+                # Saving Departments and Employees to Database
+                for emp in employees:
+                    department_members_data['employee_id'] = emp
+                    DepartmentMembers(**department_members_data).save()
 
             except Exception as e:
                 print(e)
@@ -185,6 +207,7 @@ class CreateDepartmentsView(LoginRequiredMixin, View):
             return JsonResponse(response)
 
         else:
+            print('ERRORS')
             messages.error(request,'Please Correct The Errors Below')
             
             modal_messages = []

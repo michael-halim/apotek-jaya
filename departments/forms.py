@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 import re
 
 class DepartmentMembersForm(forms.ModelForm):
-    employees = forms.ModelMultipleChoiceField(
+    employee_id = forms.ModelMultipleChoiceField(
                     queryset = Employees.objects.all(),
                     widget=forms.Select(
                         attrs = {
@@ -19,44 +19,19 @@ class DepartmentMembersForm(forms.ModelForm):
                         'required':'User Cannot be Empty',
                     },
                     required=False,
+                    label='Employees',
                     to_field_name='hash_uuid')
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields['employees'].required = False
-
-    def clean_employees(self):
-        print('Enter Clean Employees')
-        cleaned_data = super().clean()
-        employees = cleaned_data.get('employees')
-        errors = []
-        print(employees)
-
-        if employees is None:
-            employees = ''
-
-        else:
-            # TODO: check if this user already in this departments or not
-
-            print('clean else')
-            # for 
-            # email_found = User.objects.filter(email=email)  
-
-            # if email_found.count() and not self.is_updating:  
-            #     errors.append('Email Already Exist')
-            print(employees)
-
-        if errors:
-            raise forms.ValidationError(errors)
-
-        return employees
+    def clean_employee_id(self):
+        return None
     
     class Meta:
         model = DepartmentMembers
         exclude = ['updated_at', 'updated_by', 'created_by', 'created_at', 
-                   'department_id', 'employee_id', 'status']
-        
+                   'department_id', 'status']
 
 class DepartmentsForm(forms.ModelForm):
 
