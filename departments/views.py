@@ -121,7 +121,8 @@ class CreateDepartmentsView(LoginRequiredMixin, View):
         form = render_to_string('departments/includes/form.html', context, request=request)
         response = {
             'success':True,
-            'form': form
+            'form': form,
+            'is_view_only': False,
             
         }
         return JsonResponse(response)
@@ -226,12 +227,14 @@ class UpdateDepartmentsView(LoginRequiredMixin, View):
 
     def get(self, request, department_uuid):
         department = get_object_or_404(Departments, hash_uuid=department_uuid)
-
+        department_members_form = DepartmentMembersForm()
+        
         departments_form = DepartmentsForm(instance=department)
 
         context = {
             'mode':'update',
             'departments_form':departments_form,
+            'department_members_form':department_members_form,
             'modal_title':'update departments',
             'uq':{
                 'hash': department_uuid,
@@ -240,9 +243,39 @@ class UpdateDepartmentsView(LoginRequiredMixin, View):
         }
         
         form = render_to_string('departments/includes/form.html', context, request=request)
+
+        department_members = DepartmentMembers.objects.filter(department_id = department.id, status=1)
+        print('department_members')
+        print(department_members)
+        trash_icon = '''
+                <div class="d-flex justify-content-center">
+                    <span class="delete-departments-employees btn text-danger w-100">
+                        <i class="bi bi-trash"></i>
+                    </span>
+                </div>
+        '''
+
+        employee_data = []
+        for member in department_members:
+            nik = member.employee_id.nik if member.employee_id.nik != '' else '-'
+            nik_email = nik + '<br>' + member.employee_id.auth_user_id.email
+
+            employee_data.append({
+                'uq':member.employee_id.hash_uuid,
+                'nik_email':nik_email,
+                'name': member.employee_id.name,
+                'address': member.employee_id.address,
+                'education': member.employee_id.education,
+                'join_date': member.employee_id.created_at.date(),
+                'expired_at': member.employee_id.expired_at,
+                'action':trash_icon,
+            })
+
         response = {
             'success':True,
-            'form': form
+            'form': form,
+            'employee_data':employee_data,
+            'is_view_only': False,
         }
 
         return JsonResponse(response)
@@ -251,9 +284,37 @@ class UpdateDepartmentsView(LoginRequiredMixin, View):
         print(request.POST)
         department = get_object_or_404(Departments, hash_uuid=department_uuid)
 
-        departments_form = DepartmentsForm(request.POST or None, instance=department)
+        employees = request.POST['employees[]']
 
-        if departments_form.is_valid():
+        form_request = request.POST.copy()
+        del form_request['employees[]']
+
+        added_employees, removed_employees = [], []
+        
+        if employees != '':
+            # Get Employees Hash
+            form_request['employee_id'] = employees.split(',')
+
+            # Get Both Current and Old Employees Hash
+            removed_employees = []
+            added_employees = [ x for x in form_request['employee_id'] ]
+            
+            department_members = DepartmentMembers.objects.filter(department_id = department.id)
+            old_employees = [ str(x.employee_id.hash_uuid) for x in department_members]
+            
+            # Old Employees Remove Employee from Current Employees
+            # If the 'try' works, it means both have the same employees
+            # If throws error, it means the old employees is removed
+            # The rest is new employee
+            for old_emp in old_employees:
+                try: added_employees.remove(old_emp)
+                except: removed_employees.append(old_emp)
+
+
+        departments_form = DepartmentsForm(form_request or None, instance=department)
+        department_members_form = DepartmentMembersForm(form_request or None)
+
+        if departments_form.is_valid() and department_members_form.is_valid():
             print('Form is Valid')
             
             try:
@@ -265,6 +326,39 @@ class UpdateDepartmentsView(LoginRequiredMixin, View):
 
                 # Saving Departments to Database
                 departments_form.save()
+
+                department_members_data = department_members_form.cleaned_data
+
+                print('Added Employees')
+                print(added_employees)
+                print('Removed Employees')
+                print(removed_employees)
+
+                if added_employees:
+                    print('enter added employees')
+                    # Add Additional Department Members Field to Database
+                    department_members_data['department_id'] = department
+                    department_members_data['created_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
+                    department_members_data['created_by'] = request.user
+                    department_members_data['updated_at'] = None
+                    department_members_data['updated_by'] = None
+
+                    # Saving Departments and Employees to Database
+                    for emp in added_employees:
+                        employee = get_object_or_404(Employees, hash_uuid=emp)
+                        department_members_data['employee_id'] = employee
+                        DepartmentMembers(**department_members_data).save()
+
+                if removed_employees:
+                    print('enter removed employees')
+                    for emp in removed_employees:
+                        employee = get_object_or_404(Employees, hash_uuid=emp)
+                        department_members = get_object_or_404(DepartmentMembers, department_id = department, employee_id=employee)
+
+                        department_members.status = 0
+                        department_members.updated_at = datetime.now(ZoneInfo('Asia/Bangkok'))
+                        department_members.updated_by = request.user
+                        department_members.save()
 
             except Exception as e:
                 print(e)
@@ -334,7 +428,7 @@ class DetailDepartmentsView(LoginRequiredMixin, View):
         
         form = render_to_string('departments/includes/form.html', context, request=request)
 
-        department_members = DepartmentMembers.objects.filter(department_id = department.id)
+        department_members = DepartmentMembers.objects.filter(department_id = department.id, status=1)
         print('department_members')
         print(department_members)
 
@@ -358,6 +452,7 @@ class DetailDepartmentsView(LoginRequiredMixin, View):
             'success':True,
             'form': form,
             'employee_data':employee_data,
+            'is_view_only': True,
         }
         return JsonResponse(response)
 
