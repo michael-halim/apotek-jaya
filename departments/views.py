@@ -55,7 +55,6 @@ class ListDepartmentsView(LoginRequiredMixin, View):
 class AddEmployeeDepartmentsView(LoginRequiredMixin, View):
     def get(self, request):
         pass
-        
     
     def post(self, request):
         print(request.POST)
@@ -148,7 +147,6 @@ class CreateDepartmentsView(LoginRequiredMixin, View):
             print('Departments Form is Valid')
             
             try:
-                # Saving User to Database
                 departments_data = departments_form.cleaned_data
                 department_members_data = department_members_form.cleaned_data
 
@@ -160,19 +158,8 @@ class CreateDepartmentsView(LoginRequiredMixin, View):
                 departments_data['deleted_at'] = None
                 departments_data['deleted_by'] = None
 
-                print('departments')
-                print(departments_data)
-
                 created_department = Departments(**departments_data)
                 created_department.save()
-
-                print('created_department')
-                print(created_department)
-                print(type(created_department))
-                print(created_department.id)
-                
-                print('department members')
-                print(department_members_data)
 
                 # Add Additional Department Members Field to Database
                 department_members_data['department_id'] = created_department
@@ -207,7 +194,6 @@ class CreateDepartmentsView(LoginRequiredMixin, View):
             return JsonResponse(response)
 
         else:
-            print('ERRORS')
             messages.error(request,'Please Correct The Errors Below')
             
             modal_messages = []
@@ -221,8 +207,10 @@ class CreateDepartmentsView(LoginRequiredMixin, View):
 
             for field, error_list in departments_form.errors.items():
                 errors[field] = error_list
-            
+
+            print('ERRORS')
             print(errors)
+
             response = {
                 'success': False, 
                 'errors': errors, 
@@ -329,7 +317,9 @@ class DetailDepartmentsView(LoginRequiredMixin, View):
 
     def get(self, request, department_uuid):
         department = get_object_or_404(Departments, hash_uuid=department_uuid)
-
+        print('department id')
+        print(department.id)
+        
         departments_form = DepartmentsForm(instance=department)
 
         for key in departments_form.fields:
@@ -343,9 +333,31 @@ class DetailDepartmentsView(LoginRequiredMixin, View):
         }
         
         form = render_to_string('departments/includes/form.html', context, request=request)
+
+        department_members = DepartmentMembers.objects.filter(department_id = department.id)
+        print('department_members')
+        print(department_members)
+
+        employee_data = []
+        for member in department_members:
+            nik = member.employee_id.nik if member.employee_id.nik != '' else '-'
+            nik_email = nik + '<br>' + member.employee_id.auth_user_id.email
+
+            employee_data.append({
+                'uq':member.employee_id.hash_uuid,
+                'nik_email':nik_email,
+                'name': member.employee_id.name,
+                'address': member.employee_id.address,
+                'education': member.employee_id.education,
+                'join_date': member.employee_id.created_at.date(),
+                'expired_at': member.employee_id.expired_at,
+                'action':'',
+            })
+
         response = {
             'success':True,
-            'form': form
+            'form': form,
+            'employee_data':employee_data,
         }
         return JsonResponse(response)
 

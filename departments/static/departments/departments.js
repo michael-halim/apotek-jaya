@@ -136,27 +136,59 @@ function initEmployeesFooter(){
         url: url,
         method: 'GET',
         success: function (result) {
-          if (result.success === true) {
-              $('#form-departments-modal .modal-content').html(result.form);
-              dselect(document.querySelector('select#employees'), {
-                search: true,
-              });
+            if (result.success === true) {
+                $('#form-departments-modal .modal-content').html(result.form);
 
-              employee_datatable = initEmployeessDataTable();
+                if (!result.employee_data){
+                    dselect(document.querySelector('select#employees'), {
+                        search: true,
+                    });
+                }
+                
+                options_datatables = {
+                    columnDefs: [
+                        {
+                            targets: 0,
+                            visible:false,
+                            searchable:false,
+                        },
+                        {
+                            targets: 7,
+                            width: '30px',
+                        },
+                    ],
+                };
+                employee_datatable = initEmployeessDataTable(options_datatables);
 
-              $('#emp').css({
-                'width':'100%',
-              });
-              $('th#uq').css({
-                'display':'none',
-              })
-              initEmployeesFooter();
-              
-              $('#form-departments-modal').modal('show');
+                for(const emp in result.employee_data){
+                    employee_datatable.row.add([
+                        result.employee_data[emp]['uq'],
+                        result.employee_data[emp]['nik_email'],
+                        result.employee_data[emp]['name'],
+                        result.employee_data[emp]['address'],
+                        result.employee_data[emp]['education'],
+                        result.employee_data[emp]['join_date'],
+                        result.employee_data[emp]['expired_at'],
+                        result.employee_data[emp]['action'],
+                    ]);
+                }
+                employee_datatable.draw(true);
+
+                $('#departments-employees-table').css({'width':'100%',});
+                $('th#uq').css({'display':'none',})
+
+                if (result.employee_data){
+                    $('#departments-employees-table > tbody > tr').css(
+                        {'background-color':'#e9ecef',});
+                }
+                
+                initEmployeesFooter();
+                
+                $('#form-departments-modal').modal('show');
             
-          } else if (result.success === false) {
-              toastr['error'](result.toast_message);
-          }
+            } else if (result.success === false) {
+                toastr['error'](result.toast_message);
+            }
         },
         error: function (result) {},
       });
