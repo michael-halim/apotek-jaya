@@ -1,26 +1,38 @@
-from datetime import datetime
-from zoneinfo import ZoneInfo
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.views.generic import ListView,View, TemplateView
+from django.views.generic import View
 from django.contrib import messages
-from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.template.loader import render_to_string
-from django.core.exceptions import PermissionDenied
 
 from employees.models import Employees
-
 from .forms import DepartmentMembersForm, DepartmentsForm
 from .models import DepartmentMembers, Departments
 
-
+from datetime import datetime
+from zoneinfo import ZoneInfo
 import uuid
 
-class ListDepartmentsView(LoginRequiredMixin, View):
+class ListDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['departments.read_departments']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         context = {
             'view_link':str(reverse_lazy('departments:detail-departments', args=["@@"])),
@@ -37,7 +49,7 @@ class ListDepartmentsView(LoginRequiredMixin, View):
             
             departments_data.append({
                 'name':dept.name,
-                'created_at': dept.created_at.date(),
+                'created_at': dept.created_at.date().strftime("%d %B %Y"),
                 'status':dept.status,
                 'uq': form_action, 
             })
@@ -50,11 +62,35 @@ class ListDepartmentsView(LoginRequiredMixin, View):
         return JsonResponse(response)
 
     def post(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('departments:departments'))
 
-class AddEmployeeDepartmentsView(LoginRequiredMixin, View):
+        return redirect(reverse_lazy('main_app:login'))
+
+class AddEmployeeDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    login_url = '/login/'
+    permission_required = ['departments.read_departments', 'departments.create_departments']
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('departments:departments'))
+        
+        return redirect(reverse_lazy('main_app:login'))
     
     def post(self, request):
         print(request.POST)
@@ -80,8 +116,8 @@ class AddEmployeeDepartmentsView(LoginRequiredMixin, View):
                 'name': employee.name,
                 'address': employee.address,
                 'education': employee.education,
-                'join_date': employee.created_at.date(),
-                'expired_at': employee.expired_at,
+                'join_date': employee.created_at.date().strftime("%d %B %Y"),
+                'expired_at': employee.expired_at.strftime("%d %B %Y"),
                 'action':trash_icon,
 
             }
@@ -98,11 +134,26 @@ class AddEmployeeDepartmentsView(LoginRequiredMixin, View):
                 'toast_message':'Please review the form and correct any errors before resubmitting',
             }
             return JsonResponse(response)
-            
 
-class CreateDepartmentsView(LoginRequiredMixin, View):
+class CreateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['departments.read_departments', 'departments.create_departments']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+    
+        return redirect(reverse_lazy('main_app:login'))
+        
     def get(self, request):
         departments_form = DepartmentsForm()
         department_members_form = DepartmentMembersForm()
@@ -222,9 +273,25 @@ class CreateDepartmentsView(LoginRequiredMixin, View):
 
             return JsonResponse(response)
 
-class UpdateDepartmentsView(LoginRequiredMixin, View):
+class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['departments.read_departments', 'departments.update_departments']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request, department_uuid):
         department = get_object_or_404(Departments, hash_uuid=department_uuid)
         department_members_form = DepartmentMembersForm()
@@ -266,8 +333,8 @@ class UpdateDepartmentsView(LoginRequiredMixin, View):
                 'name': member.employee_id.name,
                 'address': member.employee_id.address,
                 'education': member.employee_id.education,
-                'join_date': member.employee_id.created_at.date(),
-                'expired_at': member.employee_id.expired_at,
+                'join_date': member.employee_id.created_at.date().strftime("%d %B %Y"),
+                'expired_at': member.employee_id.expired_at.strftime("%d %B %Y"),
                 'action':trash_icon,
             })
 
@@ -289,26 +356,42 @@ class UpdateDepartmentsView(LoginRequiredMixin, View):
         form_request = request.POST.copy()
         del form_request['employees[]']
 
-        added_employees, removed_employees = [], []
-        
+        added_employees,removed_employees, reactivated_employees = [], [], []
+
         if employees != '':
             # Get Employees Hash
             form_request['employee_id'] = employees.split(',')
 
             # Get Both Current and Old Employees Hash
-            removed_employees = []
             added_employees = [ x for x in form_request['employee_id'] ]
             
-            department_members = DepartmentMembers.objects.filter(department_id = department.id)
+
+            # Old Employees Remove Employee from Current Employees
+            # If the 'try' works, it means employees is reactivated
+            department_members = DepartmentMembers.objects.filter(department_id = department.id, status=0)
             old_employees = [ str(x.employee_id.hash_uuid) for x in department_members]
-            
+            for old_emp in old_employees:
+                try: 
+                    added_employees.remove(old_emp)
+                    reactivated_employees.append(old_emp)
+                except: pass
+
+
             # Old Employees Remove Employee from Current Employees
             # If the 'try' works, it means both have the same employees
             # If throws error, it means the old employees is removed
             # The rest is new employee
+            department_members = DepartmentMembers.objects.filter(department_id = department.id, status=1)
+            old_employees = [ str(x.employee_id.hash_uuid) for x in department_members]
+            
             for old_emp in old_employees:
                 try: added_employees.remove(old_emp)
                 except: removed_employees.append(old_emp)
+        
+        else:
+            # Delete All Members if employees ''
+            department_members = DepartmentMembers.objects.filter(department_id = department.id, status=1)
+            removed_employees = [ str(x.employee_id.hash_uuid) for x in department_members]
 
 
         departments_form = DepartmentsForm(form_request or None, instance=department)
@@ -329,11 +412,6 @@ class UpdateDepartmentsView(LoginRequiredMixin, View):
 
                 department_members_data = department_members_form.cleaned_data
 
-                print('Added Employees')
-                print(added_employees)
-                print('Removed Employees')
-                print(removed_employees)
-
                 if added_employees:
                     print('enter added employees')
                     # Add Additional Department Members Field to Database
@@ -350,12 +428,21 @@ class UpdateDepartmentsView(LoginRequiredMixin, View):
                         DepartmentMembers(**department_members_data).save()
 
                 if removed_employees:
-                    print('enter removed employees')
                     for emp in removed_employees:
                         employee = get_object_or_404(Employees, hash_uuid=emp)
-                        department_members = get_object_or_404(DepartmentMembers, department_id = department, employee_id=employee)
+                        department_members = get_object_or_404(DepartmentMembers, department_id = department, employee_id=employee, status=1)
 
                         department_members.status = 0
+                        department_members.updated_at = datetime.now(ZoneInfo('Asia/Bangkok'))
+                        department_members.updated_by = request.user
+                        department_members.save()
+
+                if reactivated_employees:
+                    for emp in reactivated_employees:
+                        employee = get_object_or_404(Employees, hash_uuid=emp)
+                        department_members = get_object_or_404(DepartmentMembers, department_id = department, employee_id=employee, status=0)
+
+                        department_members.status = 1
                         department_members.updated_at = datetime.now(ZoneInfo('Asia/Bangkok'))
                         department_members.updated_by = request.user
                         department_members.save()
@@ -406,9 +493,25 @@ class UpdateDepartmentsView(LoginRequiredMixin, View):
 
             return JsonResponse(response)
 
-class DetailDepartmentsView(LoginRequiredMixin, View):
+class DetailDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['departments.read_departments']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request, department_uuid):
         department = get_object_or_404(Departments, hash_uuid=department_uuid)
         print('department id')
@@ -443,8 +546,8 @@ class DetailDepartmentsView(LoginRequiredMixin, View):
                 'name': member.employee_id.name,
                 'address': member.employee_id.address,
                 'education': member.employee_id.education,
-                'join_date': member.employee_id.created_at.date(),
-                'expired_at': member.employee_id.expired_at,
+                'join_date': member.employee_id.created_at.date().strftime("%d %B %Y"),
+                'expired_at': member.employee_id.expired_at.strftime("%d %B %Y"),
                 'action':'',
             })
 
@@ -457,16 +560,37 @@ class DetailDepartmentsView(LoginRequiredMixin, View):
         return JsonResponse(response)
 
     def post(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('departments:departments'))
 
-class DeleteDepartmentsView(LoginRequiredMixin, View):
+        return redirect(reverse_lazy('main_app:login'))
+    
+class DeleteDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['departments.read_departments', 'departments.delete_departments']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('departments:departments'))
+
+        return redirect(reverse_lazy('main_app:login'))
 
     def post(self, request, department_uuid):
-        
         department = get_object_or_404(Departments, hash_uuid=department_uuid)
         department.status = 0
         department.save()
@@ -479,9 +603,25 @@ class DeleteDepartmentsView(LoginRequiredMixin, View):
 
         return JsonResponse(response)
 
-class DepartmentsView(LoginRequiredMixin, View):
+class DepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
-    
+    permission_required = ['departments.read_departments']
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+
     def get(self, request):
         context = {
             'title':'Departments',
@@ -490,4 +630,7 @@ class DepartmentsView(LoginRequiredMixin, View):
         return render(request, 'departments/departments.html', context)
 
     def post(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('departments:departments'))
+
+        return redirect(reverse_lazy('main_app:login'))

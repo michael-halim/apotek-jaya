@@ -6,8 +6,8 @@
 </div>
 <div class="modal-body">
     <ul class="modal-messages"></ul>
-    <form id="add_permission_form" method="POST">
-        {% for field in permission_form %}
+    <form id="permission_group_form" method="POST">
+        {% for field in permission_group_form %}
             {% if field.label|lower == 'permissions' %}
                 {% for choices in field.choices %}
                     {{ choices }}
@@ -62,9 +62,9 @@
 
         <div class="mb-3 d-flex justify-content-end">
             {% if mode == 'create' %}
-                <input type="button" value="Create Permission" data-link="{{uq.create_link}}" class="btn btn-success" id="submit-form-permission">
+                <input type="button" value="Create Permission Group" data-link="{{uq.create_link}}" class="btn btn-success" id="submit-form-permission-group">
             {% elif mode == 'update' %}
-                <input type="button" value="Update Permission" data-uq="{{uq.hash}}" data-link="{{uq.update_link}}" class="btn btn-success" id="submit-form-permission">
+                <input type="button" value="Update Permission Group" data-uq="{{uq.hash}}" data-link="{{uq.update_link}}" class="btn btn-success" id="submit-form-permission-group">
             {% endif %}
         </div>
     </form>

@@ -1,12 +1,11 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.views.generic import ListView,View, TemplateView
+from django.views.generic import View
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.template.loader import render_to_string
-from django.core.exceptions import PermissionDenied
 
 from main_app.forms import CreateUserForm
 from .forms import EmployeesForm
@@ -53,7 +52,7 @@ class ListEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'name':employee.name,
                 'address':employee.address,
                 'status':employee.status,
-                'created_at': employee.created_at.date(),
+                'created_at': employee.created_at.date().strftime("%d %B %Y"),
                 'uq': form_action, 
             })
 
@@ -65,11 +64,14 @@ class ListEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return JsonResponse(response)
     
     def post(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('employees:employees'))
+
+        return redirect(reverse_lazy('main_app:login'))
 
 class CreateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin ,View):
     login_url = '/login/'
-    permission_required = ['employees.create_employees']
+    permission_required = ['employees.read_employees', 'employees.create_employees']
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
@@ -184,7 +186,7 @@ class CreateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin ,View):
         
 class UpdateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
-    permission_required = ['employees.update_employees']
+    permission_required = ['employees.read_employees', 'employees.update_employees']
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
@@ -354,10 +356,13 @@ class DetailEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return JsonResponse(response)
 
     def post(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('employees:employees'))
+
+        return redirect(reverse_lazy('main_app:login'))
 
 class DeleteEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
-    permission_required = ['employees.delete_employees']
+    permission_required = ['employees.read_employees','employees.delete_employees']
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
@@ -394,7 +399,7 @@ class EmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
-            return redirect(reverse_lazy('main_app:home'))
+            return redirect(reverse_lazy('employees:employees'))
         
         return redirect(reverse_lazy('main_app:login'))
         
@@ -406,4 +411,7 @@ class EmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return render(request, 'employees/employees.html', context)
 
     def post(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('employees:employees'))
+
+        return redirect(reverse_lazy('main_app:login'))

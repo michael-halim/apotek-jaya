@@ -1,19 +1,13 @@
 <div class="d-flex justify-content-center">
-    {% if perms.employees.read_employees %}
-        <span data-uq="haha" data-link={{view_link}} class="view-employees btn text-primary w-100">
+        <span data-uq="{{hash}}" data-link={{view_link}} class="view-permission btn text-primary w-100">
             <i class="bi bi-eye"></i>
         </span>
-    {% endif %}
     
-    {% if perms.employees.update_employees %}
-        <span data-uq="haha" data-link={{update_link}} class="update-employees btn text-warning w-100">
+        <span data-uq="{{hash}}" data-link={{update_link}} class="update-permission btn text-warning w-100">
             <i class="bi bi-pencil"></i>
         </span>
-    {% endif %}
     
-    {% if perms.employees.delete_employees %}
-        <span data-uq="haha" data-link={{delete_link}} class="delete-employees btn text-danger w-100">
+        <span data-uq="{{hash}}" data-link={{delete_link}} class="delete-permission btn text-danger w-100">
             <i class="bi bi-trash"></i>
         </span>
-    {% endif %}
 </div>

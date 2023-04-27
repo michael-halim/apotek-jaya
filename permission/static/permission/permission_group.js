@@ -1,57 +1,41 @@
 $(function () {
-    function initPermissionDataTable(){
-        $('#permission-table').DataTable().destroy();
-        let permission_datatable = $('#permission-table').DataTable({
-          initComplete: function () {
-            // Apply the search
-            this.api()
-              .columns()
-              .every(function () {
-                var that = this;
+    function initPermissionGroupDataTable(){
+        $('#permission-group-table').DataTable().destroy();
+        let permission_datatable = $('#permission-group-table').DataTable({
+            initComplete: function () {
+                // Apply the search
+                this.api()
+                .columns()
+                .every(function () {
+                    var that = this;
 
-                $('input', this.footer()).on('keyup change clear', function () {
-                  if (that.search() !== this.value) {
-                    that.search(this.value).draw();
-                  }
+                    $('input', this.footer()).on('keyup change clear', function () {
+                    if (that.search() !== this.value) {
+                        that.search(this.value).draw();
+                    }
+                    });
                 });
-              });
-          },
-
-          ajax: {
-            url: 'list-permission/',
-            dataSrc: 'permission_data',
-          },
-          responsive: true,
-          columnDefs: [{ targets: 0, visible:false, searchable:false }],
-          columns: [
-            {
-              data: 'uq',
-              defaultContent: '-',
             },
-            {
-              data: 'nik_email',
-              defaultContent: '-',
+            ajax: {
+                url: 'list-permission-group/',
+                dataSrc: 'permission_group_data',
             },
-            {
-              data: 'name',
-              defaultContent: '-',
-            },
-            {
-              data: 'department',
-              defaultContent: '-',
-            },
-            {
-              data: 'group_name',
-              defaultContent: '-',
-            },
-            {
-              data: 'action',
-              defaultContent: '-',
-            },
-          ],
-          dom: 'lBfrtip',
-          buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+            responsive: true,
+            columnDefs: [{ targets: -1, width:'90px' }],
+            columns: [
+                {
+                    data: 'name',
+                    defaultContent: '-',
+                },
+                {
+                    data: 'action',
+                    defaultContent: '-',
+                },
+            ],
+            dom: 'lBfrtip',
+            buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
         });
+
         return permission_datatable;
     }
     
@@ -73,55 +57,49 @@ $(function () {
         hideMethod: 'fadeOut',
     };
 
-    permission_datatable = initPermissionDataTable();
-    $('body').on('click', '.delete-permission', function () {
-        if (confirm('Do You Want to Delete this Permission ?')) {
-            let employee_uuid = $(this).data('uq');
-            let url = $(this).data('link');
-            url = url.replace('@@', employee_uuid);
+    permission_group_datatable = initPermissionGroupDataTable();
+    
+    // $('body').on('click', '.delete-permission', function () {
+    //     if (confirm('Do You Want to Delete this Permission ?')) {
+    //         let employee_uuid = $(this).data('uq');
+    //         let url = $(this).data('link');
+    //         url = url.replace('@@', employee_uuid);
 
-            $.ajax({
-            url: url,
-            method: 'POST',
-            data: {
-                csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
-            },
-            success: function (result) {
-                if (result.success === true) {
-                    initPermissionDataTable();
+    //         $.ajax({
+    //         url: url,
+    //         method: 'POST',
+    //         data: {
+    //             csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+    //         },
+    //         success: function (result) {
+    //             if (result.success === true) {
+    //                 initPermissionDataTable();
 
-                } else if (result.success === false) {
-                    toastr['error'](result.toast_message);
+    //             } else if (result.success === false) {
+    //                 toastr['error'](result.toast_message);
 
-                }
-            },
-            error: function (result) {},
-            });
-        }
-    });
-    $('body').on('click','.update-permission, .view-permission, #add-permission',function () {
+    //             }
+    //         },
+    //         error: function (result) {},
+    //         });
+    //     }
+    // });
+
+    $('body').on('click','.update-permission-group, .view-permission-group, #add-permission-group',function () {
         let url = $(this).data('link');
-        let employee_uuid = $(this).data('uq');
-        url = url.replace('@@', employee_uuid);
+        let group_id = $(this).data('uq');
+        url = url.replace('@@', group_id);
 
         $.ajax({
           url: url,
           method: 'GET',
           success: function (result) {
             if (result.success === true) {
-                $('#form-permission-modal .modal-content').html(result.form);
-                
-                dselect(document.querySelector('select#employees'), {
-                  search: true,
-                });
-
-                if (result.is_view_only) {
-                    $('button[data-dselect-text]').prop('disabled',true);
-                }
+                $('#form-permission-group-modal .modal-content').html(result.form);
                 
                 check_checkbox_grouping();
-
-                $('#form-permission-modal').modal('show');
+                
+                $('#form-permission-group-modal').modal('show');
 
             } else if (result.success === false) {
                 toastr['error'](result.toast_message);
@@ -132,15 +110,14 @@ $(function () {
       }
     );
     
-    $('body').on('click', '#submit-form-permission', function () {
-        let form = document.getElementById('add_permission_form');
+    $('body').on('click', '#submit-form-permission-group', function () {
+        let form = document.getElementById('permission_group_form');
         let form_data = new FormData(form);
         form_data.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val());
 
         let url = $(this).data('link');
-        let employee_uuid = $(this).data('uq');
-        url = url.replace('@@', employee_uuid)
-
+        let group_id = $(this).data('uq');
+        url = url.replace('@@', group_id);
         $.ajax({
             url: url,
             method: 'POST',
@@ -155,7 +132,7 @@ $(function () {
                     $('.modal-messages').css({ display: 'none' }).html('');
                     toastr['success'](result.toast_message);
 
-                    permission_datatable = initPermissionDataTable();
+                    permission_datatable = initPermissionGroupDataTable();
                     
                 } else if (result.success === false) {
                     
@@ -184,7 +161,7 @@ $(function () {
                     toastr['error'](result.toast_message);
                 }
 
-                $('#form-permission-modal').modal(
+                $('#form-permission-group-modal').modal(
                     result.is_close_modal === true ? 'hide' : 'show'
                 );
             },
@@ -239,7 +216,7 @@ $(function () {
         
     });
 
-    $('#permission-table tfoot th.search-text').each(function () {
+    $('#permission-group-table tfoot th.search-text').each(function () {
         var title = $(this).text();
         $(this).html('<input class="form-control" type="text" placeholder="Search ' + title + '" />');
     });
