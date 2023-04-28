@@ -1,5 +1,5 @@
 from django import forms
-
+from django.contrib.auth.models import Group
 from employees.models import Employees
 from .models import DepartmentMembers, Departments
 
@@ -9,11 +9,8 @@ class DepartmentMembersForm(forms.ModelForm):
                     widget=forms.Select(
                         attrs = {
                             'id':'employees',
-                            'disabled':True,
-                        }),
-                    error_messages={
-                        'required':'User Cannot be Empty',
-                    },
+                        }
+                    ),
                     required=False,
                     label='Employees',
                     to_field_name='hash_uuid')
@@ -28,7 +25,24 @@ class DepartmentMembersForm(forms.ModelForm):
         model = DepartmentMembers
         exclude = ['updated_at', 'updated_by', 'created_by', 'created_at', 
                    'department_id', 'status']
+        
+class DepartmentMembersPermissionGroupForm(forms.Form):
+    group = forms.ModelChoiceField(
+                    queryset = Group.objects.all(),
+                    widget=forms.Select(
+                        attrs = {
+                            'id':'group',
+                        }),
+                    required=False,
+                    label='Permission Group',
+                )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
+    def clean_group(self):
+        return None
+    
 class DepartmentsForm(forms.ModelForm):
 
     def clean_name(self):

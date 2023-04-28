@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.models import Group, User
 from django.views.generic import View
 from django.contrib import messages
 from django.http import JsonResponse
@@ -7,7 +8,7 @@ from django.urls import reverse_lazy
 from django.template.loader import render_to_string
 
 from employees.models import Employees
-from .forms import DepartmentMembersForm, DepartmentsForm
+from .forms import DepartmentMembersForm, DepartmentMembersPermissionGroupForm, DepartmentsForm
 from .models import DepartmentMembers, Departments
 
 from datetime import datetime
@@ -100,7 +101,11 @@ class AddEmployeeDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, Vi
         if uuid.UUID(employees, version=4):
             print('WORKS')
             employee = get_object_or_404(Employees, hash_uuid=employees)
-            
+
+            permission_group = request.POST['permission_group']
+            if permission_group:
+                permission_group = get_object_or_404(Group, id=permission_group)
+
             nik = employee.nik if employee.nik != '' else '-'
             nik_email = nik + '<br>' + employee.auth_user_id.email
             trash_icon = '''
@@ -112,14 +117,15 @@ class AddEmployeeDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, Vi
             '''
             employee_data = {
                 'uq':employee.hash_uuid,
+                'uq_group': permission_group.id if permission_group != '' else '',
                 'nik_email':nik_email,
                 'name': employee.name,
                 'address': employee.address,
+                'permission_group':permission_group.name if permission_group != '' else '',
                 'education': employee.education,
                 'join_date': employee.created_at.date().strftime("%d %B %Y"),
                 'expired_at': employee.expired_at.strftime("%d %B %Y"),
                 'action':trash_icon,
-
             }
 
             response = {
@@ -157,6 +163,7 @@ class CreateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
     def get(self, request):
         departments_form = DepartmentsForm()
         department_members_form = DepartmentMembersForm()
+        permission_group_form = DepartmentMembersPermissionGroupForm()
 
         context = {
             'success':True,
@@ -164,6 +171,7 @@ class CreateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
             'modal_title':'create departments',
             'departments_form':departments_form,
             'department_members_form':department_members_form,
+            'permission_group_form':permission_group_form,
             'uq':{
                 'create_link':str(reverse_lazy('departments:create-departments')),
             }
@@ -181,9 +189,13 @@ class CreateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
     def post(self, request):
         print(request.POST)
         employees = request.POST['employees[]']
+        permission_group = request.POST['employees_permission_group[]']
 
         form_request = request.POST.copy()
         del form_request['employees[]']
+        del form_request['employee_id']
+        del form_request['group']
+        del form_request['employees_permission_group[]']
 
         if employees != '':
             form_request['employee_id'] = employees.split(',')
@@ -191,6 +203,17 @@ class CreateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
             employees = []
             for emp in form_request['employee_id']:
                 employees.append(get_object_or_404(Employees, hash_uuid = emp))
+
+        if permission_group != '':
+            form_request['group'] = permission_group.split(',')
+
+            print(form_request['group'])
+            permission_group = []
+            for group in form_request['group']:
+                if group != '' and group.isnumeric():
+                    permission_group.append(get_object_or_404(Group, id=group))
+                else:
+                    permission_group.append('')
 
         departments_form = DepartmentsForm(form_request or None)
         department_members_form = DepartmentMembersForm(form_request or None)
@@ -219,11 +242,14 @@ class CreateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 department_members_data['created_by'] = request.user
                 department_members_data['updated_at'] = None
                 department_members_data['updated_by'] = None
-
+                
                 # Saving Departments and Employees to Database
-                for emp in employees:
+                for emp, perm_group in zip(employees, permission_group) :
                     department_members_data['employee_id'] = emp
                     DepartmentMembers(**department_members_data).save()
+                    
+                    if perm_group:
+                        emp.auth_user_id.groups.add(perm_group)
 
             except Exception as e:
                 print(e)
@@ -295,13 +321,15 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
     def get(self, request, department_uuid):
         department = get_object_or_404(Departments, hash_uuid=department_uuid)
         department_members_form = DepartmentMembersForm()
-        
+        permission_group_form = DepartmentMembersPermissionGroupForm()
+
         departments_form = DepartmentsForm(instance=department)
 
         context = {
             'mode':'update',
             'departments_form':departments_form,
             'department_members_form':department_members_form,
+            'permission_group_form':permission_group_form,
             'modal_title':'update departments',
             'uq':{
                 'hash': department_uuid,
@@ -326,13 +354,21 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         for member in department_members:
             nik = member.employee_id.nik if member.employee_id.nik != '' else '-'
             nik_email = nik + '<br>' + member.employee_id.auth_user_id.email
+            
+            permission_object = member.employee_id.auth_user_id.groups.all()
+            permission_group, group_id = [], []
+            for perm in permission_object:
+                permission_group.append(perm.name)
+                group_id.append(perm.id)
 
             employee_data.append({
                 'uq':member.employee_id.hash_uuid,
+                'uq_group': group_id,
                 'nik_email':nik_email,
                 'name': member.employee_id.name,
                 'address': member.employee_id.address,
                 'education': member.employee_id.education,
+                'permission_group': permission_group,
                 'join_date': member.employee_id.created_at.date().strftime("%d %B %Y"),
                 'expired_at': member.employee_id.expired_at.strftime("%d %B %Y"),
                 'action':trash_icon,
@@ -356,8 +392,10 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         form_request = request.POST.copy()
         del form_request['employees[]']
 
-        added_employees,removed_employees, reactivated_employees = [], [], []
+        added_employees, removed_employees, reactivated_employees = [], [], []
 
+        # TODO: NEEDS TO EXTEND THE AUTH_GROUPS_PERMISSIONS, AUTH_USER_GROUPS, AUTH_USER_USER_PERMISSIONS
+        # ADD THIS UPDATE A LOGIC TO STORE GROUPS PERMISSION
         if employees != '':
             # Get Employees Hash
             form_request['employee_id'] = employees.split(',')
@@ -540,12 +578,20 @@ class DetailDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
             nik = member.employee_id.nik if member.employee_id.nik != '' else '-'
             nik_email = nik + '<br>' + member.employee_id.auth_user_id.email
 
+            permission_object = member.employee_id.auth_user_id.groups.all()
+            permission_group, group_id = [], []
+            for perm in permission_object:
+                permission_group.append(perm.name)
+                group_id.append(perm.id)
+
             employee_data.append({
                 'uq':member.employee_id.hash_uuid,
+                'uq_group':group_id,
                 'nik_email':nik_email,
                 'name': member.employee_id.name,
                 'address': member.employee_id.address,
                 'education': member.employee_id.education,
+                'permission_group': permission_group,
                 'join_date': member.employee_id.created_at.date().strftime("%d %B %Y"),
                 'expired_at': member.employee_id.expired_at.strftime("%d %B %Y"),
                 'action':'',

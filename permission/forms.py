@@ -5,6 +5,9 @@ from django.contrib.auth.models import User, Permission, Group
 from employees.models import Employees
 
 class PermissionForm(forms.Form):
+    is_updating = False
+    is_creating = False
+
     employees = forms.ModelChoiceField(
         queryset = Employees.objects.all(),
         widget = forms.Select(
@@ -64,6 +67,9 @@ class PermissionForm(forms.Form):
         return permissions
 
     def __init__(self, *args, **kwargs):
+        self.is_updating = kwargs.pop('is_updating', False)
+        self.is_creating = kwargs.pop('is_creating', False)
+        
         super().__init__(*args, **kwargs)
 
         permissions_choices = []
@@ -74,21 +80,29 @@ class PermissionForm(forms.Form):
         
         self.fields['permissions'].choices = permissions_choices
         
-        employees = []
-        for emp in Employees.objects.all():
-            if len(emp.auth_user_id.user_permissions.all()) == 0:
-                employees.append(emp.id)
-        
-        employees = Employees.objects.filter(id__in = employees)
+        if self.is_creating:
+            employees = []
+            for emp in Employees.objects.all():
+                if len(emp.auth_user_id.user_permissions.all()) == 0:
+                    employees.append(emp.id)
+            
+            employees = Employees.objects.filter(id__in = employees)
 
-        initial_data = kwargs.pop('initial', [])
+            initial_data = kwargs.pop('initial', [])
 
-        if initial_data:
-            employees = Employees.objects.filter(id__in = initial_data['employees'])
+            if initial_data:
+                employees = Employees.objects.filter(id__in = initial_data['employees'])
 
-        self.fields['employees'].queryset = employees
+            print('employees form')
+            print(employees)
+            self.fields['employees'].queryset = employees
+
+        if self.is_updating:
+            self.fields['employees'].required = False
 
 class PermissionGroupForm(forms.Form):
+    is_updating = False
+
     group = forms.CharField(
                 label='Group Name',
                 error_messages={
@@ -151,7 +165,11 @@ class PermissionGroupForm(forms.Form):
         return permissions
 
     def __init__(self, *args, **kwargs):
+        self.is_updating = kwargs.pop('is_updating', False)
         super().__init__(*args, **kwargs)
+
+        if self.is_updating:
+            self.fields['group'].required = False
 
         permissions_choices = []
         for perm in Permission.objects.all():

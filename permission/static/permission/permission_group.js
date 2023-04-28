@@ -59,31 +59,31 @@ $(function () {
 
     permission_group_datatable = initPermissionGroupDataTable();
     
-    // $('body').on('click', '.delete-permission', function () {
-    //     if (confirm('Do You Want to Delete this Permission ?')) {
-    //         let employee_uuid = $(this).data('uq');
-    //         let url = $(this).data('link');
-    //         url = url.replace('@@', employee_uuid);
+    $('body').on('click', '.delete-permission', function () {
+        if (confirm('Do You Want to Delete this Permission Group ?')) {
+            let group_id = $(this).data('uq');
+            let url = $(this).data('link');
+            url = url.replace('@@', group_id);
 
-    //         $.ajax({
-    //         url: url,
-    //         method: 'POST',
-    //         data: {
-    //             csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
-    //         },
-    //         success: function (result) {
-    //             if (result.success === true) {
-    //                 initPermissionDataTable();
+            $.ajax({
+            url: url,
+            method: 'POST',
+            data: {
+                csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+            },
+            success: function (result) {
+                if (result.success === true) {
+                    initPermissionDataTable();
 
-    //             } else if (result.success === false) {
-    //                 toastr['error'](result.toast_message);
+                } else if (result.success === false) {
+                    toastr['error'](result.toast_message);
 
-    //             }
-    //         },
-    //         error: function (result) {},
-    //         });
-    //     }
-    // });
+                }
+            },
+            error: function (result) {},
+            });
+        }
+    });
 
     $('body').on('click','.update-permission-group, .view-permission-group, #add-permission-group',function () {
         let url = $(this).data('link');

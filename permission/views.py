@@ -29,7 +29,7 @@ class CreatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
             return JsonResponse(response)
         
     def get(self, request):
-        permission_form = PermissionForm()
+        permission_form = PermissionForm(is_creating=True)
         context = {
             'success':True,
             'mode':'create',
@@ -160,7 +160,12 @@ class UpdatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def post(self, request, employee_uuid):
         print(request.POST)
-        permission_form = PermissionForm(request.POST or None)
+        print('employee_uuid')
+        print(employee_uuid)
+        # form_request = request.POST.copy()
+        # del form_request['employees']
+
+        permission_form = PermissionForm(request.POST or None, is_updating=True)
 
         if permission_form.is_valid():
             print('Permission Form is Valid')
@@ -317,6 +322,7 @@ class DeletePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
         }
 
         return JsonResponse(response)
+    
 class ListPermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
     permission_required = ['permission.view_permission']
@@ -526,22 +532,16 @@ class UpdatePermissionGroupView(LoginRequiredMixin, View):
         }
         return JsonResponse(response)
 
-    # TODO: CARI CARA SUPAYA GROUP_ID INI BISA GA DIUBAH2 orang dan lakukan cara ini ke permission update
     def post(self, request, group_id):
         print(request.POST)
-        form_request = request.POST.copy()
-        form_request['group'] = get_object_or_404(Group, id=group_id)
 
-        permission_group_form = PermissionGroupForm(form_request or None)
+        permission_group_form = PermissionGroupForm(request.POST or None, is_updating=True)
 
         if permission_group_form.is_valid():
             print('Permission Group Form is Valid')
             try:
                 print('saving to DB')
-                group = permission_group_form.cleaned_data['group']
-
-                print(group)
-                print(group.id)
+                group = get_object_or_404(Group, id=group_id)
                 permissions = permission_group_form.cleaned_data['permissions']
                 added_perms = [ Permission.objects.get(id=p.id) for p in permissions ]
 
@@ -648,8 +648,18 @@ class DeletePermissionGroupView(LoginRequiredMixin, View):
     def get(self, request):
         pass
 
-    def post(self, request):
-        pass
+    def post(self, request, group_id):
+        group = get_object_or_404(Group, id=group_id)
+        
+        group.permissions.clear()
+
+        response = {
+            'success': True, 
+            'toast_message':'Permission Group Deleted Successfuly',
+            'is_close_modal':True
+        }
+
+        return JsonResponse(response)
 
 class ListPermissionGroupView(LoginRequiredMixin, View):
     login_url = '/login/'
@@ -674,8 +684,6 @@ class ListPermissionGroupView(LoginRequiredMixin, View):
 
             permission_group_data.append(data)
 
-        print('permission_group_data')
-        print(permission_group_data)
         response = {
             'success':True,
             'permission_group_data': permission_group_data

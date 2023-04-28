@@ -89,7 +89,7 @@ class CreateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin ,View):
     def get(self, request):
         user_form = CreateUserForm()
         employees_form = EmployeesForm()
-
+        
         context = {
             'success':True,
             'mode':'create',
