@@ -19,6 +19,7 @@ class DepartmentMembersForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
     def clean_employee_id(self):
+        print('Enter Employee ID')
         return None
     
     class Meta:
@@ -44,7 +45,13 @@ class DepartmentMembersPermissionGroupForm(forms.Form):
         return None
     
 class DepartmentsForm(forms.ModelForm):
+    def clean(self):
+        print('Enter Clean All')
+        cleaned_data = super().clean()
+        print(cleaned_data)
 
+        return cleaned_data
+    
     def clean_name(self):
         print('Enter Clean Department Name')
         cleaned_data = super().clean()

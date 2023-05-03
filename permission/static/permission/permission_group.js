@@ -21,11 +21,27 @@ $(function () {
                 dataSrc: 'permission_group_data',
             },
             responsive: true,
-            columnDefs: [{ targets: -1, width:'90px' }],
+            columnDefs: [{ targets: -1, width: '90px' }],
             columns: [
                 {
                     data: 'name',
                     defaultContent: '-',
+                },
+                {
+                    data: 'created_at',
+                    defaultContent: '-',
+                },
+                {
+                    data: 'status',
+                    render: function (data, type, row) {
+                        if (data === 1) {
+                            return '<span class="badge bg-success">Active</span>';
+                        } else if (data === 0) {
+                            return '<span class="badge bg-danger">Inactive</span>';
+                        } else {
+                            return '<span class="badge bg-secondary">Unknown</span>';
+                        }
+                    },
                 },
                 {
                     data: 'action',
@@ -59,7 +75,7 @@ $(function () {
 
     permission_group_datatable = initPermissionGroupDataTable();
     
-    $('body').on('click', '.delete-permission', function () {
+    $('body').on('click', '.delete-permission-group', function () {
         if (confirm('Do You Want to Delete this Permission Group ?')) {
             let group_id = $(this).data('uq');
             let url = $(this).data('link');
@@ -73,7 +89,7 @@ $(function () {
             },
             success: function (result) {
                 if (result.success === true) {
-                    initPermissionDataTable();
+                    permission_group_datatable = initPermissionGroupDataTable();
 
                 } else if (result.success === false) {
                     toastr['error'](result.toast_message);

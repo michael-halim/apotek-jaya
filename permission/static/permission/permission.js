@@ -2,56 +2,56 @@ $(function () {
     function initPermissionDataTable(){
         $('#permission-table').DataTable().destroy();
         let permission_datatable = $('#permission-table').DataTable({
-          initComplete: function () {
-            // Apply the search
-            this.api()
-              .columns()
-              .every(function () {
-                var that = this;
+            initComplete: function () {
+                // Apply the search
+                this.api()
+                .columns()
+                .every(function () {
+                    var that = this;
 
-                $('input', this.footer()).on('keyup change clear', function () {
-                  if (that.search() !== this.value) {
-                    that.search(this.value).draw();
-                  }
+                    $('input', this.footer()).on('keyup change clear', function () {
+                    if (that.search() !== this.value) {
+                        that.search(this.value).draw();
+                    }
+                    });
                 });
-              });
-          },
+            },
 
-          ajax: {
-            url: 'list-permission/',
-            dataSrc: 'permission_data',
-          },
-          responsive: true,
-          columnDefs: [{ targets: 0, visible:false, searchable:false }],
-          columns: [
-            {
-              data: 'uq',
-              defaultContent: '-',
+            ajax: {
+                url: 'list-permission/',
+                dataSrc: 'permission_data',
             },
-            {
-              data: 'nik_email',
-              defaultContent: '-',
-            },
-            {
-              data: 'name',
-              defaultContent: '-',
-            },
-            {
-              data: 'department',
-              defaultContent: '-',
-            },
-            {
-              data: 'group_name',
-              defaultContent: '-',
-            },
-            {
-              data: 'action',
-              defaultContent: '-',
-            },
-          ],
-          dom: 'lBfrtip',
-          buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+            responsive: true,
+            columnDefs: [
+                { targets: 0, visible: false, searchable: false },
+                { targets: -1, width: '90px' },
+            ],
+            columns: [
+                {
+                    data: 'uq',
+                    defaultContent: '-',
+                },
+                {
+                    data: 'nik_email',
+                    defaultContent: '-',
+                },
+                {
+                    data: 'name',
+                    defaultContent: '-',
+                },
+                {
+                    data: 'department',
+                    defaultContent: '-',
+                },
+                {
+                    data: 'action',
+                    defaultContent: '-',
+                },
+            ],
+            dom: 'lBfrtip',
+            buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
         });
+
         return permission_datatable;
     }
     
@@ -88,7 +88,7 @@ $(function () {
             },
             success: function (result) {
                 if (result.success === true) {
-                    initPermissionDataTable();
+                    permission_datatable = initPermissionDataTable();
 
                 } else if (result.success === false) {
                     toastr['error'](result.toast_message);
@@ -105,29 +105,29 @@ $(function () {
         url = url.replace('@@', employee_uuid);
 
         $.ajax({
-          url: url,
-          method: 'GET',
-          success: function (result) {
-            if (result.success === true) {
-                $('#form-permission-modal .modal-content').html(result.form);
-                
-                dselect(document.querySelector('select#employees'), {
-                  search: true,
-                });
+            url: url,
+            method: 'GET',
+            success: function (result) {
+                if (result.success === true) {
+                    $('#form-permission-modal .modal-content').html(result.form);
+                    
+                    dselect(document.querySelector('select#employees'), {
+                        search: true,
+                    });
 
-                if (result.is_view_only) {
-                    $('button[data-dselect-text]').prop('disabled',true);
+                    if (result.is_view_only) {
+                        $('button[data-dselect-text]').prop('disabled',true);
+                    }
+                    
+                    check_checkbox_grouping();
+
+                    $('#form-permission-modal').modal('show');
+
+                } else if (result.success === false) {
+                    toastr['error'](result.toast_message);
                 }
-                
-                check_checkbox_grouping();
-
-                $('#form-permission-modal').modal('show');
-
-            } else if (result.success === false) {
-                toastr['error'](result.toast_message);
-            }
-          },
-          error: function (result) {},
+            },
+            error: function (result) {},
         });
       }
     );
@@ -177,9 +177,7 @@ $(function () {
                         messages_element += `<li class= "${message.tags}">${message.message}</li>`;
                     }
 
-                    $('.modal-messages')
-                    .css({ display: 'block' })
-                    .html(messages_element);
+                    $('.modal-messages').css({ display: 'block' }).html(messages_element);
 
                     toastr['error'](result.toast_message);
                 }
