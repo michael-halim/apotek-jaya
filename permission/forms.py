@@ -14,7 +14,7 @@ class PermissionForm(forms.Form):
                     attrs = {
                         'id':'employees',
                     }),
-        error_messages = {
+        error_messages={
             'required':'Employees Cannot be Empty',
         }
     )
@@ -26,7 +26,9 @@ class PermissionForm(forms.Form):
                         'class':'form-check-input',
                     }),
         label = 'Permissions',
-        required=False,
+        error_messages={
+            'required':'Permission Cannot be Empty',
+        }
     )
     
     def clean(self):
@@ -55,6 +57,9 @@ class PermissionForm(forms.Form):
         cleaned_data = super().clean()
         permissions = cleaned_data.get('permissions')
         errors = []
+
+        if permissions is None:
+            errors.append('Permission Cannot be Empty')
 
         if errors:
             raise forms.ValidationError(errors)
@@ -119,22 +124,11 @@ class PermissionGroupForm(forms.Form):
                                     'class':'form-check-input',
                                 }),
                     label = 'Permissions',
-                    required=False,
+                    error_messages={
+                        'required':'Permission Cannot be Empty',
+                    }
                 )
     
-    status = forms.IntegerField(
-                initial=1,
-                required=True,
-                label='Status',
-                widget= forms.NumberInput(attrs={
-                    'placeholder': 1,
-                    'class':'form-control',
-                    'id':'status',
-                })
-            )
-    
-    field_order = ['group', 'status', 'permissions']
-
     def clean(self):
         print('Enter Clean All')
         cleaned_data = super().clean()
@@ -147,15 +141,9 @@ class PermissionGroupForm(forms.Form):
         cleaned_data = super().clean()
         group = cleaned_data.get('group')
         errors = []
-        
 
         if group is None:
             errors.append('Group Cannot be Empty')
-            
-        else:
-            found_group_name = Group.objects.filter(name = group)  
-            if found_group_name.count() and not self.is_updating:
-                errors.append("Group Permission Name Already Exist")
 
         if errors:
             raise forms.ValidationError(errors)
@@ -168,30 +156,13 @@ class PermissionGroupForm(forms.Form):
         permissions = cleaned_data.get('permissions')
         errors = []
 
+        if permissions is None:
+            errors.append('Permission Cannot be Empty')
+
         if errors:
             raise forms.ValidationError(errors)
 
         return permissions
-    
-    def clean_status(self):
-        print('Enter Clean Status')
-        cleaned_data = super().clean()
-        status = cleaned_data.get('status')
-        errors = []
-
-        if status is None:
-            status = 1
-
-        elif status < 0 or status > 3:
-            errors.append('Status is Invalid')
-        
-        elif not isinstance(status, int):
-            errors.append('Status Must Only Input Number')
-
-        if errors:
-            raise forms.ValidationError(errors)
-
-        return status
 
     def __init__(self, *args, **kwargs):
         self.is_updating = kwargs.pop('is_updating', False)
@@ -207,3 +178,17 @@ class PermissionGroupForm(forms.Form):
             )
         
         self.fields['permissions'].choices = permissions_choices
+        
+        # employees = []
+        # for emp in Employees.objects.all():
+        #     if len(emp.auth_user_id.user_permissions.all()) == 0:
+        #         employees.append(emp.id)
+        
+        # employees = Employees.objects.filter(id__in = employees)
+
+        # initial_data = kwargs.pop('initial', [])
+
+        # if initial_data:
+        #     employees = Employees.objects.filter(id__in = initial_data['employees'])
+
+        # self.fields['employees'].queryset = employees

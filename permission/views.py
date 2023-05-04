@@ -1,5 +1,3 @@
-from datetime import datetime
-from zoneinfo import ZoneInfo
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views.generic import View
@@ -12,10 +10,6 @@ from departments.models import DepartmentMembers
 
 from employees.models import Employees
 from .forms import PermissionForm, PermissionGroupForm
-from .models import AuthGroupExtended, AuthGroupPermissionExtended, AuthUserGroupExtended, AuthUserPermissionExtended
-
-
-from itertools import chain
 
 class CreatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
@@ -68,19 +62,6 @@ class CreatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 
                 user.user_permissions.set(user_perms)
                 
-                auth_user_permission_data = {
-                    'aup_user_id': user,
-                    'created_at': datetime.now(ZoneInfo('Asia/Bangkok')),
-                    'created_by': request.user,
-                    'updated_at': None,
-                    'updated_by': None,
-                    'deleted_at': None,
-                    'deleted_by': None,
-                }
-                for perm in user_perms:
-                    auth_user_permission_data['aup_permission_id'] = perm
-                    AuthUserPermissionExtended(**auth_user_permission_data).save()
-                
             except Exception as e:
                 print(e)
                 response = {
@@ -93,20 +74,11 @@ class CreatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
                 return JsonResponse(response)
 
-
             response = {
-                    'success': False, 
-                    'errors': [], 
-                    'modal_messages':[],
-                    'toast_message':'Permission Cannot be Empty',
-                    'is_close_modal':False,
+                'success': True, 
+                'toast_message':'Permission Added Successfuly',
+                'is_close_modal':True
             }
-            if user_perms:
-                response = {
-                    'success': True, 
-                    'toast_message':'Permission Added Successfuly',
-                    'is_close_modal':True
-                }
 
             return JsonResponse(response)
     
@@ -155,10 +127,9 @@ class UpdatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
     #TODO: UPDATE NYA GA PKEK UUID, jadi di url nya bisa @@ karena belum terisi
     def get(self, request, employee_uuid):
         permission_data = []
-        employee = get_object_or_404(Employees, hash_uuid=employee_uuid)
-        employee_permissions = AuthUserPermissionExtended.objects\
-                                    .filter(aup_user_id=employee.auth_user_id.id, status=1)\
-                                    .values_list('aup_permission_id', flat=True)
+        employee = Employees.objects.filter(hash_uuid=employee_uuid)[0]
+        employee_permissions = employee.auth_user_id.user_permissions.all()
+        employee_permissions = [ x.id for x in employee_permissions ]
         
         initial_data = {
             'employees':[ employee.id ],
@@ -191,6 +162,8 @@ class UpdatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
         print(request.POST)
         print('employee_uuid')
         print(employee_uuid)
+        # form_request = request.POST.copy()
+        # del form_request['employees']
 
         permission_form = PermissionForm(request.POST or None, is_updating=True)
 
@@ -204,73 +177,20 @@ class UpdatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 permissions = permission_form.cleaned_data['permissions']
                 added_perms = [ Permission.objects.get(id=p.id) for p in permissions ]
 
-                deactivated_perms = AuthUserPermissionExtended.objects\
-                                        .filter(aup_user_id = user.id, status=0)\
-                                        .values_list('aup_permission_id', flat=True)
-                
-                reactivated_perms = []
-                for perm_id in deactivated_perms:
-                    try:
-                        added_perms.remove(get_object_or_404(Permission, id=perm_id))
-                        reactivated_perms.append(get_object_or_404(Permission, id=perm_id))
-                    except: pass
-
-                
-                old_perms = AuthUserPermissionExtended.objects\
-                                        .filter(aup_user_id = user.id, status=1)\
-                                        .values_list('aup_permission_id', flat=True)
+                old_perms = user.user_permissions.all()
                 
                 removed_perms = []
-                for perm_id in old_perms:
-                    try: added_perms.remove(get_object_or_404(Permission, id=perm_id))
-                    except: removed_perms.append(get_object_or_404(Permission, id=perm_id))
 
-
-                print('added_perms')
-                print(added_perms)
-
-                print('removed_perms')
-                print(removed_perms)
-
-                print('reactivated_perms')
-                print(reactivated_perms)
-
+                for p in old_perms:
+                    try: added_perms.remove(p)
+                    except: removed_perms.append(p)
 
                 if added_perms:
                     user.user_permissions.add(*added_perms)
-                    auth_user_permissions_data = {
-                        'aup_user_id': user,
-                        'created_at': datetime.now(ZoneInfo('Asia/Bangkok')),
-                        'created_by': request.user,
-                        'updated_at': None,
-                        'updated_by': None,
-                        'deleted_at': None,
-                        'deleted_by': None,
-                    }
-
-                    for perm in added_perms:
-                        auth_user_permissions_data['aup_permission_id'] = perm
-                        AuthUserPermissionExtended(**auth_user_permissions_data).save()
-
 
                 if removed_perms:
-                    for perm in removed_perms:
-                        user_permission = get_object_or_404(AuthUserPermissionExtended, aup_user_id=user.id, aup_permission_id=perm.id)
-                        user_permission.status = 0
-                        user_permission.updated_at = datetime.now(ZoneInfo('Asia/Bangkok'))
-                        user_permission.updated_by = request.user
-                        user_permission.save()
+                    user.user_permissions.remove(*removed_perms)
                 
-
-                if reactivated_perms:
-                    for perm in reactivated_perms:
-                        user_permission = get_object_or_404(AuthUserPermissionExtended, aup_user_id=user.id, aup_permission_id=perm.id)
-                        user_permission.status = 1
-                        user_permission.updated_at = datetime.now(ZoneInfo('Asia/Bangkok'))
-                        user_permission.updated_by = request.user
-                        user_permission.save()
-
-
             except Exception as e:
                 print(e)
                 response = {
@@ -333,14 +253,13 @@ class DetailPermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
             }
 
             return JsonResponse(response)
-    
+        
     def get(self, request, employee_uuid):
         permission_data = []
-        employee = get_object_or_404(Employees, hash_uuid=employee_uuid)
-        employee_permissions = AuthUserPermissionExtended.objects\
-                                    .filter(aup_user_id=employee.auth_user_id.id, status=1)\
-                                    .values_list('aup_permission_id', flat=True)
-
+        employee = Employees.objects.filter(hash_uuid=employee_uuid)[0]
+        employee_permissions = employee.auth_user_id.user_permissions.all()
+        employee_permissions = [ x.id for x in employee_permissions ]
+        
         initial_data = {
             'employees':[ employee.id ],
             'permissions':employee_permissions,
@@ -446,19 +365,19 @@ class ListPermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 nik = employee.nik if employee.nik != '' else '-'
                 nik_email = nik + '<br>' + employee.auth_user_id.email
                 
-                # departments = DepartmentMembers.objects.filter(employee_id=employee.id)
-                departments = AuthUserGroupExtended.objects.filter(aug_employee_id=employee.id, status=1)
-                department_data = ''
-                for dept in departments:
-                    department_data += dept.aug_department_id.name + ' -> ' + dept.aug_group_id.name + '<br>'
+                departments = DepartmentMembers.objects.filter(employee_id=employee.id)
+                departments = [dept.department_id.name for dept in departments]
                 
                 data = {
                     'uq':employee.hash_uuid,
                     'nik_email':nik_email,
                     'name':employee.name,
-                    'department': department_data,
+                    'department': departments,
                     'action':form_action,
                 }
+
+                for group in group_object:
+                    data['group_name'] = group.name
                 
                 permission_data.append(data)
 
@@ -524,40 +443,11 @@ class CreatePermissionGroupView(LoginRequiredMixin, View):
                 group_name = permission_group_form.cleaned_data['group']
                 
                 permissions = permission_group_form.cleaned_data['permissions']
-                status = permission_group_form.cleaned_data['status']
                 permissions = [ Permission.objects.get(id=p.id) for p in permissions ]
                 
                 group_object = Group.objects.create(name=group_name)
-                auth_group_data = {
-                    'auth_group_id': group_object,
-                    'created_at': datetime.now(ZoneInfo('Asia/Bangkok')),
-                    'created_by': request.user,
-                    'updated_at': None,
-                    'updated_by': None,
-                    'deleted_at': None,
-                    'deleted_by': None,
-                    'status': status,
-                }
-
-                AuthGroupExtended(**auth_group_data).save()
-
                 group_object.permissions.set(permissions)
                 
-                auth_group_permissions_data = {
-                    'agp_group_id': group_object,
-                    'created_at': datetime.now(ZoneInfo('Asia/Bangkok')),
-                    'created_by': request.user,
-                    'updated_at': None,
-                    'updated_by': None,
-                    'deleted_at': None,
-                    'deleted_by': None,
-                }
-
-                for perm in permissions:
-                    auth_group_permissions_data['agp_permission_id'] = perm
-                    AuthGroupPermissionExtended(**auth_group_permissions_data).save()
-
-
             except Exception as e:
                 print(e)
                 response = {
@@ -608,26 +498,20 @@ class UpdatePermissionGroupView(LoginRequiredMixin, View):
     login_url = '/login/'
 
     def get(self, request, group_id):
-        group = get_object_or_404(AuthGroupExtended, auth_group_id=group_id)
-        
-        active_permission_group_ids = AuthGroupPermissionExtended.objects\
-                                        .filter(agp_group_id=group_id, status=1)\
-                                        .values_list('agp_permission_id', flat=True)
-        
+        group = Group.objects.filter(id=group_id)[0]
+        group_permissions = group.permissions.all()
+        group_permissions = [ x.id for x in group_permissions ]
         
         initial_data = {
-            'group':group.auth_group_id,
-            'permissions':active_permission_group_ids,
-            'status':group.status
+            'group':group,
+            'permissions':group_permissions,
         }
 
         permission_group_form = PermissionGroupForm(initial=initial_data)
 
-        disabled_field = ['group']
+        permission_group_form.fields['group'].widget.attrs['disabled'] = True
+        permission_group_form.fields['group'].widget.attrs['placeholder'] = ''
 
-        for field in disabled_field:
-            permission_group_form.fields[field].widget.attrs['disabled'] = True
-            permission_group_form.fields[field].widget.attrs['placeholder'] = ''
 
         context = {
             'mode':'update',
@@ -646,7 +530,6 @@ class UpdatePermissionGroupView(LoginRequiredMixin, View):
             'form': form,
             'is_view_only': False,
         }
-
         return JsonResponse(response)
 
     def post(self, request, group_id):
@@ -658,80 +541,23 @@ class UpdatePermissionGroupView(LoginRequiredMixin, View):
             print('Permission Group Form is Valid')
             try:
                 print('saving to DB')
-                reactivated_perms = []
-                group = get_object_or_404(AuthGroupExtended, auth_group_id=group_id)
-                
-                group.status = permission_group_form.cleaned_data['status']
-                group.save()
-
+                group = get_object_or_404(Group, id=group_id)
                 permissions = permission_group_form.cleaned_data['permissions']
                 added_perms = [ Permission.objects.get(id=p.id) for p in permissions ]
 
-                # Get All Permissions That Are Inactive in a Group
-                deactivated_perms = AuthGroupPermissionExtended.objects\
-                                            .filter(agp_group_id=group_id, status=0)\
-                                            .values_list('agp_permission_id', flat=True)
-
-                # If Deactivated Perms can Remove Added Permissions, It Means the Permissions is Reactivated
-                for perm_id in deactivated_perms:
-                    try: 
-                        added_perms.remove(get_object_or_404(Permission, id=perm_id))
-                        reactivated_perms.append(get_object_or_404(Permission, id=perm_id))
-                    except: pass
+                old_perms = group.permissions.all()
                 
-                old_perms = AuthGroupPermissionExtended.objects\
-                                            .filter(agp_group_id=group_id, status=1)\
-                                            .values_list('agp_permission_id', flat=True)
-
                 removed_perms = []
-                for perm_id in old_perms:
-                    try: added_perms.remove(get_object_or_404(Permission, id=perm_id))
-                    except: removed_perms.append(get_object_or_404(Permission, id=perm_id))
 
-                print('added_perms')
-                print(added_perms)
-
-                print('removed_perms')
-                print(removed_perms)
-
-                print('reactivated_perms')
-                print(reactivated_perms)
+                for p in old_perms:
+                    try: added_perms.remove(p)
+                    except: removed_perms.append(p)
 
                 if added_perms:
-                    group.auth_group_id.permissions.add(*added_perms)
-
-                    auth_group_permissions_data = {
-                        'agp_group_id':group.auth_group_id,
-                        'created_at': datetime.now(ZoneInfo('Asia/Bangkok')),
-                        'created_by': request.user,
-                        'updated_at': None,
-                        'updated_by': None,
-                        'deleted_at': None,
-                        'deleted_by': None,
-                    }
-
-                    for perm in added_perms:
-                        auth_group_permissions_data['agp_permission_id'] = perm
-                        AuthGroupPermissionExtended(**auth_group_permissions_data).save()
-
+                    group.permissions.add(*added_perms)
 
                 if removed_perms:
-                    for perm in removed_perms:
-                        permission_group = get_object_or_404(AuthGroupPermissionExtended, agp_group_id=group.id, agp_permission_id=perm.id)
-                        permission_group.status = 0
-                        permission_group.updated_at = datetime.now(ZoneInfo('Asia/Bangkok'))
-                        permission_group.updated_by = request.user
-                        permission_group.save()
-
-
-                if reactivated_perms:
-                    for perm in reactivated_perms:
-                        permission_group = get_object_or_404(AuthGroupPermissionExtended, agp_group_id=group.id, agp_permission_id=perm.id)
-                        permission_group.status = 1
-                        permission_group.updated_at = datetime.now(ZoneInfo('Asia/Bangkok'))
-                        permission_group.updated_by = request.user
-                        permission_group.save()
-
+                    group.permissions.remove(*removed_perms)
                 
             except Exception as e:
                 print(e)
@@ -783,15 +609,13 @@ class DetailPermissionGroupView(LoginRequiredMixin, View):
     login_url = '/login/'
 
     def get(self, request, group_id):
-        group = get_object_or_404(AuthGroupExtended, auth_group_id=group_id)
-        permission_group_ids = AuthGroupPermissionExtended.objects\
-                                        .filter(agp_group_id=group_id, status=1)\
-                                        .values_list('agp_permission_id', flat=True)
+        group = Group.objects.filter(id=group_id)[0]
+        group_permissions = group.permissions.all()
+        group_permissions = [ x.id for x in group_permissions ]
         
         initial_data = {
-            'group':group.auth_group_id,
-            'permissions':permission_group_ids,
-            'status':group.status,
+            'group':group,
+            'permissions':group_permissions,
         }
 
         permission_group_form = PermissionGroupForm(initial=initial_data)
@@ -825,13 +649,9 @@ class DeletePermissionGroupView(LoginRequiredMixin, View):
         pass
 
     def post(self, request, group_id):
-        print('group_id')
-        print(group_id)
-        group = get_object_or_404(AuthGroupExtended, auth_group_id=group_id)
-        group.updated_at = datetime.now(ZoneInfo('Asia/Bangkok'))
-        group.updated_by = request.user
-        group.status = 0
-        group.save()
+        group = get_object_or_404(Group, id=group_id)
+        
+        group.permissions.clear()
 
         response = {
             'success': True, 
@@ -852,16 +672,13 @@ class ListPermissionGroupView(LoginRequiredMixin, View):
             'delete_link':str(reverse_lazy('permission:delete-permission-group', args=["@@"])),
         }
 
-        
-        group_object = AuthGroupExtended.objects.all()
+        group_object = Group.objects.all()
         permission_group_data = []
         for group in group_object:
-            context['hash'] = group.auth_group_id.id
+            context['hash'] = group.id
             form_action = render_to_string('permission/includes/permission_group_form_action_button.html', context, request=request)
             data = {
-                'name':group.auth_group_id.name,
-                'created_at':group.created_at.date().strftime("%d %B %Y"),
-                'status':group.status,
+                'name':group.name,
                 'action':form_action,
             }
 

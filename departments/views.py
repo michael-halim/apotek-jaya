@@ -8,7 +8,6 @@ from django.urls import reverse_lazy
 from django.template.loader import render_to_string
 
 from employees.models import Employees
-from permission.models import AuthUserGroupExtended
 from .forms import DepartmentMembersForm, DepartmentMembersPermissionGroupForm, DepartmentsForm
 from .models import DepartmentMembers, Departments
 
@@ -251,19 +250,6 @@ class CreateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
                     
                     if perm_group:
                         emp.auth_user_id.groups.add(perm_group)
-                        auth_user_group_data = {
-                            'aug_employee_id':emp,
-                            'aug_group_id':perm_group,
-                            'aug_department_id': created_department,
-                            'created_at': datetime.now(ZoneInfo('Asia/Bangkok')),
-                            'created_by': request.user,
-                            'updated_at': None,
-                            'updated_by': None,
-                            'deleted_at': None,
-                            'deleted_by': None,
-                        }
-                        AuthUserGroupExtended(**auth_user_group_data).save()
-
 
             except Exception as e:
                 print(e)
@@ -369,17 +355,15 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
             nik = member.employee_id.nik if member.employee_id.nik != '' else '-'
             nik_email = nik + '<br>' + member.employee_id.auth_user_id.email
             
-            permission_object = AuthUserGroupExtended.objects\
-                                    .filter(aug_employee_id=member.employee_id,
-                                            aug_department_id=department.id,
-                                            status=1)
-            
-            uq_group = permission_object[0].aug_group_id.id if permission_object else ''
-            permission_group = permission_object[0].aug_group_id.name if permission_object else ''
+            permission_object = member.employee_id.auth_user_id.groups.all()
+            permission_group, group_id = [], []
+            for perm in permission_object:
+                permission_group.append(perm.name)
+                group_id.append(perm.id)
 
             employee_data.append({
                 'uq':member.employee_id.hash_uuid,
-                'uq_group': uq_group,
+                'uq_group': group_id,
                 'nik_email':nik_email,
                 'name': member.employee_id.name,
                 'address': member.employee_id.address,
@@ -401,25 +385,24 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def post(self, request, department_uuid):
         print(request.POST)
-        
         department = get_object_or_404(Departments, hash_uuid=department_uuid)
 
         employees = request.POST['employees[]']
-        employees_permission_group = request.POST['employees_permission_group[]']
 
         form_request = request.POST.copy()
         del form_request['employees[]']
-        del form_request['employees_permission_group[]']
-
 
         added_employees, removed_employees, reactivated_employees = [], [], []
-        added_employee_group = []
+
+        # TODO: NEEDS TO EXTEND THE AUTH_GROUPS_PERMISSIONS, AUTH_USER_GROUPS, AUTH_USER_USER_PERMISSIONS
+        # ADD THIS UPDATE A LOGIC TO STORE GROUPS PERMISSION
         if employees != '':
             # Get Employees Hash
             form_request['employee_id'] = employees.split(',')
 
             # Get Both Current and Old Employees Hash
             added_employees = [ x for x in form_request['employee_id'] ]
+            
 
             # Old Employees Remove Employee from Current Employees
             # If the 'try' works, it means employees is reactivated
@@ -431,6 +414,7 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
                     reactivated_employees.append(old_emp)
                 except: pass
 
+
             # Old Employees Remove Employee from Current Employees
             # If the 'try' works, it means both have the same employees
             # If throws error, it means the old employees is removed
@@ -441,68 +425,12 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
             for old_emp in old_employees:
                 try: added_employees.remove(old_emp)
                 except: removed_employees.append(old_emp)
-
-            employees_permission_group = employees_permission_group.split(',')
-            # added_employee_group = employees_permission_group.split(',')
-
-            
-            print('employees_permission_group')
-            print(employees_permission_group)
-
-            print('employee')
-            print(form_request['employee_id'])
-
-            for emp_group, emp_hash in zip(employees_permission_group, form_request['employee_id']):
-                employee = get_object_or_404(Employees, hash_uuid=emp_hash)
-                group = ''    
-                if emp_group:
-                    group = get_object_or_404(Group, id=emp_group)
-                    group = group.id
-
-                added_employee_group.append((employee.id, group))
-
+        
         else:
             # Delete All Members if employees ''
             department_members = DepartmentMembers.objects.filter(department_id = department.id, status=1)
             removed_employees = [ str(x.employee_id.hash_uuid) for x in department_members]
 
-        removed_employee_group, reactivated_employee_group = [], []
-        deactivated_user_group = AuthUserGroupExtended.objects\
-                                        .filter(aug_department_id=department,
-                                                status=0)\
-                                        .values_list('aug_employee_id', 'aug_group_id')
-        
-        active_user_group = AuthUserGroupExtended.objects\
-                                        .filter(aug_department_id=department,
-                                                status=1)\
-                                        .values_list('aug_employee_id', 'aug_group_id')
-        
-        for eg in deactivated_user_group:
-            try: 
-                added_employee_group.remove(eg)
-                reactivated_employee_group.append(eg)
-            except: pass
-
-
-        for eg in active_user_group:
-            try: added_employee_group.remove(eg)
-            except: removed_employee_group.append(eg)
-
-
-        print('reactivated_employee_group')
-        print(reactivated_employee_group)
-
-        print('removed_employee_group')
-        print(removed_employee_group)
-
-        print('added_employee_group')
-        print(added_employee_group)
-
-        # TODO: if removed all, the employee_id is by default 2bc5227c-738f-40ca-b958-4cdd049420c0
-        # harusnya disini nge loop employee dan group yang disini dan di masukkan ke list
-        
-        if isinstance(form_request['employee_id'], str):
-            form_request['employee_id'] = [form_request['employee_id']]
 
         departments_form = DepartmentsForm(form_request or None, instance=department)
         department_members_form = DepartmentMembersForm(form_request or None)
@@ -530,24 +458,24 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
                     department_members_data['created_by'] = request.user
                     department_members_data['updated_at'] = None
                     department_members_data['updated_by'] = None
-                    
+
+                    # Saving Departments and Employees to Database
+                    for emp in added_employees:
+                        employee = get_object_or_404(Employees, hash_uuid=emp)
+                        department_members_data['employee_id'] = employee
+                        DepartmentMembers(**department_members_data).save()
 
                 if removed_employees:
-                    print('enter removed employees')
                     for emp in removed_employees:
                         employee = get_object_or_404(Employees, hash_uuid=emp)
-                        department_members = get_object_or_404(DepartmentMembers, department_id = department, 
-                                                                                    employee_id = employee, 
-                                                                                    status = 1)
+                        department_members = get_object_or_404(DepartmentMembers, department_id = department, employee_id=employee, status=1)
 
                         department_members.status = 0
                         department_members.updated_at = datetime.now(ZoneInfo('Asia/Bangkok'))
                         department_members.updated_by = request.user
                         department_members.save()
 
-
                 if reactivated_employees:
-                    print('enter reactivated employees')
                     for emp in reactivated_employees:
                         employee = get_object_or_404(Employees, hash_uuid=emp)
                         department_members = get_object_or_404(DepartmentMembers, department_id = department, employee_id=employee, status=0)
@@ -556,55 +484,6 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
                         department_members.updated_at = datetime.now(ZoneInfo('Asia/Bangkok'))
                         department_members.updated_by = request.user
                         department_members.save()
-
-                if added_employee_group:
-                    print('enter added employee group')
-                    auth_user_group_data = {
-                        'created_at': datetime.now(ZoneInfo('Asia/Bangkok')),
-                        'created_by': request.user,
-                        'updated_at': None,
-                        'updated_by': None,
-                        'aug_department_id': department,
-                    }
-
-                    for emp_group in added_employee_group:
-                        if not emp_group[0] or not emp_group[1]:
-                            continue
-
-                        auth_user_group_data['aug_employee_id'] = get_object_or_404(Employees, id=emp_group[0])
-                        auth_user_group_data['aug_group_id'] = get_object_or_404(Group, id=emp_group[1])
-                        AuthUserGroupExtended(**auth_user_group_data).save()
-
-                if removed_employee_group:
-                    print('enter removed employee group')
-                    for emp_group in removed_employee_group:
-                        if not emp_group[0] or not emp_group[1]:
-                            continue
-
-                        user_group = get_object_or_404(AuthUserGroupExtended, aug_department_id = department, 
-                                                                aug_employee_id=emp_group[0], 
-                                                                aug_group_id=emp_group[1])
-                        
-                        user_group.updated_at = datetime.now(ZoneInfo('Asia/Bangkok'))
-                        user_group.updated_by = request.user
-                        user_group.status = 0
-                        user_group.save()
-
-                if reactivated_employee_group:
-                    print('enter reactivated employee group')
-                    for emp_group in reactivated_employee_group:
-                        if not emp_group[0] or not emp_group[1]:
-                            continue
-
-                        user_group = get_object_or_404(AuthUserGroupExtended, aug_department_id = department, 
-                                                                aug_employee_id=emp_group[0], 
-                                                                aug_group_id=emp_group[1])
-                        
-                        user_group.updated_at = datetime.now(ZoneInfo('Asia/Bangkok'))
-                        user_group.updated_by = request.user
-                        user_group.status = 1
-                        user_group.save()
-
 
             except Exception as e:
                 print(e)
@@ -642,7 +521,6 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
             for field, error_list in departments_form.errors.items():
                 errors[field] = error_list
 
-            print(errors)
             response = {
                 'success': False, 
                 'errors': errors, 
@@ -700,20 +578,15 @@ class DetailDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
             nik = member.employee_id.nik if member.employee_id.nik != '' else '-'
             nik_email = nik + '<br>' + member.employee_id.auth_user_id.email
 
-            permission_object = AuthUserGroupExtended.objects\
-                                    .filter(aug_employee_id=member.employee_id,
-                                            aug_department_id=department.id,
-                                            status=1)
-            
-            print('permission_object')
-            print(permission_object)
-            uq_group = permission_object[0].aug_group_id.id if permission_object else ''
-            permission_group = permission_object[0].aug_group_id.name if permission_object else ''
-
+            permission_object = member.employee_id.auth_user_id.groups.all()
+            permission_group, group_id = [], []
+            for perm in permission_object:
+                permission_group.append(perm.name)
+                group_id.append(perm.id)
 
             employee_data.append({
                 'uq':member.employee_id.hash_uuid,
-                'uq_group':uq_group,
+                'uq_group':group_id,
                 'nik_email':nik_email,
                 'name': member.employee_id.name,
                 'address': member.employee_id.address,
