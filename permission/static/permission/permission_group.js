@@ -59,7 +59,7 @@ $(function () {
 
     permission_group_datatable = initPermissionGroupDataTable();
     
-    $('body').on('click', '.delete-permission', function () {
+    $('body').on('click', '.delete-permission-group', function () {
         if (confirm('Do You Want to Delete this Permission Group ?')) {
             let group_id = $(this).data('uq');
             let url = $(this).data('link');
@@ -73,7 +73,7 @@ $(function () {
             },
             success: function (result) {
                 if (result.success === true) {
-                    initPermissionDataTable();
+                    permission_group_datatable = initPermissionGroupDataTable();
 
                 } else if (result.success === false) {
                     toastr['error'](result.toast_message);

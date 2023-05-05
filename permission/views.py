@@ -162,8 +162,6 @@ class UpdatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
         print(request.POST)
         print('employee_uuid')
         print(employee_uuid)
-        # form_request = request.POST.copy()
-        # del form_request['employees']
 
         permission_form = PermissionForm(request.POST or None, is_updating=True)
 
@@ -366,19 +364,24 @@ class ListPermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 nik_email = nik + '<br>' + employee.auth_user_id.email
                 
                 departments = DepartmentMembers.objects.filter(employee_id=employee.id)
-                departments = [dept.department_id.name for dept in departments]
+                departments_data = ''
+                for dept in departments:
+                    departments_data += dept.department_id.name + '<br>'
                 
                 data = {
                     'uq':employee.hash_uuid,
                     'nik_email':nik_email,
                     'name':employee.name,
-                    'department': departments,
+                    'department': departments_data,
                     'action':form_action,
                 }
-
-                for group in group_object:
-                    data['group_name'] = group.name
                 
+                group_names = ''
+                for group in group_object:
+                    group_names += group.name + '<br>'
+                
+                data['group_name'] = group_names
+
                 permission_data.append(data)
 
         response = {
@@ -498,13 +501,13 @@ class UpdatePermissionGroupView(LoginRequiredMixin, View):
     login_url = '/login/'
 
     def get(self, request, group_id):
-        group = Group.objects.filter(id=group_id)[0]
-        group_permissions = group.permissions.all()
-        group_permissions = [ x.id for x in group_permissions ]
+        group = get_object_or_404(Group, id=group_id)
+        group_permissions = group.permissions.all().values_list('id', flat=True)
         
         initial_data = {
             'group':group,
             'permissions':group_permissions,
+            'status': group.status
         }
 
         permission_group_form = PermissionGroupForm(initial=initial_data)
@@ -543,6 +546,7 @@ class UpdatePermissionGroupView(LoginRequiredMixin, View):
                 print('saving to DB')
                 group = get_object_or_404(Group, id=group_id)
                 permissions = permission_group_form.cleaned_data['permissions']
+
                 added_perms = [ Permission.objects.get(id=p.id) for p in permissions ]
 
                 old_perms = group.permissions.all()
@@ -609,9 +613,8 @@ class DetailPermissionGroupView(LoginRequiredMixin, View):
     login_url = '/login/'
 
     def get(self, request, group_id):
-        group = Group.objects.filter(id=group_id)[0]
-        group_permissions = group.permissions.all()
-        group_permissions = [ x.id for x in group_permissions ]
+        group = get_object_or_404(Group, id=group_id)
+        group_permissions = group.permissions.all().values_list('id', flat=True)
         
         initial_data = {
             'group':group,
@@ -649,9 +652,9 @@ class DeletePermissionGroupView(LoginRequiredMixin, View):
         pass
 
     def post(self, request, group_id):
+        print('ENTER DELETE PERMISSION GROUP')
         group = get_object_or_404(Group, id=group_id)
-        
-        group.permissions.clear()
+        group.delete()
 
         response = {
             'success': True, 

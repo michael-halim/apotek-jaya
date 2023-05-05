@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import Group, User, Permission
 from django.views.generic import View
 from django.contrib import messages
 from django.http import JsonResponse
@@ -356,9 +356,10 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
             nik_email = nik + '<br>' + member.employee_id.auth_user_id.email
             
             permission_object = member.employee_id.auth_user_id.groups.all()
-            permission_group, group_id = [], []
+            permission_group = ''
+            group_id = []
             for perm in permission_object:
-                permission_group.append(perm.name)
+                permission_group += perm.name + '<br>'
                 group_id.append(perm.id)
 
             employee_data.append({
@@ -388,14 +389,14 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         department = get_object_or_404(Departments, hash_uuid=department_uuid)
 
         employees = request.POST['employees[]']
+        employees_permission_group = request.POST['employees_permission_group[]']
 
         form_request = request.POST.copy()
         del form_request['employees[]']
+        del form_request['employees_permission_group[]']
 
         added_employees, removed_employees, reactivated_employees = [], [], []
 
-        # TODO: NEEDS TO EXTEND THE AUTH_GROUPS_PERMISSIONS, AUTH_USER_GROUPS, AUTH_USER_USER_PERMISSIONS
-        # ADD THIS UPDATE A LOGIC TO STORE GROUPS PERMISSION
         if employees != '':
             # Get Employees Hash
             form_request['employee_id'] = employees.split(',')
@@ -403,6 +404,16 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
             # Get Both Current and Old Employees Hash
             added_employees = [ x for x in form_request['employee_id'] ]
             
+            employees_permission_group = employees_permission_group.split(',')
+            print('employees_permission_group')
+            print(employees_permission_group)
+            for emp, perm_group in zip(added_employees,employees_permission_group):
+                if not emp or not perm_group:
+                    continue
+
+                employee_object = get_object_or_404(Employees, hash_uuid=emp)
+                group = get_object_or_404(Group, id=perm_group)
+                employee_object.auth_user_id.groups.add(group)
 
             # Old Employees Remove Employee from Current Employees
             # If the 'try' works, it means employees is reactivated
@@ -432,6 +443,10 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
             removed_employees = [ str(x.employee_id.hash_uuid) for x in department_members]
 
 
+
+        if isinstance(form_request['employee_id'], str):
+            form_request['employee_id'] = [form_request['employee_id']]
+            
         departments_form = DepartmentsForm(form_request or None, instance=department)
         department_members_form = DepartmentMembersForm(form_request or None)
 
@@ -449,7 +464,6 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 departments_form.save()
 
                 department_members_data = department_members_form.cleaned_data
-
                 if added_employees:
                     print('enter added employees')
                     # Add Additional Department Members Field to Database
@@ -466,6 +480,7 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
                         DepartmentMembers(**department_members_data).save()
 
                 if removed_employees:
+                    print('enter removed employees')
                     for emp in removed_employees:
                         employee = get_object_or_404(Employees, hash_uuid=emp)
                         department_members = get_object_or_404(DepartmentMembers, department_id = department, employee_id=employee, status=1)
@@ -476,6 +491,7 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
                         department_members.save()
 
                 if reactivated_employees:
+                    print('enter reactivated employees')
                     for emp in reactivated_employees:
                         employee = get_object_or_404(Employees, hash_uuid=emp)
                         department_members = get_object_or_404(DepartmentMembers, department_id = department, employee_id=employee, status=0)
@@ -579,9 +595,10 @@ class DetailDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
             nik_email = nik + '<br>' + member.employee_id.auth_user_id.email
 
             permission_object = member.employee_id.auth_user_id.groups.all()
-            permission_group, group_id = [], []
+            permission_group = ''
+            group_id = []
             for perm in permission_object:
-                permission_group.append(perm.name)
+                permission_group += perm.name + '<br>'
                 group_id.append(perm.id)
 
             employee_data.append({
