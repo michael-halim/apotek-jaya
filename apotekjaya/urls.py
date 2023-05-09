@@ -25,6 +25,7 @@ urlpatterns = [
     path('employees/', include('employees.urls')),
     path('departments/', include('departments.urls')),
     path('permission/', include('permission.urls')),
+    path('benefits/', include('benefits.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 handler404 = 'main_app.views.error_404_view'

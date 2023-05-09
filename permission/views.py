@@ -13,7 +13,7 @@ from .forms import PermissionForm, PermissionGroupForm
 
 class CreatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
-    permission_required = ['permission.add_permission']
+    permission_required = ['auth.view_permission', 'auth.add_permission']
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
@@ -28,6 +28,8 @@ class CreatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
             return JsonResponse(response)
         
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         permission_form = PermissionForm(is_creating=True)
         context = {
@@ -109,7 +111,7 @@ class CreatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
             return JsonResponse(response)
 class UpdatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
-    permission_required = ['permission.change_permission']
+    permission_required = ['auth.view_permission', 'auth.change_permission']
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
@@ -123,8 +125,9 @@ class UpdatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
             }
 
             return JsonResponse(response)
-    
-    #TODO: UPDATE NYA GA PKEK UUID, jadi di url nya bisa @@ karena belum terisi
+        
+        return redirect(reverse_lazy('main_app:login'))
+
     def get(self, request, employee_uuid):
         permission_data = []
         employee = Employees.objects.filter(hash_uuid=employee_uuid)[0]
@@ -156,6 +159,7 @@ class UpdatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
             'permission_data':permission_data,
             'is_view_only': True,
         }
+
         return JsonResponse(response)
 
     def post(self, request, employee_uuid):
@@ -237,7 +241,7 @@ class UpdatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 class DetailPermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
-    permission_required = ['permission.view_permission']
+    permission_required = ['auth.view_permission']
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
@@ -286,11 +290,14 @@ class DetailPermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return JsonResponse(response)
 
     def post(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
+
+        return redirect(reverse_lazy('main_app:login'))
 
 class DeletePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
-    permission_required = ['permission.delete_permission']
+    permission_required = ['auth.view_permission', 'auth.delete_permission']
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
@@ -305,8 +312,13 @@ class DeletePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
             return JsonResponse(response)
         
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
+
+        return redirect(reverse_lazy('main_app:login'))
 
     def post(self, request, employee_uuid):
         employee = get_object_or_404(Employees, hash_uuid=employee_uuid)
@@ -323,7 +335,7 @@ class DeletePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
     
 class ListPermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
-    permission_required = ['permission.view_permission']
+    permission_required = ['auth.view_permission']
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
@@ -338,6 +350,8 @@ class ListPermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
             return JsonResponse(response)
         
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         print('ENTER PERMISSION')
         context = {
@@ -396,11 +410,20 @@ class ListPermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 class PermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
-    permission_required = ['permission.view_permission']
+    permission_required = ['auth.view_permission']
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
-            return redirect(reverse_lazy('main_app:home'))
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
         
         return redirect(reverse_lazy('main_app:login'))
 
@@ -411,11 +434,30 @@ class PermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return render(request, 'permission/permission.html', context)
 
     def post(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
+
+        return redirect(reverse_lazy('main_app:login'))
 
 
-class CreatePermissionGroupView(LoginRequiredMixin, View):
+class CreatePermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['auth_view_group' ,'auth.add_group']
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
     
     def get(self, request):
         permission_group_form = PermissionGroupForm()
@@ -497,9 +539,25 @@ class CreatePermissionGroupView(LoginRequiredMixin, View):
 
             return JsonResponse(response)
 
-class UpdatePermissionGroupView(LoginRequiredMixin, View):
+class UpdatePermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['auth.view_group' ,'auth.change_group']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request, group_id):
         group = get_object_or_404(Group, id=group_id)
         group_permissions = group.permissions.all().values_list('id', flat=True)
@@ -609,9 +667,25 @@ class UpdatePermissionGroupView(LoginRequiredMixin, View):
 
             return JsonResponse(response)
 
-class DetailPermissionGroupView(LoginRequiredMixin, View):
+class DetailPermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['auth.view_group']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request, group_id):
         group = get_object_or_404(Group, id=group_id)
         group_permissions = group.permissions.all().values_list('id', flat=True)
@@ -643,13 +717,35 @@ class DetailPermissionGroupView(LoginRequiredMixin, View):
         return JsonResponse(response)
 
     def post(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
 
-class DeletePermissionGroupView(LoginRequiredMixin, View):
+        return redirect(reverse_lazy('main_app:login'))
+
+class DeletePermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['auth.view_group', 'auth.delete_group']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
+
+        return redirect(reverse_lazy('main_app:login'))
 
     def post(self, request, group_id):
         print('ENTER DELETE PERMISSION GROUP')
@@ -664,9 +760,25 @@ class DeletePermissionGroupView(LoginRequiredMixin, View):
 
         return JsonResponse(response)
 
-class ListPermissionGroupView(LoginRequiredMixin, View):
+class ListPermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['auth.view_group']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         print('ENTER PERMISSION GROUP')
         context = {
@@ -695,11 +807,30 @@ class ListPermissionGroupView(LoginRequiredMixin, View):
         return JsonResponse(response)
 
     def post(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
 
-class PermissionGroupView(LoginRequiredMixin, View):
+        return redirect(reverse_lazy('main_app:login'))
+
+class PermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['auth.view_group']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         context = {
             'title':'Permission Group'
@@ -707,4 +838,7 @@ class PermissionGroupView(LoginRequiredMixin, View):
         return render(request, 'permission/permission_group.html', context)
 
     def post(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
+
+        return redirect(reverse_lazy('main_app:login'))

@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'employees',
     'permission',
     'departments',
+    'benefits',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

@@ -64,7 +64,7 @@ class ListDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def post(self, request):
         if self.request.user.is_authenticated:
-            return redirect(reverse_lazy('departments:departments'))
+            return redirect(reverse_lazy('main_app:home'))
 
         return redirect(reverse_lazy('main_app:login'))
 
@@ -89,7 +89,7 @@ class AddEmployeeDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, Vi
     
     def get(self, request):
         if self.request.user.is_authenticated:
-            return redirect(reverse_lazy('departments:departments'))
+            return redirect(reverse_lazy('main_app:home'))
         
         return redirect(reverse_lazy('main_app:login'))
     
@@ -485,6 +485,8 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
                         employee = get_object_or_404(Employees, hash_uuid=emp)
                         department_members = get_object_or_404(DepartmentMembers, department_id = department, employee_id=employee, status=1)
 
+                        employee.auth_user_id.groups.clear()
+
                         department_members.status = 0
                         department_members.updated_at = datetime.now(ZoneInfo('Asia/Bangkok'))
                         department_members.updated_by = request.user
@@ -624,7 +626,7 @@ class DetailDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def post(self, request):
         if self.request.user.is_authenticated:
-            return redirect(reverse_lazy('departments:departments'))
+            return redirect(reverse_lazy('main_app:home'))
 
         return redirect(reverse_lazy('main_app:login'))
     
@@ -649,7 +651,7 @@ class DeleteDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
     
     def get(self, request):
         if self.request.user.is_authenticated:
-            return redirect(reverse_lazy('departments:departments'))
+            return redirect(reverse_lazy('main:home'))
 
         return redirect(reverse_lazy('main_app:login'))
 
@@ -694,6 +696,6 @@ class DepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def post(self, request):
         if self.request.user.is_authenticated:
-            return redirect(reverse_lazy('departments:departments'))
+            return redirect(reverse_lazy('main_app:home'))
 
         return redirect(reverse_lazy('main_app:login'))
