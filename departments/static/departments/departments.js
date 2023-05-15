@@ -1,25 +1,28 @@
 $(function () {
   	function initEmployeessDataTable(options = { columnDefs :{}}) {
-    $('#departments-employees-table').DataTable().destroy();
-    let employee_datatable = $('#departments-employees-table').DataTable({
-      initComplete: function () {
-        // Apply the search
-        this.api()
-          .columns()
-          .every(function () {
-            var that = this;
+        $('#departments-employees-table').DataTable().destroy();
+        let employee_datatable = $('#departments-employees-table').DataTable({
+            initComplete: function () {
+                // Apply the search
+                this.api()
+                .columns()
+                .every(function () {
+                    var that = this;
 
-            $('input', this.footer()).on('keyup change clear', function () {
-              if (that.search() !== this.value) {
-                that.search(this.value).draw();
-              }
-            });
-          });
-      },
-      columnDefs: options.columnDefs,
-      responsive: true,
-    });
-    return employee_datatable;
+                    $('input', this.footer()).on('keyup change clear', function () {
+                        if (that.search() !== this.value) {
+                            that.search(this.value).draw();
+                        }
+                    });
+                });
+            },
+
+            columnDefs: options.columnDefs,
+            responsive: true,
+
+        });
+
+        return employee_datatable;
   	}
 
 	function initEmployeesFooter(){
