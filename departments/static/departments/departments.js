@@ -66,15 +66,15 @@ $(function () {
                 },
                 {
                     data: 'status',
-                        render: function (data, type, row) {
-                            if (data === 1) {
-                                return '<span class="badge bg-success">Active</span>';
-                            } else if (data === 0) {
-                                return '<span class="badge bg-danger">Inactive</span>';
-                            } else {
-                                return '<span class="badge bg-secondary">Unknown</span>';
-                            }
-                        },
+                    render: function (data, type, row) {
+                        if (data === 1) {
+                            return '<span class="badge bg-success">Active</span>';
+                        } else if (data === 0) {
+                            return '<span class="badge bg-danger">Inactive</span>';
+                        } else {
+                            return '<span class="badge bg-secondary">Unknown</span>';
+                        }
+                    },
                 },
                 {
                     data: 'uq',

@@ -434,14 +434,15 @@ class ListBenefitSchemeView(LoginRequiredMixin, View):
         benefit_scheme_object = BenefitScheme.objects.all()
         benefit_scheme_data = []
 
-        for benefit in benefit_scheme_object:
-            context['hash'] = benefit.hash_uuid
+        for benefit_scheme in benefit_scheme_object:
+            context['hash'] = benefit_scheme.hash_uuid
             form_action = render_to_string('benefits/includes/benefit_scheme_form_action_button.html', context, request=request)
             
             benefit_scheme_data.append({
-                'name':benefit.name,
-                'description':benefit.description,
-                'created_at': benefit.created_at.date().strftime("%d %B %Y"),
+                'name':benefit_scheme.name,
+                'description':benefit_scheme.description,
+                'created_at': benefit_scheme.created_at.date().strftime("%d %B %Y"),
+                'status': benefit_scheme.status,
                 'uq': form_action, 
             })
 
@@ -612,7 +613,7 @@ class UpdateBenefitSchemeView(LoginRequiredMixin, View):
         detail_employee_benefits_form = DetailEmployeeBenefitsForm()
 
         context = {
-            'mode':'view',
+            'mode':'update',
             'benefit_scheme_form':benefit_scheme_form,
             'detail_employee_benefits_form':detail_employee_benefits_form,
             'modal_title':'view benefit scheme',
@@ -670,13 +671,20 @@ class UpdateBenefitSchemeView(LoginRequiredMixin, View):
             nik = employee.nik if employee.nik != '' else '-'
             nik_email = nik + '<br>' + employee.auth_user_id.email
 
+            department = DepartmentMembers.objects.filter(employee_id = emp).values_list('department_id')
+            department = Departments.objects.filter(id__in = department).values_list('name', flat=True)
+
+            department_data = ''
+            for dept in department:
+                department_data += dept + '<br>'
+
             employees_data.append({
                 'uq_emp': employee.hash_uuid,
                 'nik_email':nik_email,
                 'name': employee.name,
                 'address': employee.address,
                 'education': employee.education,
-                'department': 'masih belum tw',
+                'department': department_data,
                 'join_date': employee.created_at.date().strftime("%d %B %Y"),
                 'expired_at': employee.expired_at.strftime("%d %B %Y"),
                 'status': employee.status,
@@ -686,7 +694,7 @@ class UpdateBenefitSchemeView(LoginRequiredMixin, View):
         response = {
             'success':True,
             'form': form,
-            'is_view_only': True,
+            'is_view_only': False,
             'benefits_data':benefits_data,
             'employees_data':employees_data,
         }
@@ -751,6 +759,13 @@ class DetailBenefitSchemeView(LoginRequiredMixin, View):
         for emp in detail_employees:
             employee = get_object_or_404(Employees, id=emp)
             
+            department = DepartmentMembers.objects.filter(employee_id = emp).values_list('department_id')
+            department = Departments.objects.filter(id__in = department).values_list('name', flat=True)
+
+            department_data = ''
+            for dept in department:
+                department_data += dept + '<br>'
+
             nik = employee.nik if employee.nik != '' else '-'
             nik_email = nik + '<br>' + employee.auth_user_id.email
 
@@ -760,7 +775,7 @@ class DetailBenefitSchemeView(LoginRequiredMixin, View):
                 'name': employee.name,
                 'address': employee.address,
                 'education': employee.education,
-                'department': 'masih belum tw',
+                'department': department_data,
                 'join_date': employee.created_at.date().strftime("%d %B %Y"),
                 'expired_at': employee.expired_at.strftime("%d %B %Y"),
                 'status': employee.status,
@@ -787,8 +802,20 @@ class DeleteBenefitSchemeView(LoginRequiredMixin, View):
     def get(self, request):
         pass
 
-    def post(self, request):
-        pass
+    def post(self, request, benefit_scheme_uuid):
+        benefit_scheme = get_object_or_404(BenefitScheme, hash_uuid=benefit_scheme_uuid)
+        benefit_scheme.status = 0
+        benefit_scheme.deleted_at = datetime.now(ZoneInfo('Asia/Bangkok'))
+        benefit_scheme.deleted_by = request.user
+        benefit_scheme.save()
+
+        response = {
+            'success': True, 
+            'toast_message':'Benefit Scheme Deactivated Successfuly',
+            'is_close_modal':True
+        }
+
+        return JsonResponse(response)
 
 class BenefitSchemeView(LoginRequiredMixin, View):
     login_url = '/login/'

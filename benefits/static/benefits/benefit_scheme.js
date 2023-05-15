@@ -31,7 +31,10 @@ $(function () {
                 dataSrc: 'benefit_scheme_data',
             },
             responsive: true,
-            columnDefs: [{ targets: -1, width: '90px' }],
+            columnDefs: [
+                { targets: -1, width: '90px' },
+                { targets: -2, width: '90px' }
+            ],
             columns: [
                 {
                     data: 'name',
@@ -46,11 +49,21 @@ $(function () {
                     defaultContent: '-',
                 },
                 {
+                    data: 'status',
+                    render: function (data, type, row) {
+                        if (data === 1) {
+                            return '<span class="badge bg-success">Active</span>';
+                        } else if (data === 0) {
+                            return '<span class="badge bg-danger">Inactive</span>';
+                        } else {
+                            return '<span class="badge bg-secondary">Unknown</span>';
+                        }
+                    },
+                },
+                {
                     data: 'uq',
                 },
             ],
-            dom: 'lBfrtip',
-            buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
 		});
 
         return benefit_scheme_datatable;
@@ -180,29 +193,29 @@ $(function () {
     let detail_employees_datatable = null;
 	let benefit_scheme_datatable =  initBenefitSchemeDataTable();
 
-	// $('body').on('click', '.delete-benefit-scheme', function () {
-	// 	if (confirm('Do You Want to Deactivate this Benefits ?')) {
-    //         let benefit_uuid = $(this).data('uq');
-    //         let url = $(this).data('link');
-    //         url = url.replace('@@', benefit_uuid);
+	$('body').on('click', '.delete-benefit-scheme', function () {
+		if (confirm('Do You Want to Deactivate this Benefit Scheme ?')) {
+            let benefit_scheme_uuid = $(this).data('uq');
+            let url = $(this).data('link');
+            url = url.replace('@@', benefit_scheme_uuid);
 
-    //         $.ajax({
-    //             url: url,
-    //             method: 'POST',
-    //             data: {
-    //                 csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
-    //             },
-    //             success: function (result) {
-    //                 if (result.success === true) {
-    //                     benefit_scheme_datatable = initBenefitSchemeDataTable();
-    //                 } else if (result.success === false) {
-    //                     toastr['error'](result.toast_message);
-    //                 }
-    //             },
-    //             error: function (result) {},
-    //         });
-	// 	}
-	// });
+            $.ajax({
+                url: url,
+                method: 'POST',
+                data: {
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                },
+                success: function (result) {
+                    if (result.success === true) {
+                        benefit_scheme_datatable = initBenefitSchemeDataTable();
+                    } else if (result.success === false) {
+                        toastr['error'](result.toast_message);
+                    }
+                },
+                error: function (result) {},
+            });
+		}
+	});
 
 	$('body').on('click','.update-benefit-scheme, .view-benefit-scheme, #add-benefit-scheme', function () {
 		let benefit_scheme_uuid = $(this).data('uq');
