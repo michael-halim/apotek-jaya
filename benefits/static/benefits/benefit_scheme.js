@@ -298,18 +298,20 @@ $(function () {
                     $('#detail-employees-list-table').css({ width: '100%' });
                     $('#detail-employees-table').css({ width: '100%' });
                     
-                    $('#detail-benefits-table > tbody > tr').css({
-                        'background-color': '#e9ecef',
-                    });
+                    if (!result.is_view_only){
+                        $('#detail-benefits-table > tbody > tr').css({
+                            'background-color': '#e9ecef',
+                        });
 
-                    $('#detail-employees-list-table > tbody > tr').css({
-                        'background-color': '#e9ecef',
-                    });
-                    
-                    $('#detail-employees-table > tbody > tr').css({
-                        'background-color': '#e9ecef',
-                    });
-                    
+                        $('#detail-employees-list-table > tbody > tr').css({
+                            'background-color': '#e9ecef',
+                        });
+
+                        $('#detail-employees-table > tbody > tr').css({
+                            'background-color': '#e9ecef',
+                        });
+                    }
+
                     $('th#uq-benefit').css({ display: 'none' });
                     $('th#uq-emp-dept').css({ display: 'none' });
                     $('th#uq-emp').css({ display: 'none' });
@@ -344,11 +346,6 @@ $(function () {
             benefits_data.push(ben[0]);
         }
         
-        console.log('employees[]');
-        console.log(employees);
-
-        console.log('benefits[]');
-        console.log(benefits);
         form_data.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val());
         form_data.delete('value');
         form_data.append('value', cleaned_value);

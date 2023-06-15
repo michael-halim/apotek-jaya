@@ -420,9 +420,24 @@ class BenefitsView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
         return redirect(reverse_lazy('main_app:login'))
     
-
-class ListBenefitSchemeView(LoginRequiredMixin, View):
+class ListBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['benefits.read_benefit_scheme']
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
 
     def get(self, request):
         context = {
@@ -454,11 +469,31 @@ class ListBenefitSchemeView(LoginRequiredMixin, View):
         return JsonResponse(response)
 
     def post(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
 
-class CreateBenefitSchemeView(LoginRequiredMixin, View):
+        return redirect(reverse_lazy('main_app:login'))
+    
+
+class CreateBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['benefits.read_benefit_scheme', 'benefits.create_benefit_scheme']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         benefit_scheme_form = BenefitSchemeForm()
         detail_employee_benefits_form = DetailEmployeeBenefitsForm()
@@ -481,12 +516,11 @@ class CreateBenefitSchemeView(LoginRequiredMixin, View):
             'is_view_only': False,
             
         }
+
         return JsonResponse(response)
 
     def post(self, request):
         form_request = request.POST.copy()
-        print('before deleted')
-        print(form_request)
 
         employees = form_request['employees[]'].split(',')
         benefits = form_request['benefits[]'].split(',')
@@ -494,24 +528,18 @@ class CreateBenefitSchemeView(LoginRequiredMixin, View):
         employees_data = [ get_object_or_404(Employees, hash_uuid = emp) for emp in employees ]
         benefits_data = [ get_object_or_404(Benefits, hash_uuid=ben) for ben in benefits ]
 
-
         del form_request['employees[]']
         del form_request['benefits[]']
         
-        print('after deleted')
-        print(form_request)
-
         benefit_scheme_form = BenefitSchemeForm(form_request or None)
         detail_employee_benefits_form = DetailEmployeeBenefitsForm(form_request or None)
 
         if detail_employee_benefits_form.is_valid() and benefit_scheme_form.is_valid():
-            print('Benefits Form is Valid')
-            
             try:
-                print('SAVING TO DB')
                 benefit_scheme_data = benefit_scheme_form.cleaned_data
                 detail_employee_benefits_data = detail_employee_benefits_form.cleaned_data
                 
+                # Add Additional Benefit Scheme Field to Database
                 benefit_scheme_data['created_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
                 benefit_scheme_data['created_by'] = request.user
                 benefit_scheme_data['updated_at'] = None
@@ -522,10 +550,7 @@ class CreateBenefitSchemeView(LoginRequiredMixin, View):
                 created_benefit_scheme = BenefitScheme(**benefit_scheme_data)
                 created_benefit_scheme.save()
 
-                print('benefit_scheme_data')
-                print(benefit_scheme_data)
-
-                # Add Additional Benefits Field to Database
+                # Add Additional Detail Employee Benefits Field to Database
                 detail_employee_benefits_data['created_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
                 detail_employee_benefits_data['created_by'] = request.user
                 detail_employee_benefits_data['updated_at'] = None
@@ -534,14 +559,6 @@ class CreateBenefitSchemeView(LoginRequiredMixin, View):
                 detail_employee_benefits_data['deleted_by'] = None
                 detail_employee_benefits_data['benefit_scheme_id'] = created_benefit_scheme
                 del detail_employee_benefits_data['department']
-
-                print(detail_employee_benefits_data)
-
-                print('employees_data')
-                print(employees_data)
-
-                print('benefits_data')
-                print(benefits_data)
 
                 for employee in employees_data:
                     for benefit in benefits_data:
@@ -602,9 +619,25 @@ class CreateBenefitSchemeView(LoginRequiredMixin, View):
             return JsonResponse(response)
 
 
-class UpdateBenefitSchemeView(LoginRequiredMixin, View):
+class UpdateBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['benefits.read_benefit_scheme', 'benefits.update_benefit_scheme']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
 
     def get(self, request, benefit_scheme_uuid):
         benefit_scheme = get_object_or_404(BenefitScheme, hash_uuid=benefit_scheme_uuid)
@@ -616,7 +649,11 @@ class UpdateBenefitSchemeView(LoginRequiredMixin, View):
             'mode':'update',
             'benefit_scheme_form':benefit_scheme_form,
             'detail_employee_benefits_form':detail_employee_benefits_form,
-            'modal_title':'view benefit scheme',
+            'modal_title':'update benefit scheme',
+            'uq':{
+                'hash': benefit_scheme_uuid,
+                'update_link':str(reverse_lazy('benefits:update-benefit-scheme', args=["@@"])),
+            }
         }
         
         form = render_to_string('benefits/includes/benefit_scheme_form.html', context, request=request)
@@ -626,9 +663,6 @@ class UpdateBenefitSchemeView(LoginRequiredMixin, View):
                                     .values_list('benefit_id', flat=True)\
                                     .distinct()
         
-        print('detail_benefits')
-        print(detail_benefits)
-
         trash_icon = '''
             <div class='d-flex justify-content-center'>
                 <span class='delete-benefit-detail btn text-danger w-100'>
@@ -654,9 +688,6 @@ class UpdateBenefitSchemeView(LoginRequiredMixin, View):
                                     .values_list('employee_id', flat=True)\
                                     .distinct()
         
-        print('detail_employees')
-        print(detail_employees)
-
         trash_icon = '''
             <div class='d-flex justify-content-center'>
                 <span class='delete-employee-detail btn text-danger w-100'>
@@ -701,12 +732,167 @@ class UpdateBenefitSchemeView(LoginRequiredMixin, View):
 
         return JsonResponse(response)
 
-    def post(self, request):
-        pass
+    def post(self, request, benefit_scheme_uuid):
+        form_request = request.POST.copy()
+        benefit_scheme = get_object_or_404(BenefitScheme, hash_uuid = benefit_scheme_uuid)
+        benefit_scheme_form = BenefitSchemeForm(request.POST or None, instance=benefit_scheme)
 
-class DetailBenefitSchemeView(LoginRequiredMixin, View):
+        employees = form_request['employees[]'].split(',')
+        benefits = form_request['benefits[]'].split(',')
+        
+        # Check if employees or benefits is empty
+        added_employee_benefits, removed_employee_benefits, reactivated_employee_benefits = [], [], []
+        if len("".join(employees)) != 0 and len("".join(benefits)) != 0:
+            for emp_uuid in employees:
+                for ben_uuid in benefits:
+                    emp = get_object_or_404(Employees, hash_uuid = emp_uuid)
+                    ben = get_object_or_404(Benefits, hash_uuid = ben_uuid)
+                    added_employee_benefits.append((emp.id, ben.id))
+
+
+        # Check Is There Any Inactive Detail Employee Benefits in user Input
+        # If There is, then it's reactivated
+        inactive_employee_benefits = DetailEmployeeBenefits.objects\
+                                        .filter(benefit_scheme_id = benefit_scheme, status = 0)\
+                                        .values_list('employee_id', 'benefit_id')
+        
+        for emp_ben in inactive_employee_benefits:
+            try:
+                added_employee_benefits.remove(emp_ben)
+                reactivated_employee_benefits.append(emp_ben)
+            except : pass
+
+        # Check Is There Any Active Detail Employee Benefits in user Input
+        # If There isn't , then it's removed
+        active_employee_benefits = DetailEmployeeBenefits.objects\
+                                        .filter(benefit_scheme_id = benefit_scheme, status = 1)\
+                                        .values_list('employee_id', 'benefit_id')
+        
+        
+        for emp_ben in active_employee_benefits:
+            try: added_employee_benefits.remove(emp_ben)
+            except : removed_employee_benefits.append(emp_ben)
+
+
+        if benefit_scheme_form.is_valid():
+            try:
+                print('SAVING TO DB')
+
+                # Add Additional Field to Database
+                benefit_scheme_form.cleaned_data['updated_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
+                benefit_scheme_form.cleaned_data['updated_by'] = request.user
+
+                # Saving Benefits to Database
+                benefit_scheme_form.save()
+
+                if added_employee_benefits:
+                    employee_benefits_data = {
+                        'created_at': datetime.now(ZoneInfo('Asia/Bangkok')),
+                        'created_by': request.user,
+                        'updated_at': None,
+                        'updated_by': None,
+                        'deleted_at': None,
+                        'deleted_by': None,
+                        'benefit_scheme_id': benefit_scheme,
+                    }
+                    
+                    for emp_ben in added_employee_benefits:
+                        employee_benefits_data['employee_id'] = get_object_or_404(Employees, id=emp_ben[0])
+                        employee_benefits_data['benefit_id'] = get_object_or_404(Benefits, id=emp_ben[1])
+
+                        DetailEmployeeBenefits(**employee_benefits_data).save()
+
+
+                if removed_employee_benefits:
+                    for emp_ben in removed_employee_benefits:
+                        detail_emp_ben = get_object_or_404(DetailEmployeeBenefits, 
+                                                                    benefit_scheme_id = benefit_scheme, 
+                                                                    employee_id=emp_ben[0], 
+                                                                    benefit_id = emp_ben[1])
+                        
+                        detail_emp_ben.deleted_at = datetime.now(ZoneInfo('Asia/Bangkok'))
+                        detail_emp_ben.deleted_by = request.user
+                        detail_emp_ben.status = 0
+                        detail_emp_ben.save()
+
+
+                if reactivated_employee_benefits:
+                    for emp_ben in reactivated_employee_benefits:
+                        detail_emp_ben = get_object_or_404(DetailEmployeeBenefits, 
+                                                                    benefit_scheme_id = benefit_scheme, 
+                                                                    employee_id=emp_ben[0], 
+                                                                    benefit_id = emp_ben[1])
+
+                        detail_emp_ben.updated_at = datetime.now(ZoneInfo('Asia/Bangkok'))
+                        detail_emp_ben.updated_by = request.user
+                        detail_emp_ben.status = 1
+                        detail_emp_ben.save()
+
+
+            except Exception as e:
+                print(e)
+                response = {
+                    'success': False,
+                    'errors': [],
+                    'modal_messages':[],
+                    'toast_message':'We\'re sorry, but something went wrong on our end. Please try again later.',
+                    'is_close_modal':False,
+                }
+
+                return JsonResponse(response)
+            
+            response = {
+                'success': True, 
+                'toast_message':'Benefit Scheme Updated Successfuly',
+                'is_close_modal':True
+            }
+
+            return JsonResponse(response)
+
+        else:
+            print('ERRORS')
+            print(benefit_scheme_form.errors)
+            messages.error(request,'Please Correct The Errors Below')
+            
+            modal_messages = []
+            for message in messages.get_messages(request):
+                modal_messages.append({
+                    'message':str(message),
+                    'tags': message.tags
+                })
+
+            errors = {}
+            for field, error_list in benefit_scheme_form.errors.items():
+                errors[field] = error_list
+
+            response = {
+                'success': False, 
+                'errors': errors, 
+                'modal_messages':modal_messages,
+                'toast_message':'Please review the form and correct any errors before resubmitting',
+                'is_close_modal':False
+            }
+
+            return JsonResponse(response)
+
+class DetailBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['benefits.read_benefit_scheme']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
 
     def get(self, request, benefit_scheme_uuid):
         benefit_scheme = get_object_or_404(BenefitScheme, hash_uuid=benefit_scheme_uuid)
@@ -732,9 +918,6 @@ class DetailBenefitSchemeView(LoginRequiredMixin, View):
                                     .values_list('benefit_id', flat=True)\
                                     .distinct()
         
-        print('detail_benefits')
-        print(detail_benefits)
-
         benefits_data = []
         for ben in detail_benefits:
             benefit = get_object_or_404(Benefits, id=ben)
@@ -793,14 +976,36 @@ class DetailBenefitSchemeView(LoginRequiredMixin, View):
         return JsonResponse(response)
 
     def post(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
 
-class DeleteBenefitSchemeView(LoginRequiredMixin, View):
+        return redirect(reverse_lazy('main_app:login'))
+    
+
+class DeleteBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['benefits.read_benefit_scheme', 'benefits.delete_benefit_scheme']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
 
     def get(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
+
+        return redirect(reverse_lazy('main_app:login'))
 
     def post(self, request, benefit_scheme_uuid):
         benefit_scheme = get_object_or_404(BenefitScheme, hash_uuid=benefit_scheme_uuid)
@@ -817,9 +1022,24 @@ class DeleteBenefitSchemeView(LoginRequiredMixin, View):
 
         return JsonResponse(response)
 
-class BenefitSchemeView(LoginRequiredMixin, View):
+class BenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['benefits.read_benefit_scheme']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
 
     def get(self, request):
         context = {
@@ -834,11 +1054,30 @@ class BenefitSchemeView(LoginRequiredMixin, View):
 
         return redirect(reverse_lazy('main_app:login'))
     
-class AddBenefitDetailView(LoginRequiredMixin, View):
+class AddBenefitDetailView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['benefits.read_benefit_scheme']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
+
+        return redirect(reverse_lazy('main_app:login'))
 
     def post(self, request):
         print(request.POST)
@@ -888,9 +1127,25 @@ class AddBenefitDetailView(LoginRequiredMixin, View):
                 
             return JsonResponse(response)
         
-class ShowEmployeesDepartmentView(LoginRequiredMixin, View):
+class ShowEmployeesDepartmentView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['benefits.read_benefit_scheme']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         if self.request.user.is_authenticated:
             return redirect(reverse_lazy('main_app:home'))

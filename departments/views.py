@@ -70,7 +70,7 @@ class ListDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 class AddEmployeeDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
-    permission_required = ['departments.read_departments', 'departments.create_departments']
+    permission_required = ['departments.read_departments']
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:

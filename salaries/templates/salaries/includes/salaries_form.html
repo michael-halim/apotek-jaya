@@ -1,0 +1,27 @@
+<div class="modal-header">
+    <h5 class="modal-title">{{modal_title|title}}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+    <ul class="modal-messages"></ul>
+    <form id="salaries_form" method="POST">
+        <div class="row">
+            <div class="col-12">
+                <div class="mb-3">
+                    <label for="{{benefits_form.name.id_for_label}}" class="form-label">
+                        <b>{{ benefits_form.name.label }}</b>
+                    </label>
+                    {{ benefits_form.name }}
+                    <span class="form-error text-danger"></span>
+                </div>
+            </div>
+        </div>
+        <div class="mb-3 d-flex justify-content-end">
+            {% if mode == 'create' %}
+                <input type="button" value="Create Salaries" data-link="{{uq.create_link}}" class="btn btn-success" id="submit-form-salaries">
+            {% elif mode == 'update' %}
+                <input type="button" value="Update Salaries" data-uq="{{uq.hash}}" data-link="{{uq.update_link}}" class="btn btn-success" id="submit-form-salaries">
+            {% endif %}
+        </div>
+    </form>
+</div>

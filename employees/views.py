@@ -376,9 +376,14 @@ class DeleteEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             }
 
             return JsonResponse(response)
-        
+    
+    def get(self, request):
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
+
+        return redirect(reverse_lazy('main_app:login'))
+    
     def post(self, request, employee_uuid):
-        
         employee = get_object_or_404(Employees, hash_uuid=employee_uuid)
         employee.status = 0
         employee.save()
