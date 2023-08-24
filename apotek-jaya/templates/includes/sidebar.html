@@ -1,0 +1,429 @@
+{% load static %}
+
+{% block scripts_css %}
+<style>
+
+@media screen and (max-width: 480px) {
+    .offcanvas{
+        max-width: 75%;
+    }
+}
+
+.offcanvas{
+    max-width: 330px;
+    border-top-right-radius: 24px;
+    border-bottom-right-radius: 24px;
+    background: #0F4C75;
+    color: white;
+}
+
+.menu{
+    margin: 20px 0;
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.menu:hover{
+    background: #fff;
+    color: #0F4C75;
+}
+
+
+.logout-menu{
+    margin: 20px 0;
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: #BBE1FA;
+    /* color: #000; */
+    color: #212529;
+    font-weight: bold;
+}
+
+.hr-sidebar{
+    border-top: 5px solid #fff;
+    border-radius: 24px;
+}
+.selected{
+    background: #fff;
+    border-radius: 6px;
+    color: #0F4C75;
+}
+
+[class*="dropdown-child-"] {
+  margin: 10px 20px;
+}
+
+.rotate {
+  transform: rotate(180deg);
+}
+</style>
+
+<script>
+    $(function () {
+        $('[class*="dropdown-child-"]').hide();
+        $('body').on('click','.dropdown-parent',function(){
+            var id = $(this).attr('id');
+            $('.dropdown-child-' + id).slideToggle('fast');
+            
+            if ($(this).find('div.icon-dropdown > i').hasClass('fa-caret-up')){
+                $(this).find('div.icon-dropdown > i').removeClass('fa-caret-up');
+                $(this).find('div.icon-dropdown > i').addClass('fa-caret-down');
+            } else{
+                $(this).find('div.icon-dropdown > i').addClass('fa-caret-up');
+                $(this).find('div.icon-dropdown > i').removeClass('fa-caret-down');
+            }
+            
+        });
+        $('body').on('click','#logout',function(){
+            if (confirm('Are You Sure You Want to Logout ?')){
+                window.location.href = "{% url 'main_app:logout' %}"
+            }
+        });
+    });
+</script>
+{% endblock scripts_css %}
+<div class="offcanvas offcanvas-start" data-bs-scroll="true" id="sidebar">
+    <div class="offcanvas-header">
+        <a href="{% url 'main_app:home' %}">
+            <img src="{% static 'main_app/find-me-white-ver.png' %}" width="120" alt="">
+        </a>
+        <div class="btn text-white" data-bs-dismiss="offcanvas">
+            <i class="fa-solid fa-bars" ></i>
+        </div>
+    </div>
+    <div class="offcanvas-body">
+        <div class="col-12">
+            <div class="row text-center">
+                <p><b>Hi, {{ user }}</b></p>
+            </div>
+            
+        </div>
+        <hr class="hr-sidebar">
+        <a class="dropdown-item {% if request.path == '/' %} selected {% endif %}" href="{% url 'main_app:home' %}">
+            <div class="row menu">
+                <div class="col-2" style="padding-left: 9px;">
+                    <i class="fa-solid fa-house"></i>
+                </div>
+                <div class="col-10">
+                    Home
+                </div>
+            </div>
+        </a>
+
+        {% if perms.employees.read_employees %}
+            <div class="row menu dropdown-parent" id="employees">
+                <div class="col-2">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div class="col-8">
+                    Employees
+                </div>
+                <div class="col-2 icon-dropdown">
+                    <i class="fa-solid fa-caret-down"></i>
+                </div>
+            </div>
+        
+            <div class="wrapper-dropdown-employees">
+                {% if perms.employees.read_employees %}
+                    <a class="dropdown-item" href="{% url 'employees:employees' %}">
+                        <div class="row menu dropdown-child-employees {% if 'employees' in request.path %} selected {% endif %}">
+                            <div class="col-2">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="col-10">
+                                Employees
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if perms.auth.view_permission or perms.auth.view_group %}
+            <div class="row menu dropdown-parent" id="permission">
+                <div class="col-2">
+                    <i class="fa-solid fa-user-lock"></i>
+                </div>
+                <div class="col-8">
+                    Permission
+                </div>
+                <div class="col-2 icon-dropdown">
+                    <i class="fa-solid fa-caret-down"></i>
+                </div>
+            </div>
+        
+            <div class="wrapper-dropdown-employees">
+                {% if perms.auth.view_permission %}
+                    <a class="dropdown-item" href="{% url 'permission:permission' %}">
+                        <div class="row menu dropdown-child-permission">
+                            <div class="col-2">
+                                <i class="fa-solid fa-user-lock"></i>
+                            </div>
+                            <div class="col-10">
+                                Permission
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+
+                {% if perms.auth.view_group %}
+                    <a class="dropdown-item" href="{% url 'permission:permission-group' %}">
+                        <div class="row menu dropdown-child-permission">
+                            <div class="col-2">
+                                <i class="fa-solid fa-user-group"></i>
+                            </div>
+                            <div class="col-10">
+                                Group Permission
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if perms.departments.read_departments %}
+            <div class="row menu dropdown-parent" id="departments">
+                <div class="col-2">
+                    <i class="fa-solid fa-building-user"></i>
+                </div>
+                <div class="col-8">
+                    Departments
+                </div>
+                <div class="col-2 icon-dropdown">
+                    <i class="fa-solid fa-caret-down"></i>
+                </div>
+            </div>
+            
+            <div class="wrapper-dropdown-departments">
+                {% if perms.departments.read_departments %}
+                    <a class="dropdown-item" href="{% url 'departments:departments' %}">
+                        <div class="row menu dropdown-child-departments">
+                            <div class="col-2">
+                                <i class="fa-solid fa-building-user"></i>
+                            </div>
+                            <div class="col-10">
+                                Departments
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if perms.benefits.read_benefits or perms.benefits.read_benefit_scheme or perms.benefits.read_benefit_categories %}
+            <div class="row menu dropdown-parent" id="benefits">
+                <div class="col-2">
+                    <i class="fa-solid fa-user-plus"></i>
+                </div>
+                <div class="col-8">
+                    Benefits
+                </div>
+                <div class="col-2 icon-dropdown">
+                    <i class="fa-solid fa-caret-down"></i>
+                </div>
+            </div>
+            
+            <div class="wrapper-dropdown-benefits">
+                {% if perms.benefits.read_benefit_categories %}
+                    <a class="dropdown-item" href="{% url 'benefits:benefit-categories' %}">
+                        <div class="row menu dropdown-child-benefits">
+                            <div class="col-2">
+                                <i class="fa-solid fa-tags"></i>
+                            </div>
+                            <div class="col-10">
+                                Benefits Categories
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+
+                {% if perms.benefits.read_benefits %}
+                    <a class="dropdown-item" href="{% url 'benefits:benefits' %}">
+                        <div class="row menu dropdown-child-benefits">
+                            <div class="col-2">
+                                <i class="fa-solid fa-user-plus"></i>
+                            </div>
+                            <div class="col-10">
+                                Benefits
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+                
+                {% if perms.benefits.read_benefit_scheme %}
+                    <a class="dropdown-item" href="{% url 'benefits:benefit-scheme' %}">
+                        <div class="row menu dropdown-child-benefits">
+                            <div class="col-2">
+                                <i class="fa-solid fa-chart-pie"></i>
+                            </div>
+                            <div class="col-10">
+                                Benefit Scheme
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+        
+        {% if perms.salaries.read_salaries or perms.salaries.read_payroll_period %}
+            <div class="row menu dropdown-parent" id="salaries">
+                <div class="col-2">
+                    <i class="fa-solid fa-sack-dollar"></i>
+                </div>
+                <div class="col-8">
+                    Salaries
+                </div>
+                <div class="col-2 icon-dropdown">
+                    <i class="fa-solid fa-caret-down"></i>
+                </div>
+            </div>
+            
+            <div class="wrapper-dropdown-salaries">
+                {% if perms.salaries.read_payroll_period %}
+                    <a class="dropdown-item" href="{% url 'salaries:payroll-periods' %}">
+                        <div class="row menu dropdown-child-salaries">
+                            <div class="col-2">
+                                <i class="fa-solid fa-calendar-days"></i>
+                            </div>
+                            <div class="col-10">
+                                Payroll Period
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+                
+                {% if perms.salaries.read_salaries %}
+                    <a class="dropdown-item" href="{% url 'salaries:salaries' %}">
+                        <div class="row menu dropdown-child-salaries">
+                            <div class="col-2">
+                                <i class="fa-solid fa-sack-dollar"></i>
+                            </div>
+                            <div class="col-10">
+                                Salaries
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+        
+        {% if perms.presences.read_presences or perms.overtimes.read_overtimes or perms.leaves.read_leaves %}
+            <div class="row menu dropdown-parent" id="presence">
+                <div class="col-2">
+                    <i class="fa-solid fa-calendar-days"></i>
+                </div>
+                <div class="col-8">
+                    Presence
+                </div>
+                <div class="col-2 icon-dropdown">
+                    <i class="fa-solid fa-caret-down"></i>
+                </div>
+            </div>
+            
+            <div class="wrapper-dropdown-presence">
+                {% if perms.presences.read_presences %}
+                    <a class="dropdown-item" href="{% url 'presences:presences' %}">
+                        <div class="row menu dropdown-child-presence">
+                            <div class="col-2">
+                                <i class="fa-solid fa-calendar-days"></i>
+                            </div>
+                            <div class="col-10">
+                                Presences
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+
+                {% if perms.overtimes.read_leave_balances %}
+                    <a class="dropdown-item" href="{% url 'leaves:leaves-balances' %}">
+                        <div class="row menu dropdown-child-presence">
+                            <div class="col-2">
+                                <i class="fa-solid fa-user-group"></i>
+                            </div>
+                            <div class="col-10">
+                                Leaves Balances
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+                
+                {% if perms.overtimes.read_leave %}
+                    <a class="dropdown-item" href="{% url 'leaves:leaves' %}">
+                        <div class="row menu dropdown-child-presence">
+                            <div class="col-2">
+                                <i class="fa-solid fa-user-xmark"></i>
+                            </div>
+                            <div class="col-10">
+                                Leaves
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+
+                {% if perms.leaves.read_overtimes %}
+                    <a class="dropdown-item" href="{% url 'overtimes:overtimes' %}">
+                        <div class="row menu dropdown-child-presence">
+                            <div class="col-2">
+                                <i class="fa-solid fa-user-clock"></i>
+                            </div>
+                            <div class="col-10">
+                                Overtimes
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if perms.salaries.read_salaries or perms.salaries.read_payroll_period %}
+            <div class="row menu dropdown-parent" id="reports">
+                <div class="col-2">
+                    <i class="fa-solid fa-file-invoice"></i>
+                </div>
+                <div class="col-8">
+                    Reports
+                </div>
+                <div class="col-2 icon-dropdown">
+                    <i class="fa-solid fa-caret-down"></i>
+                </div>
+            </div>
+            
+            <div class="wrapper-dropdown-reports">
+                <a class="dropdown-item" href="{% url 'reports:reports-salary' %}">
+                    <div class="row menu dropdown-child-reports">
+                        <div class="col-2">
+                            <i class="fa-solid fa-file-invoice"></i>
+                        </div>
+                        <div class="col-10">
+                            Reports Salary
+                        </div>
+                    </div>
+                </a>
+                <a class="dropdown-item" href="{% url 'reports:reports-presence' %}">
+                    <div class="row menu dropdown-child-reports">
+                        <div class="col-2">
+                            <i class="fa-solid fa-file-invoice"></i>
+                        </div>
+                        <div class="col-10">
+                            Reports Presence
+                        </div>
+                    </div>
+                </a>
+            </div>
+        {% endif %}
+
+        <hr class="hr-sidebar">
+        <a class="dropdown-item" id="logout">
+            <div class="row logout-menu">
+                <div class="col-2">
+                    <i class="fa-solid fa-power-off"></i>
+                </div>
+                <div class="col-10">
+                    Logout
+                </div>
+            </div>
+        </a>
+    </div>
+</div>

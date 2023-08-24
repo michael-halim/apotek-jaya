@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+{{title}}
+{% endblock title %}
+
+{% block script_css %}
+<link rel="stylesheet" href="https://unpkg.com/@jarstone/dselect/dist/css/dselect.css">
+<script src="https://unpkg.com/@jarstone/dselect/dist/js/dselect.js"></script>
+<link rel="stylesheet" href="{% static 'reports/reports_presence.css' %}">
+
+{% endblock script_css %}
+
+{% block content %}
+{% include 'includes/navbar.html' %}
+{% include 'includes/sidebar.html' %}
+
+<div class="container-fluid my-1" style="width: 90%;">
+    
+    <div class="row">
+        <div class="col-md-2">
+                <h3>Reports Presence</h3>
+        </div>
+    </div>
+    <hr class="mt-0 mb-4">
+    
+    {% csrf_token %}
+
+    {% include 'reports/includes/reports_filter.html' %}
+    
+    {% include 'reports/includes/reports_subtotal_column.html' %}
+    
+    {% include 'reports/includes/reports_presence_table.html' %}
+
+    <script src="{% static 'reports/reports_presence.js' %}" defer></script>
+    
+</div>
+{% endblock content %}

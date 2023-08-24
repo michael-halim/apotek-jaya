@@ -1,0 +1,49 @@
+body{
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+    background-color: #B9D7EA;
+
+}
+::-webkit-scrollbar {
+    display: none;
+}
+
+div.benefit-categories-wrapper{
+    background-color: white;
+    padding: 20px;
+    border-radius: 16px;
+}
+
+div.benefit-categories-wrapper{
+    background-color: white;
+    padding: 20px;
+    border-radius: 16px;
+    width: 100%;
+}
+
+tfoot {
+    display: table-header-group;
+}
+
+li.error{
+    border: 1px solid #f1aeb5;
+    background-color: #f8d7da;
+    text-align: left;
+    padding: 0.5rem;
+    border-radius: 8px;
+    margin-top: 10px;
+    list-style-type: none;
+    color: #58151c;
+}
+
+ul.modal-messages{
+    padding: 0;
+    display: none;
+}
+li.info{
+    background-color: rgb(186, 228, 209);
+    text-align: center;
+    padding: 0.5rem;
+    border-radius: 8px;
+    margin-top: 10px;
+}

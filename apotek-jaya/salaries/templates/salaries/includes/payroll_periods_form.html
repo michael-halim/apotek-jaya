@@ -1,0 +1,63 @@
+<div class="modal-header">
+    <h5 class="modal-title">{{modal_title|title}}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+    <ul class="modal-messages"></ul>
+    <form id="payroll_periods_form" method="POST">
+        <div class="row">
+            <div class="col-12">
+                <div class="mb-3">
+                    <label for="{{payroll_periods_form.name.id_for_label}}" class="form-label">
+                        <b>{{ payroll_periods_form.name.label }}</b>
+                    </label>
+                    {{ payroll_periods_form.name }}
+                    <span class="form-error text-danger"></span>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="mb-3">
+                    <label for="{{payroll_periods_form.description.id_for_label}}" class="form-label">
+                        <b>{{ payroll_periods_form.description.label }}</b>
+                    </label>
+                    {{ payroll_periods_form.description }}
+                    <span class="form-error text-danger"></span>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="mb-3">
+                    <label for="{{payroll_periods_form.start_at.id_for_label}}" class="form-label">
+                        <b>{{ payroll_periods_form.start_at.label }}</b>
+                    </label>
+                    {{ payroll_periods_form.start_at }}
+                    <span class="form-error text-danger"></span>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="mb-3">
+                    <label for="{{payroll_periods_form.end_at.id_for_label}}" class="form-label">
+                        <b>{{ payroll_periods_form.end_at.label }}</b>
+                    </label>
+                    {{ payroll_periods_form.end_at }}
+                    <span class="form-error text-danger"></span>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="mb-3">
+                    <label for="{{payroll_periods_form.status.id_for_label}}" class="form-label">
+                        <b>{{ payroll_periods_form.status.label }}</b>
+                    </label>
+                    {{ payroll_periods_form.status }}
+                    <span class="form-error text-danger"></span>
+                </div>
+            </div>
+        </div>
+        <div class="mb-3 d-flex justify-content-end">
+            {% if mode == 'create' %}
+                <input type="button" value="Create Payroll Period" data-link="{{uq.create_link}}" class="btn btn-success" id="submit-form-payroll-periods">
+            {% elif mode == 'update' %}
+                <input type="button" value="Update Payroll Period" data-uq="{{uq.hash}}" data-link="{{uq.update_link}}" class="btn btn-success" id="submit-form-payroll-periods">
+            {% endif %}
+        </div>
+    </form>
+</div>

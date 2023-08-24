@@ -1,0 +1,68 @@
+###########
+# BUILDER #
+###########
+
+FROM python:3.11.4-slim-buster as builder
+
+WORKDIR /usr/src/app
+
+# Set Environment Variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Install System Dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc
+
+# Lint
+RUN pip install --upgrade pip
+COPY . .
+
+# Install Python Dependencies
+COPY ./requirements.txt .
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements.txt
+
+
+#########
+# FINAL #
+#########
+
+# pull official base image
+FROM python:3.11.4-slim-buster
+
+# Create Directory for the App User
+RUN mkdir -p /home/app
+
+# Create App User
+RUN addgroup --system app && adduser --system --group app
+
+# Create Appropriate Directory Structure
+ENV HOME=/home/app
+ENV APP_HOME=/home/app/web
+RUN mkdir $APP_HOME
+RUN mkdir $APP_HOME/staticfiles
+WORKDIR $APP_HOME
+
+# Install Dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends netcat
+COPY --from=builder /usr/src/app/wheels /wheels
+COPY --from=builder /usr/src/app/requirements.txt .
+RUN pip install --upgrade pip
+RUN pip install --no-cache /wheels/*
+
+# Copy entrypoint.prod.sh
+COPY ./entrypoint.prod.sh .
+RUN sed -i 's/\r$//g'  $APP_HOME/entrypoint.prod.sh
+RUN chmod +x  $APP_HOME/entrypoint.prod.sh
+
+# Copy Project
+COPY . $APP_HOME
+
+# chown all the files to the app user
+RUN chown -R app:app $APP_HOME
+
+# Change to the app user
+USER app
+
+# Run entrypoint.prod.sh
+ENTRYPOINT ["/home/app/web/entrypoint.prod.sh"]

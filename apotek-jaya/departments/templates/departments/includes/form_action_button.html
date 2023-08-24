@@ -1,0 +1,20 @@
+<div class="d-flex justify-content-center">
+    {% if perms.departments.read_departments %}
+        <span data-uq={{hash}} data-link={{view_link}} class="view-departments btn text-primary w-100">
+            <i class="bi bi-eye"></i>
+        </span>
+    {% endif %}
+
+    {% if perms.departments.update_departments %}
+        <span data-uq={{hash}} data-link={{update_link}} class="update-departments btn text-warning w-100">
+            <i class="bi bi-pencil"></i>
+        </span>
+    {% endif %}
+
+    {% if perms.departments.delete_departments %}
+        <span data-uq={{hash}} data-link={{delete_link}} class="delete-departments btn text-danger w-100">
+            <i class="bi bi-trash"></i>
+        </span>
+    {% endif %}
+
+</div>

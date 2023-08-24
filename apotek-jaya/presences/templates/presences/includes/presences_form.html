@@ -1,0 +1,60 @@
+<div class="modal-header">
+    <h5 class="modal-title">{{modal_title|title}}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+    <ul class="modal-messages"></ul>
+    <form id="presences_form" method="POST">
+        <div class="row">
+            <div class="row sticky-top">
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        <label for="{{presences_form.employee_id.id_for_label}}" class="form-label">
+                            <b>{{ presences_form.employee_id.label }}</b>
+                        </label>
+                        {{ presences_form.employee_id }}
+                        <span class="form-error text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        <label for="{{presences_form.start_at.id_for_label}}" class="form-label">
+                            <b>{{ presences_form.start_at.label }}</b>
+                        </label>
+                        {{ presences_form.start_at }}
+                        <span class="form-error text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        <label for="{{presences_form.end_at.id_for_label}}" class="form-label">
+                            <b>{{ presences_form.end_at.label }}</b>
+                        </label>
+                        {{ presences_form.end_at }}
+                        <span class="form-error text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        <label for="{{presences_form.status.id_for_label}}" class="form-label">
+                            <b>{{ presences_form.status.label }}</b>
+                        </label>
+                        {{ presences_form.status }}
+                        <span class="form-error text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="d-flex justify-content-end">
+                        {% if mode == 'create' %}
+                        <input type="button" value="Create Presence" data-link="{{uq.create_link}}" class="btn btn-success"
+                            id="submit-form-presences">
+                        {% elif mode == 'update' %}
+                        <input type="button" value="Update Presence" data-uq="{{uq.hash}}" data-link="{{uq.update_link}}"
+                            class="btn btn-success" id="submit-form-presences">
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  web:
+    container_name: web
+    image: apotekjaya
+    build: 
+      context: apotek-jaya/
+      dockerfile: Dockerfile.dev
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./apotek-jaya/:/usr/src/app/
+    ports:
+      - '8000:8000'
+    env_file:
+      - ./apotek-jaya/.env.dev
+    depends_on:
+      - db
+
+  db:
+    container_name: db
+    image: postgres:12
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./apotek-jaya/.env.dev.db
+    ports:
+      - '5432:5432'
+
+volumes:
+  postgres_data:

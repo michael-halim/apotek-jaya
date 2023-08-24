@@ -1,0 +1,112 @@
+<div class="modal-header">
+    <h5 class="modal-title">{{modal_title|title}}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+    <ul class="modal-messages"></ul>
+    <form id="benefit_scheme_form" method="POST">
+        <div class="row">
+            <div class="col-12">
+                <div class="mb-3">
+                    <label for="{{benefit_scheme_form.name.id_for_label}}" class="form-label">
+                        <b>{{ benefit_scheme_form.name.label }}</b>
+                    </label>
+                    {{ benefit_scheme_form.name }}
+                    <span class="form-error text-danger"></span>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="mb-3">
+                    <label for="{{benefit_scheme_form.description.id_for_label}}" class="form-label">
+                        <b>{{ benefit_scheme_form.description.label }}</b>
+                    </label>
+                    {{ benefit_scheme_form.description }}
+                    <span class="form-error text-danger"></span>
+                </div>
+            </div>
+            
+            <div class="col-12">
+                <div class="mb-3">
+                    <label for="{{benefit_scheme_form.status.id_for_label}}" class="form-label">
+                        <b>{{ benefit_scheme_form.status.label }}</b>
+                    </label>
+                    {{ benefit_scheme_form.status }}
+                    <span class="form-error text-danger"></span>
+                </div>
+            </div>
+        </div>
+        
+        {% if mode == 'create' or mode == 'update' %}
+            <div class="col-12">
+                <div class="mb-3">
+                    <label for="{{detail_employee_benefits_form.benefit_id.id_for_label}}" class="form-label">
+                        <b>{{ detail_employee_benefits_form.benefit_id.label }}</b>
+                    </label>
+                    {{ detail_employee_benefits_form.benefit_id }}
+                    <span class="form-error text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <input type="button" class="btn btn-success" id="add-benefit-detail" role="button" value="Add Benefit">
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="col-12">
+            <div class="m-3">
+                <label class="form-label"><b>Added Benefit(s)</b></label>
+            </div>
+
+            <div class="mb-5">
+                {% include 'benefits/includes/detail_benefits_table.html' %}
+            </div>
+        </div>
+
+        {% if mode == 'create' or mode == 'update' %}
+            <div class="col-12">
+                <div class="mb-3">
+                    <label for="{{detail_employee_benefits_form.department.id_for_label}}" class="form-label">
+                        <b>{{ detail_employee_benefits_form.department.label }}</b>
+                    </label>
+                    {{ detail_employee_benefits_form.department }}
+                    <span class="form-error text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <input type="button" class="btn btn-success" id="show-employees-department" role="button" value="Show Employees in Department">
+                </div>
+                
+            </div>
+        {% endif %}
+
+        <div class="col-12">
+            {% if mode == 'create' or mode == 'update' %}
+                <div class="m-3">
+                    <label class="form-label"><b>Employee(s) in Department</b></label>
+                </div>
+            
+                <div class="mb-5">
+                    {% include 'benefits/includes/detail_employees_list_table.html' %}
+                </div>
+
+            {% endif %}
+
+            <div class="m-3">
+                <label class="form-label"><b>Added Employee(s)</b></label>
+            </div>
+
+            <div class="mb-5">
+                {% include 'benefits/includes/detail_employees_table.html' %}
+            </div>
+
+        </div>
+
+        <div class="mb-3 d-flex justify-content-end">
+            {% if mode == 'create' %}
+                <input type="button" value="Create Benefit Scheme" data-link="{{uq.create_link}}" class="btn btn-success" id="submit-form-benefit-scheme">
+            {% elif mode == 'update' %}
+                <input type="button" value="Update Benefit Scheme" data-uq="{{uq.hash}}" data-link="{{uq.update_link}}" class="btn btn-success" id="submit-form-benefit-scheme">
+            {% endif %}
+        </div>
+    </form>
+</div>

@@ -1,0 +1,28 @@
+FROM python:3.11.4-slim-buster
+
+WORKDIR /usr/src/app
+
+# Set Environment Variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Install System Dependencies
+RUN apt-get update && apt-get install -y netcat
+
+# Install System Dependencies
+RUN pip install --upgrade pip
+COPY ./requirements.txt .
+RUN pip install -r requirements.txt
+
+# Copy Entrypoint
+COPY ./entrypoint.sh .
+RUN sed -i 's/\r$//g' /usr/src/app/entrypoint.sh
+RUN chmod +x /usr/src/app/entrypoint.sh
+
+# Copy Project
+COPY . .
+
+EXPOSE 8000
+
+# Run Entrypoint
+ENTRYPOINT ["/usr/src/app/entrypoint.sh"]

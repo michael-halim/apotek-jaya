@@ -1,0 +1,19 @@
+<div class="d-flex justify-content-center">
+    {% if perms.benefits.read_benefits %}
+        <span data-uq='{{hash}}' data-link="{{view_link}}" class="view-benefits btn text-primary w-100">
+            <i class="bi bi-eye"></i>
+        </span>
+    {% endif %}
+
+    {% if perms.benefits.update_benefits %}
+        <span data-uq='{{hash}}' data-link="{{update_link}}" class="update-benefits btn text-warning w-100">
+            <i class="bi bi-pencil"></i>
+        </span>
+    {% endif %}
+
+    {% if perms.benefits.delete_benefits %}
+        <span data-uq='{{hash}}' data-link="{{delete_link}}" class="delete-benefits btn text-danger w-100">
+            <i class="bi bi-trash"></i>
+        </span>
+    {% endif %}
+</div>

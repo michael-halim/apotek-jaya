@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+Login
+{% endblock title %}
+
+{% block script_css %}
+<script src="{% static 'main_app/login.js' %}"></script>
+<link rel="stylesheet" href="{% static 'main_app/login.css' %}">
+{% endblock script_css %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row ">
+        
+        <div class="col-4"></div>
+        <div class="col-4 form-wrapper">
+            {% if messages %}
+                <ul class="messages">
+                    {% for message in messages %}
+                    <li {% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <form action="" class="login" method="POST">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="login_username" class="form-label">Username</label>
+                    <input type="text" placeholder="Username" name="username"
+                            autocomplete="off" id="login_username" class="form-control" 
+                            value="{{ input_username }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="login_pass" class="form-label">Password</label>
+                    <input type="password" 
+                            placeholder="Password" 
+                            name="password" 
+                            class="form-control"
+                            id="login_pass" 
+                            required>
+                </div>
+                <div class="mb-3">
+                    <div class="row">
+                        <div class="col-8 offset-2">
+                            <input type="submit" value="Login" class="btn btn-success w-100">
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-4"></div>
+    </div>
+</div>
+{% endblock content %}

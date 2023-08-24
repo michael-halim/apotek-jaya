@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+{{title}}
+{% endblock title %}
+
+{% block script_css %}
+<link rel="stylesheet" href="https://unpkg.com/@jarstone/dselect/dist/css/dselect.css">
+<script src="https://unpkg.com/@jarstone/dselect/dist/js/dselect.js"></script>
+<link rel="stylesheet" href="{% static 'salaries/payroll_periods.css' %}">
+
+{% endblock script_css %}
+
+{% block content %}
+{% include 'includes/navbar.html' %}
+{% include 'includes/sidebar.html' %}
+
+<div class="container-fluid my-1" style="width: 90%;">
+    
+    {% include 'salaries/includes/payroll_periods_modal.html' %}
+    <div class="row">
+        <div class="col-md-2"><h3>Payroll Period</h3></div>
+                <div class="col-md-1 mt-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="green" class="bi bi-plus-square-fill" viewBox="0 0 16 16" role="button" data-link="{% url 'salaries:create-payroll-periods' %}" id="add-payroll-periods">
+                        <path d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm6.5 4.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3a.5.5 0 0 1 1 0z"/>
+                    </svg>
+                    &nbsp;
+                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="green" class="bi bi-file-earmark-excel-fill" viewBox="0 0 16 16" role="button" id="import-payroll-periods">
+                        <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0zM9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1zM5.884 6.68 8 9.219l2.116-2.54a.5.5 0 1 1 .768.641L8.651 10l2.233 2.68a.5.5 0 0 1-.768.64L8 10.781l-2.116 2.54a.5.5 0 0 1-.768-.641L7.349 10 5.116 7.32a.5.5 0 1 1 .768-.64z" />
+                    </svg>
+                </div>
+    </div>
+    <hr class="mt-0 mb-4">
+    
+    {% csrf_token %}
+
+    {% include 'salaries/includes/payroll_periods_table.html' %}
+
+    <script src="{% static 'salaries/payroll_periods.js' %}" defer></script>
+    
+</div>
+{% endblock content %}

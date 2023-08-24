@@ -1,0 +1,251 @@
+<div class="modal-header">
+    <h5 class="modal-title">{{modal_title|title}}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+    <ul class="modal-messages"></ul>
+    <form id="salaries_form" method="POST">
+        <div class="row">
+            <div class="col-4">
+                <div class="row sticky-top">
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.period_id.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.period_id.label }}</b>
+                            </label>
+                            {{ salaries_form.period_id }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.employee_id.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.employee_id.label }}</b>
+                            </label>
+                            {{ salaries_form.employee_id }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.presence_count.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.presence_count.label }}</b>
+                            </label>
+                            {{ salaries_form.presence_count }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.total_work_hours.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.total_work_hours.label }}</b>
+                            </label>
+                            {{ salaries_form.total_work_hours }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.overtime_hours_count.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.overtime_hours_count.label }}</b>
+                            </label>
+                            {{ salaries_form.overtime_hours_count }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.overtime_hours_nominal.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.overtime_hours_nominal.label }}</b>
+                            </label>
+                            {{ salaries_form.overtime_hours_nominal }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.leave_count.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.leave_count.label }}</b>
+                            </label>
+                            {{ salaries_form.leave_count }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.sick_count.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.sick_count.label }}</b>
+                            </label>
+                            {{ salaries_form.sick_count }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.permit_count.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.permit_count.label }}</b>
+                            </label>
+                            {{ salaries_form.permit_count }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.pph21.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.pph21.label }}</b>
+                            </label>
+                            {{ salaries_form.pph21 }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.ptkp.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.ptkp.label }}</b>
+                            </label>
+                            {{ salaries_form.ptkp }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.gross_salary.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.gross_salary.label }}</b>
+                            </label>
+                            {{ salaries_form.gross_salary }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.final_salary.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.final_salary.label }}</b>
+                            </label>
+                            {{ salaries_form.final_salary }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.base_salary.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.base_salary.label }}</b>
+                            </label>
+                            {{ salaries_form.base_salary }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.allowance.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.allowance.label }}</b>
+                            </label>
+                            {{ salaries_form.allowance }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.bonus.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.bonus.label }}</b>
+                            </label>
+                            {{ salaries_form.bonus }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.deduction.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.deduction.label }}</b>
+                            </label>
+                            {{ salaries_form.deduction }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.thr.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.thr.label }}</b>
+                            </label>
+                            {{ salaries_form.thr }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <label for="{{salaries_form.status.id_for_label}}" class="form-label">
+                                <b>{{ salaries_form.status.label }}</b>
+                            </label>
+                            {{ salaries_form.status }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-8">
+                {% if mode == 'update' %}
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label for="{{salary_adjustments_form.name.id_for_label}}" class="form-label">
+                                    <b>{{ salary_adjustments_form.name.label }}</b>
+                                </label>
+                                {{ salary_adjustments_form.name }}
+                                <span class="form-error text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label for="{{salary_adjustments_form.description.id_for_label}}" class="form-label">
+                                    <b>{{ salary_adjustments_form.description.label }}</b>
+                                </label>
+                                {{ salary_adjustments_form.description }}
+                                <span class="form-error text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <b>
+                                    <label class="form-check-label" 
+                                            for="{{salary_adjustments_form.is_deduction.id_for_label}}">
+                                            {{ salary_adjustments_form.is_deduction.label }}
+                                    </label>
+                                </b>
+                                    {{ salary_adjustments_form.is_deduction }}
+                                <span class="form-error text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label for="{{salary_adjustments_form.value.id_for_label}}" class="form-label">
+                                    <b>{{ salary_adjustments_form.value.label }}</b>
+                                </label>
+                                {{ salary_adjustments_form.value }}
+                                <span class="form-error text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="col-6">
+                            <div style="margin-top: 30px;">
+                                <input type="button" class="btn btn-success" id="add-salary-adjustment" value="Add Salary Adjustment" data-uq="{{uq.hash}}">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="my-2"></div>
+                {% endif %}
+                {% include 'salaries/includes/salary_components_table.html' %}
+            
+                <div class="mb-3 d-flex justify-content-end sticky-bottom update-salaries-bottom-wrapper">
+                    {% if mode == 'update' %}
+                        <input type="button" value="Update Salaries" data-uq="{{uq.hash}}" data-link="{{uq.update_link}}" class="btn btn-success" id="submit-form-salaries">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        
+    </form>
+</div>

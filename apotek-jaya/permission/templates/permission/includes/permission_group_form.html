@@ -1,0 +1,71 @@
+{% load custom_tags %}
+
+<div class="modal-header">
+    <h5 class="modal-title">{{modal_title|title}}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+    <ul class="modal-messages"></ul>
+    <form id="permission_group_form" method="POST">
+        {% for field in permission_group_form %}
+            {% if field.label|lower == 'permissions' %}
+                {% for choices in field.choices %}
+                    {{ choices }}
+                {% endfor %}
+                <div class="mb-3">
+                    <label for="{{field.id_for_label}}" id="permissions" class="form-label m-0"><b>{{field.label}}</b></label>
+                    <span class="form-error text-danger d-block"></span>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-3 mb-4">
+                        <input type="checkbox" value="check-all-permissions"
+                                 class="form-check-input" id="check-all-permissions"
+                                {% if mode == 'view' %} disabled {% endif %} >
+                        <label class="form-check-label align-bottom" for="check-all-permissions">
+                            <b>Check All Permissions</b>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    {% for f in field %}
+                        {% if forloop.counter0|divisibleby:'4' %}
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <input type="checkbox" id="check-all-group-{{forloop.counter0}}" 
+                                        class="form-check-input" {% if mode == 'view' %} disabled {% endif %}>
+                                <label class="form-check-label align-bottom" for="check-all-group-{{forloop.counter0}}">
+                                    <b>{{ f.choice_label|split:' '|slice:'1:'|join:' '}}</b>
+                                </label>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="col-md-3 mb-3">
+                            {{f.tag}}
+                            <label class="form-check-label align-bottom" for="{{f.id_for_label}}">{{f.choice_label}}</label>
+                        </div>
+
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="mb-3">
+                    <label for="{{field.id_for_label}}" class="form-label"><b>{{field.label}}</b></label>
+                    {{field}}
+                    <span class="form-error text-danger"></span>
+                </div>
+            {% endif %}
+        
+        {% endfor %}
+
+        <div class="mb-3 d-flex justify-content-end">
+            {% if mode == 'create' %}
+                <input type="button" value="Create Permission Group" data-link="{{uq.create_link}}" class="btn btn-success" id="submit-form-permission-group">
+            {% elif mode == 'update' %}
+                <input type="button" value="Update Permission Group" data-uq="{{uq.hash}}" data-link="{{uq.update_link}}" class="btn btn-success" id="submit-form-permission-group">
+            {% endif %}
+        </div>
+    </form>
+</div>
