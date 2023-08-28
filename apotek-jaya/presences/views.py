@@ -113,7 +113,6 @@ class CreatePresencesView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return JsonResponse(response)
 
     def post(self, request):
-        print(request.POST)
         failed_response = {
             'success': False, 
             'errors': [], 
@@ -160,7 +159,6 @@ class CreatePresencesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 Presences(**presences_data).save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False, 
                     'errors': [], 
@@ -193,9 +191,6 @@ class CreatePresencesView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
             for field, error_list in presences_form.errors.items():
                 errors[field] = error_list
-
-            print('ERRORS')
-            print(errors)
 
             response = {
                 'success': False, 
@@ -259,7 +254,6 @@ class UpdatePresencesView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return JsonResponse(response)
 
     def post(self, request, presence_uuid):
-        print(request.POST)
         employee = get_object_or_404(Employees, hash_uuid=request.POST['employee_id'] )
         presence_object = get_object_or_404(Presences, hash_uuid=presence_uuid)
         presences_form = PresencesForm(request.POST or None, instance=presence_object)
@@ -289,7 +283,6 @@ class UpdatePresencesView(LoginRequiredMixin, PermissionRequiredMixin, View):
         
         if presences_form.is_valid():
             try:
-                print('SAVING TO DB')
 
                 # Add Additional Field to Database
                 presences_form.cleaned_data['updated_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
@@ -299,7 +292,6 @@ class UpdatePresencesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 presences_form.save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False,
                     'errors': [],
@@ -319,8 +311,6 @@ class UpdatePresencesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             return JsonResponse(response)
 
         else:
-            print('ERRORS')
-            print(presences_form.errors)
             messages.error(request,'Please Correct The Errors Below')
             
             modal_messages = []
@@ -596,4 +586,5 @@ class CreatePresencesBulkView(LoginRequiredMixin, View):
             'modal_messages':[],
             'is_close_modal':False,
         }
+        
         return JsonResponse(failed_response)

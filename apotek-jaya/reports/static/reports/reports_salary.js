@@ -51,12 +51,11 @@ $(function () {
             'thr': 0,
             'bonus': 0,
             'gross_salary': 0,
+            'pph21': 0,
             'final_salary': 0,
         };
 
         for (const salary of reports_salary_datatable.rows().data().toArray()) {
-            console.log('salary[0]');
-            console.log(salary['nik_name']);
             subtotal['base_salary'] += parseInt(salary['base_salary']);
             subtotal['allowance'] += parseInt(salary['allowance']);
             subtotal['overtime'] += parseInt(salary['overtime']);
@@ -64,6 +63,7 @@ $(function () {
             subtotal['thr'] += parseInt(salary['thr']);
             subtotal['bonus'] += parseInt(salary['bonus']);
             subtotal['gross_salary'] += parseInt(salary['gross_salary']);
+            subtotal['pph21'] += parseInt(salary['pph21']);
             subtotal['final_salary'] += parseInt(salary['final_salary']);
         }
 
@@ -78,6 +78,7 @@ $(function () {
             thr: `${subtotal['thr']}`,
             bonus: `${subtotal['bonus']}`,
             gross_salary: `${subtotal['gross_salary']}`,
+            pph21: `${subtotal['pph21']}`,
             final_salary: `${subtotal['final_salary']}`
 
         }).draw(true);
@@ -163,6 +164,13 @@ $(function () {
                 },
                 {
                     data: 'gross_salary',
+                    defaultContent: '-',
+                    render: function(data, type, row){
+                        return 'Rp. ' + format_number(data);
+                    }
+                },
+                {
+                    data: 'pph21',
                     defaultContent: '-',
                     render: function(data, type, row){
                         return 'Rp. ' + format_number(data);

@@ -108,7 +108,6 @@ $(function () {
 			method: 'GET',
 			success: function (result) {
 				if (result.success === true) {
-                    console.log(result);
 					$('#form-benefit-categories-modal .modal-content').html(result.form);
                     
                     $('#form-benefit-categories-modal').modal('show');

@@ -62,6 +62,7 @@ class ListReportsSalaryView(LoginRequiredMixin, View):
                 'thr': salary.thr,
                 'bonus': salary.bonus,
                 'gross_salary': salary.gross_salary,
+                'pph21': salary.pph21,
                 'final_salary': salary.final_salary,
             })
 

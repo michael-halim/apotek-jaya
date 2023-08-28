@@ -163,7 +163,6 @@ $(function () {
 			method: 'GET',
 			success: function (result) {
 				if (result.success === true) {
-                    console.log(result);
 					$('#form-overtimes-modal .modal-content').html(result.form);
                     
                     if (!result.is_view_only){

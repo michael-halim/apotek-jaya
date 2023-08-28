@@ -20,6 +20,13 @@ urlpatterns = [
     path('category/create/',views.CreateBenefitCategoriesView.as_view(), name='create-benefit-categories'),
     path('category',views.BenefitCategoriesView.as_view(), name='benefit-categories'),
     
+    path('ptkp/detail/<str:ptkp_type_uuid>',views.DetailPTKPTypeView.as_view(), name='detail-ptkp-type'),
+    path('ptkp/delete/<str:ptkp_type_uuid>',views.DeletePTKPTypeView.as_view(), name='delete-ptkp-type'),
+    path('ptkp/update/<str:ptkp_type_uuid>',views.UpdatePTKPTypeView.as_view(), name='update-ptkp-type'),
+    path('ptkp/fetch-ptkp-type/',views.ListPTKPTypeView.as_view(), name='fetch-ptkp-type'),
+    path('ptkp/create/',views.CreatePTKPTypeView.as_view(), name='create-ptkp-type'),
+    path('ptkp',views.PTKPTypeView.as_view(), name='ptkp-type'),
+    
     path('detail/<str:benefit_uuid>',views.DetailBenefitsView.as_view(), name='detail-benefits'),
     path('delete/<str:benefit_uuid>',views.DeleteBenefitsView.as_view(), name='delete-benefits'),
     path('update/<str:benefit_uuid>',views.UpdateBenefitsView.as_view(), name='update-benefits'),

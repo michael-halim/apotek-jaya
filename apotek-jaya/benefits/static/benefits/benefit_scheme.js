@@ -5,10 +5,6 @@ $(function () {
         return num.replace(/(\d)(?=(\d{3})+$)/g, '$1.');
     }
 
-    function removeElementFromArray(arr, removed_value, n_deleted=1){
-        return arr.splice(arr.indexOf(removed_value), n_deleted);
-    }
-
 	function initBenefitSchemeDataTable() {
 		$('#benefit-scheme-table').DataTable().destroy();
 		let benefit_scheme_datatable = $('#benefit-scheme-table').DataTable({
@@ -227,7 +223,6 @@ $(function () {
 			method: 'GET',
 			success: function (result) {
 				if (result.success === true) {
-                    console.log(result);
 					$('#form-benefit-scheme-modal .modal-content').html(result.form);
                     
                     if (!result.is_view_only){

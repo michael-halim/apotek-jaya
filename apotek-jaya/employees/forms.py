@@ -1,3 +1,4 @@
+from benefits.models import PTKPType
 from django import forms
 
 from .models import Employees
@@ -8,8 +9,18 @@ from zoneinfo import ZoneInfo
 import re
 
 class EmployeesForm(forms.ModelForm):
+    ptkp_type_id = forms.ModelChoiceField(
+                    queryset = PTKPType.objects.all(),
+                    widget=forms.Select(
+                        attrs = {
+                            'id':'ptkp_type_id',
+                            'class':'form-control',
+                        }),
+                    required=True,
+                    label='PTKP Type',
+                    to_field_name='hash_uuid')
+    
     def clean_name(self):
-        print('Enter Clean Name')
         cleaned_data = super().clean()
         name = cleaned_data.get('name')
         errors = []
@@ -26,7 +37,6 @@ class EmployeesForm(forms.ModelForm):
         return name
 
     def clean_nik(self):
-        print('Enter Clean NIK')
         cleaned_data = super().clean()
         nik = cleaned_data.get('nik')
         errors = []
@@ -43,7 +53,6 @@ class EmployeesForm(forms.ModelForm):
         return nik
     
     def clean_birthplace(self):
-        print('Enter Clean Birthplace')
         cleaned_data = super().clean()
         birthplace = cleaned_data.get('birthplace')
         errors = []
@@ -58,7 +67,6 @@ class EmployeesForm(forms.ModelForm):
     
 
     def clean_birthdate(self):
-        print('Enter Clean Birthdate')
         cleaned_data = super().clean()
         birthdate = cleaned_data.get('birthdate')
         errors = []
@@ -81,7 +89,6 @@ class EmployeesForm(forms.ModelForm):
         return birthdate
     
     def clean_bloodtype(self):
-        print('Enter Clean Bloodtype')
         cleaned_data = super().clean()
         bloodtype = cleaned_data.get('bloodtype')
         errors = []
@@ -102,7 +109,6 @@ class EmployeesForm(forms.ModelForm):
         return bloodtype
 
     def clean_address(self):
-        print('Enter Clean Address')
         cleaned_data = super().clean()
         address = cleaned_data.get('address')
         errors = []
@@ -131,7 +137,6 @@ class EmployeesForm(forms.ModelForm):
         return address
 
     def clean_rt(self):
-        print('Enter Clean RT')
         cleaned_data = super().clean()
         rt = cleaned_data.get('rt')
         errors = []
@@ -145,13 +150,11 @@ class EmployeesForm(forms.ModelForm):
                 errors.append('RT Must Only Contain Number 0-9')
 
         if errors:
-            print('ENTER ERRORS RT')
             raise forms.ValidationError(errors)
         
         return rt
     
     def clean_rw(self):
-        print('Enter Clean RW')
         cleaned_data = super().clean()
         rw = cleaned_data.get('rw')
         errors = []
@@ -169,7 +172,6 @@ class EmployeesForm(forms.ModelForm):
         return rw
     
     def clean_province(self):
-        print('Enter Clean Province')
         cleaned_data = super().clean()
         province = cleaned_data.get('province')
         errors = []
@@ -187,7 +189,6 @@ class EmployeesForm(forms.ModelForm):
         return province
     
     def clean_domicile(self):
-        print('Enter Clean Domicile')
         cleaned_data = super().clean()
         domicile = cleaned_data.get('domicile')
         errors = []
@@ -215,7 +216,6 @@ class EmployeesForm(forms.ModelForm):
         return domicile
     
     def clean_gender(self):
-        print('Enter Clean Gender')
         cleaned_data = super().clean()
         gender = cleaned_data.get('gender')
         errors = []
@@ -229,17 +229,14 @@ class EmployeesForm(forms.ModelForm):
             gender_choices = ['L', 'P']
 
             if gender not in gender_choices:
-                print('gender not valid')
                 errors.append('gender is not valid')
 
         if errors:
             raise forms.ValidationError(errors)
 
-        print('returning gender')
         return gender
 
     def clean_phone(self):
-        print('Enter Clean Phone')
         cleaned_data = super().clean()
         phone = cleaned_data.get('phone')
         errors = []
@@ -260,7 +257,6 @@ class EmployeesForm(forms.ModelForm):
         return phone
     
     def clean_npwp(self):
-        print('Enter Clean NPWP')
         cleaned_data = super().clean()
         npwp = cleaned_data.get('npwp')
         errors = []
@@ -281,7 +277,6 @@ class EmployeesForm(forms.ModelForm):
         return npwp
     
     def clean_expired_at(self):
-        print('Enter Clean Expired At')
         cleaned_data = super().clean()
         expired_at = cleaned_data.get('expired_at')
         errors = []
@@ -300,7 +295,6 @@ class EmployeesForm(forms.ModelForm):
         return expired_at
     
     def clean_education(self):
-        print('Enter Clean Education')
         cleaned_data = super().clean()
         education = cleaned_data.get('education')
         errors = []
@@ -320,7 +314,6 @@ class EmployeesForm(forms.ModelForm):
         return education
     
     def clean_status(self):
-        print('Enter Clean Status')
         cleaned_data = super().clean()
         status = cleaned_data.get('status')
         errors = []
@@ -371,6 +364,9 @@ class EmployeesForm(forms.ModelForm):
             },
             'expired_at':{
                 'required':'Expired At is Required'
+            },
+            'ptkp_type':{
+                'required':'PTKP Type is Required'
             }
         }
 

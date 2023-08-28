@@ -82,7 +82,6 @@ class CreateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin ,View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -111,19 +110,15 @@ class CreateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin ,View):
         return JsonResponse(response)
     
     def post(self, request):
-        print(request.POST)
         user_form = CreateUserForm(request.POST or None)
         employees_form = EmployeesForm(request.POST or None)
 
         if user_form.is_valid() and employees_form.is_valid():
-            print('Form is Valid')
-            
             try:
                 # Saving User to Database
                 user = user_form.save()
 
                 employees_data = employees_form.cleaned_data
-                # print(employees_data)
 
                 # Add Additional Field to Database
                 employees_data['created_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
@@ -135,11 +130,10 @@ class CreateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin ,View):
                 employees_data['resigned_at'] = None
                 employees_data['auth_user_id'] = user
                 
-                # Saving Employees to Database
+                # Saving Data to Database
                 Employees(**employees_data).save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False, 
                     'errors': [], 
@@ -197,7 +191,6 @@ class UpdateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
             
             return JsonResponse(response)
@@ -232,7 +225,6 @@ class UpdateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return JsonResponse(response)
 
     def post(self, request, employee_uuid):
-        print(request.POST)
         employee = get_object_or_404(Employees, hash_uuid=employee_uuid)
         user = get_object_or_404(User, id=employee.auth_user_id.id)
 
@@ -240,10 +232,7 @@ class UpdateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
         user_form = CreateUserForm(request.POST or None, instance=user, is_updating=True)
 
         if user_form.is_valid() and employees_form.is_valid():
-            print('Form is Valid')
-            
             try:
-                print('SAVING TO DB')
                 # Saving User to Database
                 user_form.save()
 
@@ -251,11 +240,10 @@ class UpdateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 employees_form.cleaned_data['updated_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
                 employees_form.cleaned_data['updated_by'] = request.user
                 
-                # Saving Employees to Database
+                # Saving Data to Database
                 employees_form.save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False,
                     'errors': [],
@@ -275,9 +263,6 @@ class UpdateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             return JsonResponse(response)
 
         else:
-            print('ERRORS')
-            print(user_form.errors)
-            print(employees_form.errors)
             messages.error(request,'Please Correct The Errors Below')
             
             modal_messages = []
@@ -316,7 +301,6 @@ class DetailEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -371,7 +355,6 @@ class DeleteEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -402,10 +385,15 @@ class EmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     permission_required = ['employees.read_employees']
 
     def handle_no_permission(self):
-        if self.request.user.is_authenticated:
-            return redirect(reverse_lazy('employees:employees'))
-        
-        return redirect(reverse_lazy('main_app:login'))
+        response = {
+            'success': False,
+            'errors': [],
+            'modal_messages':[],
+            'toast_message':'You Are Not Authorized',
+            'is_close_modal':False,
+        }
+
+        return JsonResponse(response)
         
     def get(self, request):
         context = {

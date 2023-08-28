@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import Overtimes, OvertimeUsers
 
-# Register your models here.
+admin.site.register(Overtimes)
+admin.site.register(OvertimeUsers)

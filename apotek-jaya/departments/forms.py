@@ -44,9 +44,7 @@ class DepartmentMembersPermissionGroupForm(forms.Form):
         return None
     
 class DepartmentsForm(forms.ModelForm):
-
     def clean_name(self):
-        print('Enter Clean Department Name')
         cleaned_data = super().clean()
         name = cleaned_data.get('name')
         errors = []
@@ -66,7 +64,6 @@ class DepartmentsForm(forms.ModelForm):
         return name
 
     def clean_status(self):
-        print('Enter Clean Status')
         cleaned_data = super().clean()
         status = cleaned_data.get('status')
         errors = []

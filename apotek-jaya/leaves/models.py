@@ -1,13 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-from datetime import date, timedelta, datetime
-from zoneinfo import ZoneInfo
-import uuid
 from employees.models import Employees
-
 from salaries.models import PayrollPeriods
 
+import uuid
 
 class Leaves(models.Model):
     # If null=True, in forms is allowed to enter None, if not validators will come into play

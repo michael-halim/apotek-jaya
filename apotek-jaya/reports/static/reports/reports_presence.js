@@ -1,14 +1,4 @@
 $(function () {
-    function format_number(num) {
-        // Add a '.' after every 3 digits from the end of the input
-        num = num.toString().replace(/\D/g, '');
-        num = num.toString().replace(/^(0{1,})(\d+)/g, '$2');
-        num = num.replace(/(\d)(?=(\d{3})+$)/g, '$1.')
-        if (num == '') num = '0';
-            
-        return num
-    }
-
     function fetch_salary_filter(){
         $.ajax({
             url : 'fetch-period/', 

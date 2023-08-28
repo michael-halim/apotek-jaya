@@ -133,7 +133,6 @@ $(function () {
 			method: 'GET',
 			success: function (result) {
 				if (result.success === true) {
-                    console.log(result);
 					$('#form-leaves-balances-modal .modal-content').html(result.form);
                     
                     if (result.mode === 'create'){

@@ -6,10 +6,10 @@ from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.template.loader import render_to_string
 
-from departments.models import DepartmentMembers
-from employees.models import Employees
 from .models import Leaves, LeaveBalances
 from .forms import LeavesForm, LeaveBalancesForm
+from departments.models import DepartmentMembers
+from employees.models import Employees
 
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -27,7 +27,6 @@ class ListLeavesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -82,7 +81,6 @@ class CreateLeavesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -107,21 +105,18 @@ class CreateLeavesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             'success':True,
             'form': form,
             'is_view_only': False,
-            
         }
         
         return JsonResponse(response)
 
     def post(self, request):
-        print(request.POST)
         leaves_form = LeavesForm(request.POST or None)
 
         if leaves_form.is_valid():
             try:
-                print('SAVING TO DB')
                 leaves_data = leaves_form.cleaned_data
 
-                # Add Additional Leaves Field to Database
+                # Add Additional Field to Database
                 leaves_data['created_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
                 leaves_data['created_by'] = request.user
                 leaves_data['updated_at'] = None
@@ -132,7 +127,6 @@ class CreateLeavesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 Leaves(**leaves_data).save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False, 
                     'errors': [], 
@@ -166,9 +160,6 @@ class CreateLeavesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             for field, error_list in leaves_form.errors.items():
                 errors[field] = error_list
 
-            print('ERRORS')
-            print(errors)
-
             response = {
                 'success': False, 
                 'errors': errors, 
@@ -191,7 +182,6 @@ class UpdateLeavesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -228,17 +218,14 @@ class UpdateLeavesView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
         if leaves_form.is_valid():
             try:
-                print('SAVING TO DB')
-
                 # Add Additional Field to Database
                 leaves_form.cleaned_data['updated_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
                 leaves_form.cleaned_data['updated_by'] = request.user
 
-                # Saving Leaves to Database
+                # Saving Data to Database
                 leaves_form.save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False,
                     'errors': [],
@@ -258,8 +245,6 @@ class UpdateLeavesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             return JsonResponse(response)
 
         else:
-            print('ERRORS')
-            print(leaves_form.errors)
             messages.error(request,'Please Correct The Errors Below')
             
             modal_messages = []
@@ -295,7 +280,6 @@ class DetailLeavesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -405,9 +389,25 @@ class LeavesView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return redirect(reverse_lazy('main_app:login'))
 
 
-class ListLeavesBalancesView(LoginRequiredMixin, View):
+class ListLeavesBalancesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['leaves.read_leave_balances']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         context = {
             'view_link':str(reverse_lazy('leaves:detail-leaves-balances', args=["@@"])),
@@ -447,9 +447,25 @@ class ListLeavesBalancesView(LoginRequiredMixin, View):
 
         return redirect(reverse_lazy('main_app:login'))
 
-class CreateLeavesBalancesView(LoginRequiredMixin, View):
+class CreateLeavesBalancesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['leaves.read_leave_balances', 'leaves.create_leave_balances']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         leaves_balances_form = LeaveBalancesForm()
 
@@ -525,10 +541,9 @@ class CreateLeavesBalancesView(LoginRequiredMixin, View):
 
         if leaves_balances_form.is_valid():
             try:
-                print('SAVING TO DB')
                 leaves_balances_data = leaves_balances_form.cleaned_data
 
-                # Add Additional Leave Balances Field to Database
+                # Add Additional Field to Database
                 leaves_balances_data['employee_id'] = employee_object
                 leaves_balances_data['created_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
                 leaves_balances_data['created_by'] = request.user
@@ -543,7 +558,6 @@ class CreateLeavesBalancesView(LoginRequiredMixin, View):
                     LeaveBalances(**leaves_balances_data).save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False, 
                     'errors': [], 
@@ -577,9 +591,6 @@ class CreateLeavesBalancesView(LoginRequiredMixin, View):
             for field, error_list in leaves_balances_form.errors.items():
                 errors[field] = error_list
 
-            print('ERRORS')
-            print(errors)
-
             response = {
                 'success': False, 
                 'errors': errors, 
@@ -590,9 +601,25 @@ class CreateLeavesBalancesView(LoginRequiredMixin, View):
 
             return JsonResponse(response)
 
-class UpdateLeavesBalancesView(LoginRequiredMixin, View):
+class UpdateLeavesBalancesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['leaves.read_leave_balances', 'leaves.update_leave_balances']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request, leave_balance_uuid):
         leaves_balance_object = get_object_or_404(LeaveBalances, hash_uuid=leave_balance_uuid)
 
@@ -624,6 +651,7 @@ class UpdateLeavesBalancesView(LoginRequiredMixin, View):
                 </span>
             </div>
         '''
+
         leaves_balances_data = []
         leaves_balances_employee = LeaveBalances.objects.filter(employee_id = leaves_balance_object.employee_id, status=1)
         for lb in leaves_balances_employee:
@@ -646,11 +674,9 @@ class UpdateLeavesBalancesView(LoginRequiredMixin, View):
         return JsonResponse(response)
 
     def post(self, request, leave_balance_uuid):
-        print(request.POST)
         employee = get_object_or_404(Employees, hash_uuid=request.POST['employee_id'])
         leave_balance_object = get_object_or_404(LeaveBalances, hash_uuid=leave_balance_uuid)
         leave_balances_form = LeaveBalancesForm(request.POST or None)
-        
         
         failed_response = {
             'success': False, 
@@ -690,16 +716,8 @@ class UpdateLeavesBalancesView(LoginRequiredMixin, View):
             else:
                 removed_leaves_balances[str(lb.leave_id.hash_uuid)] = lb.balance
 
-        print('added_leaves_balances')
-        print(added_leaves_balances)
-
-        print('removed_leaves_balances')
-        print(removed_leaves_balances)
-        
-
         if leave_balances_form.is_valid():
             try:
-                print('SAVING TO DB')
                 if added_leaves_balances:
                     leaves_balances_data = {
                         'employee_id': leave_balance_object.employee_id,
@@ -736,7 +754,6 @@ class UpdateLeavesBalancesView(LoginRequiredMixin, View):
                         lb.save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False,
                     'errors': [],
@@ -756,8 +773,6 @@ class UpdateLeavesBalancesView(LoginRequiredMixin, View):
             return JsonResponse(response)
 
         else:
-            print('ERRORS')
-            print(leave_balances_form.errors)
             messages.error(request,'Please Correct The Errors Below')
             
             modal_messages = []
@@ -781,9 +796,25 @@ class UpdateLeavesBalancesView(LoginRequiredMixin, View):
 
             return JsonResponse(response)
 
-class DetailLeavesBalancesView(LoginRequiredMixin, View):
+class DetailLeavesBalancesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['leaves.read_leave_balances']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request, leave_balance_uuid):
         leaves_balance_object = get_object_or_404(LeaveBalances, hash_uuid=leave_balance_uuid)
 
@@ -831,9 +862,25 @@ class DetailLeavesBalancesView(LoginRequiredMixin, View):
 
         return redirect(reverse_lazy('main_app:login'))
 
-class DeleteLeavesBalancesView(LoginRequiredMixin, View):
+class DeleteLeavesBalancesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['leaves.read_leave_balances', 'leaves.delete_leave_balances']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         if self.request.user.is_authenticated:
             return redirect(reverse_lazy('main_app:home'))
@@ -855,9 +902,25 @@ class DeleteLeavesBalancesView(LoginRequiredMixin, View):
 
         return JsonResponse(response)
 
-class LeavesBalancesView(LoginRequiredMixin, View):
+class LeavesBalancesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['leaves.read_leave_balances']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         context = {
             'title':'Leaves Balances',
@@ -880,13 +943,13 @@ class AddLeavesBalancesView(LoginRequiredMixin, View):
         return redirect(reverse_lazy('main_app:login'))
 
     def post(self, request):
-        print(request.POST)
         failed_response = {
             'success': False, 
             'errors': [], 
             'modal_messages':[],
             'is_close_modal':False,
         }
+
         leave = None
             
         if request.POST['leave_id'] == '':
@@ -930,6 +993,6 @@ class AddLeavesBalancesView(LoginRequiredMixin, View):
             'toast_message':'Leave Balance Added Successfuly',
             'is_close_modal':False,
             'leaves_data': leaves_data,
-
         }
+        
         return JsonResponse(response)

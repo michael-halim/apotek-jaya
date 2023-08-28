@@ -5,14 +5,15 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.template.loader import render_to_string
+
+from .models import PayrollPeriods, Salaries, SalaryAdjustments, SalaryComponents
+
 from benefits.models import BenefitAdjustments, DetailEmployeeBenefits
 from departments.models import DepartmentMembers, Departments
 from employees.models import Employees
 from overtimes.models import OvertimeUsers
 from presences.models import Presences
-
 from salaries.forms import PayrollPeriodsForm, SalariesForm, SalaryAdjustmentsForm
-from .models import PayrollPeriods, Salaries, SalaryAdjustments, SalaryComponents
 
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -20,22 +21,14 @@ import uuid
 
 def calculate_salary(request, employees, period):
     for employee in employees:
-        presence_count = 0
-        total_work_hours = 0
-        ptkp = 54000000
-        overtime_hours_count = 0
-        overtime_hours_nominal = 0
-        leave_count = 0
-        sick_count = 0
-        permit_count = 0
+        overtime_hours_count, overtime_hours_nominal = 0, 0
+        leave_count, sick_count, permit_count = 0, 0, 0
+        base_salary, gross_salary, final_salary = 0, 0, 0
+        allowance, deduction = 0, 0
+        presence_count, total_work_hours = 0, 0
+        bonus, thr = 0, 0
         pph21 = 0
-        allowance = 0
-        deduction = 0
-        base_salary = 0
-        bonus = 0
-        gross_salary = 0
-        final_salary = 0
-        thr = 0
+        ptkp = employee.ptkp_type_id.value if employee.ptkp_type_id else 54000000
 
         # Check Employee Benefits and Its Adjustments
         salary_components_data = []
@@ -191,6 +184,41 @@ def calculate_salary(request, employees, period):
 
             gross_salary += sc_data['value']
         
+        # Calculate PPH21
+        # PKP Tax Bracket
+        # 0 - 60jt      -> 5%
+        # 60jt - 250jt  -> 15%
+        # 250jt - 500jt -> 25%
+        # 500jt - 5M    -> 30%
+        # >5M           -> 35%
+        tax_bracket = {
+            '60000000': 0.05,
+            '250000000': 0.15, 
+            '500000000': 0.25,
+            '5000000000': 0.3,
+            '>5000000000':0.35,
+        }
+
+        tmp_gross_salary = (gross_salary * 12) - ptkp
+        if tmp_gross_salary > 0:
+            for t in tax_bracket:
+                if t == '>5000000000':
+                    pph21 += tmp_gross_salary * tax_bracket[t]
+                    break
+
+                elif tmp_gross_salary - int(t) < 0:
+                    pph21 += tmp_gross_salary * tax_bracket[t]
+                    break
+                
+                pph21 += int(t) * tax_bracket[t]
+                tmp_gross_salary -= int(t)
+
+            pph21 /= 12
+            final_salary = gross_salary - pph21
+
+        else:
+            final_salary = gross_salary
+
         salaries_data = {
             'presence_count': presence_count,
             'total_work_hours': total_work_hours,
@@ -432,6 +460,11 @@ class UpdateSalariesView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
         salaries_form = SalariesForm(instance=salary_object, initial=initial_data)
         salary_adjustments_form = SalaryAdjustmentsForm()
+
+        for key in salaries_form.fields:
+            salaries_form.fields[key].widget.attrs['disabled'] = True
+            salaries_form.fields[key].widget.attrs['placeholder'] = ''
+
         context = {
             'mode':'update',
             'salaries_form':salaries_form,
@@ -509,8 +542,6 @@ class UpdateSalariesView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
         if salaries_form.is_valid():
             try:
-                print('SAVING TO DB')
-
                 # Add Additional Field to Database
                 salaries_form.cleaned_data['updated_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
                 salaries_form.cleaned_data['updated_by'] = request.user
@@ -559,7 +590,6 @@ class UpdateSalariesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 calculate_salary(request, employees=Employees.objects.filter(id=salary.employee_id.id), period=salary.period_id)
                 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False,
                     'errors': [],
@@ -579,8 +609,6 @@ class UpdateSalariesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             return JsonResponse(response)
 
         else:
-            print('ERRORS')
-            print(salaries_form.errors)
             messages.error(request,'Please Correct The Errors Below')
             
             modal_messages = []
@@ -861,7 +889,6 @@ class AddSalaryAdjustmentView(LoginRequiredMixin, PermissionRequiredMixin, View)
         return redirect(reverse_lazy('main_app:login'))
 
     def post(self, request):
-        print(request.POST)
         uuid_invalid = True
         try: 
             if uuid.UUID(request.POST['salary_uuid'], version=4): 
@@ -884,12 +911,10 @@ class AddSalaryAdjustmentView(LoginRequiredMixin, PermissionRequiredMixin, View)
         salary_adjustments_form = SalaryAdjustmentsForm(salary_request or None)
 
         if salary_adjustments_form.is_valid():
-            print('Salary Adjustments Form is Valid')
             
             saved_salary_adjustment = None
             salary_components_data = []
             try:
-                print('SAVING TO DB')
                 salary_adjustments_data = salary_adjustments_form.cleaned_data
                 salary_object = get_object_or_404(Salaries, hash_uuid=request.POST['salary_uuid'])
 
@@ -927,7 +952,6 @@ class AddSalaryAdjustmentView(LoginRequiredMixin, PermissionRequiredMixin, View)
                 }]
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False, 
                     'errors': [], 
@@ -962,9 +986,6 @@ class AddSalaryAdjustmentView(LoginRequiredMixin, PermissionRequiredMixin, View)
 
             for field, error_list in salary_adjustments_form.errors.items():
                 errors[field] = error_list
-
-            print('ERRORS')
-            print(errors)
 
             response = {
                 'success': False, 
@@ -1074,15 +1095,10 @@ class CreatePayrollPeriodView(LoginRequiredMixin, PermissionRequiredMixin, View)
         return JsonResponse(response)
 
     def post(self, request):
-        print(request.POST)
-
         payroll_periods_form = PayrollPeriodsForm(request.POST or None)
 
         if payroll_periods_form.is_valid():
-            print('Payroll Periods Form is Valid')
-            
             try:
-                print('SAVING TO DB')
                 payroll_period_data = payroll_periods_form.cleaned_data
 
                 # Add Additional Benefits Field to Database
@@ -1093,12 +1109,9 @@ class CreatePayrollPeriodView(LoginRequiredMixin, PermissionRequiredMixin, View)
                 payroll_period_data['deleted_at'] = None
                 payroll_period_data['deleted_by'] = None
 
-                print(payroll_period_data)
-
                 PayrollPeriods(**payroll_period_data).save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False, 
                     'errors': [], 
@@ -1131,9 +1144,6 @@ class CreatePayrollPeriodView(LoginRequiredMixin, PermissionRequiredMixin, View)
 
             for field, error_list in payroll_periods_form.errors.items():
                 errors[field] = error_list
-
-            print('ERRORS')
-            print(errors)
 
             response = {
                 'success': False, 
@@ -1191,16 +1201,12 @@ class UpdatePayrollPeriodView(LoginRequiredMixin, PermissionRequiredMixin, View)
         return JsonResponse(response)
 
     def post(self, request, period_uuid):
-        print(request.POST)
         payroll_period = get_object_or_404(PayrollPeriods, hash_uuid=period_uuid)
-
         payroll_period_form = PayrollPeriodsForm(request.POST or None, instance=payroll_period)
 
         if payroll_period_form.is_valid():
-            print('Form is Valid')
             
             try:
-                print('SAVING TO DB')
 
                 # Add Additional Field to Database
                 payroll_period_form.cleaned_data['updated_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
@@ -1210,7 +1216,6 @@ class UpdatePayrollPeriodView(LoginRequiredMixin, PermissionRequiredMixin, View)
                 payroll_period_form.save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False,
                     'errors': [],
@@ -1230,7 +1235,6 @@ class UpdatePayrollPeriodView(LoginRequiredMixin, PermissionRequiredMixin, View)
             return JsonResponse(response)
 
         else:
-            print('ERRORS')
             messages.error(request,'Please Correct The Errors Below')
             
             modal_messages = []

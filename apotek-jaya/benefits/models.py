@@ -1,10 +1,7 @@
-from departments.models import Departments
 from employees.models import Employees
 from django.db import models
 from django.contrib.auth.models import User
 
-from datetime import date, timedelta, datetime
-from zoneinfo import ZoneInfo
 import uuid
 
 class BenefitCategories(models.Model):
@@ -68,7 +65,6 @@ class Benefits(models.Model):
     benefit_category_id = models.ForeignKey(BenefitCategories,
                                             on_delete=models.CASCADE,
                                             db_column='benefit_category_id')
-    
 
     created_at = models.DateTimeField()
     created_by = models.ForeignKey(User,
@@ -267,4 +263,51 @@ class BenefitAdjustments(models.Model):
             ("read_benefit_adjustments", "Read Benefit Adjustments"),
             ("update_benefit_adjustments", "Update Benefit Adjustments"),
             ("delete_benefit_adjustments", "Delete Benefit Adjustments"),
+        )
+
+class PTKPType(models.Model):
+    # If null=True, in forms is allowed to enter None, if not validators will come into play
+    hash_uuid = models.UUIDField(default=uuid.uuid4, editable=False)
+
+    name = models.CharField(max_length=5, default='')
+
+    value = models.IntegerField(default='')
+
+    created_at = models.DateTimeField()
+    created_by = models.ForeignKey(User,
+                                    on_delete=models.CASCADE, 
+                                    related_name='created_by_ptkp_type',
+                                    db_column='created_by',
+                                    blank=True)
+    
+    updated_at = models.DateTimeField(null=True, blank=True, default=None)
+    updated_by = models.ForeignKey(User,
+                                    on_delete=models.CASCADE, 
+                                    related_name='updated_by_ptkp_type',
+                                    db_column='updated_by',
+                                    null=True, 
+                                    blank=True)
+    
+    deleted_at = models.DateTimeField(null=True, blank=True, default=None)
+    deleted_by = models.ForeignKey(User,
+                                    on_delete=models.CASCADE, 
+                                    related_name='deleted_by_ptkp_type',
+                                    db_column='deleted_by',
+                                    null=True,
+                                    blank=True)
+
+    status = models.IntegerField(default=1)
+
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        db_table = 'ptkp_type'
+        verbose_name_plural = 'PTKP Types'
+        default_permissions = ()
+        permissions = (
+            ("create_ptkp_type", "Create PTKP Type"),
+            ("read_ptkp_type", "Read PTKP Type"),
+            ("update_ptkp_type", "Update PTKP Type"),
+            ("delete_ptkp_type", "Delete PTKP Type"),
         )

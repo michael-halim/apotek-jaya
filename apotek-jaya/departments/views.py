@@ -112,6 +112,7 @@ class AddEmployeeDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, Vi
                     </span>
                 </div>
             '''
+
             employee_data = {
                 'uq':employee.hash_uuid,
                 'uq_group': permission_group.id if permission_group != '' else '',
@@ -129,6 +130,7 @@ class AddEmployeeDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, Vi
                 'success':True,
                 'employee_data':employee_data,
             }
+
             return JsonResponse(response)
 
         else:
@@ -136,6 +138,7 @@ class AddEmployeeDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, Vi
                 'success':False,
                 'toast_message':'Please review the form and correct any errors before resubmitting',
             }
+
             return JsonResponse(response)
 
 class CreateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
@@ -184,7 +187,6 @@ class CreateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return JsonResponse(response)
 
     def post(self, request):
-        print(request.POST)
         employees = request.POST['employees[]']
         permission_group = request.POST['employees_permission_group[]']
 
@@ -204,7 +206,6 @@ class CreateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         if permission_group != '':
             form_request['group'] = permission_group.split(',')
 
-            print(form_request['group'])
             permission_group = []
             for group in form_request['group']:
                 if group != '' and group.isnumeric():
@@ -216,8 +217,6 @@ class CreateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         department_members_form = DepartmentMembersForm(form_request or None)
 
         if departments_form.is_valid() and department_members_form.is_valid():
-            print('Departments Form is Valid')
-            
             try:
                 departments_data = departments_form.cleaned_data
                 department_members_data = department_members_form.cleaned_data
@@ -249,7 +248,6 @@ class CreateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
                         emp.auth_user_id.groups.add(perm_group)
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False, 
                     'errors': [], 
@@ -283,9 +281,6 @@ class CreateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
             for field, error_list in departments_form.errors.items():
                 errors[field] = error_list
 
-            print('ERRORS')
-            print(errors)
-
             response = {
                 'success': False, 
                 'errors': errors, 
@@ -317,9 +312,9 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
     
     def get(self, request, department_uuid):
         department = get_object_or_404(Departments, hash_uuid=department_uuid)
+
         department_members_form = DepartmentMembersForm()
         permission_group_form = DepartmentMembersPermissionGroupForm()
-
         departments_form = DepartmentsForm(instance=department)
 
         context = {
@@ -337,8 +332,6 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         form = render_to_string('departments/includes/form.html', context, request=request)
 
         department_members = DepartmentMembers.objects.filter(department_id = department.id, status=1)
-        print('department_members')
-        print(department_members)
         trash_icon = '''
                 <div class="d-flex justify-content-center">
                     <span class="delete-departments-employees btn text-danger w-100">
@@ -382,7 +375,6 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return JsonResponse(response)
 
     def post(self, request, department_uuid):
-        print(request.POST)
         department = get_object_or_404(Departments, hash_uuid=department_uuid)
 
         employees = request.POST['employees[]']
@@ -402,8 +394,6 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
             added_employees = [ x for x in form_request['employee_id'] ]
             
             employees_permission_group = employees_permission_group.split(',')
-            print('employees_permission_group')
-            print(employees_permission_group)
             for emp, perm_group in zip(added_employees,employees_permission_group):
                 if not emp or not perm_group:
                     continue
@@ -448,10 +438,7 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         department_members_form = DepartmentMembersForm(form_request or None)
 
         if departments_form.is_valid() and department_members_form.is_valid():
-            print('Form is Valid')
-            
             try:
-                print('SAVING TO DB')
 
                 # Add Additional Field to Database
                 departments_form.cleaned_data['updated_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
@@ -462,7 +449,7 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
                 department_members_data = department_members_form.cleaned_data
                 if added_employees:
-                    print('enter added employees')
+
                     # Add Additional Department Members Field to Database
                     department_members_data['department_id'] = department
                     department_members_data['created_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
@@ -477,7 +464,6 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
                         DepartmentMembers(**department_members_data).save()
 
                 if removed_employees:
-                    print('enter removed employees')
                     for emp in removed_employees:
                         employee = get_object_or_404(Employees, hash_uuid=emp)
                         department_members = get_object_or_404(DepartmentMembers, department_id = department, employee_id=employee, status=1)
@@ -490,7 +476,6 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
                         department_members.save()
 
                 if reactivated_employees:
-                    print('enter reactivated employees')
                     for emp in reactivated_employees:
                         employee = get_object_or_404(Employees, hash_uuid=emp)
                         department_members = get_object_or_404(DepartmentMembers, department_id = department, employee_id=employee, status=0)
@@ -501,7 +486,6 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
                         department_members.save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False,
                     'errors': [],
@@ -521,8 +505,6 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
             return JsonResponse(response)
 
         else:
-            print('ERRORS')
-            print(departments_form.errors)
             messages.error(request,'Please Correct The Errors Below')
             
             modal_messages = []
@@ -567,9 +549,6 @@ class DetailDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
     
     def get(self, request, department_uuid):
         department = get_object_or_404(Departments, hash_uuid=department_uuid)
-        print('department id')
-        print(department.id)
-        
         departments_form = DepartmentsForm(instance=department)
 
         for key in departments_form.fields:
@@ -585,8 +564,6 @@ class DetailDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         form = render_to_string('departments/includes/form.html', context, request=request)
 
         department_members = DepartmentMembers.objects.filter(department_id = department.id, status=1)
-        print('department_members')
-        print(department_members)
 
         employee_data = []
         for member in department_members:
@@ -639,7 +616,6 @@ class DeleteDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -677,7 +653,6 @@ class DepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)

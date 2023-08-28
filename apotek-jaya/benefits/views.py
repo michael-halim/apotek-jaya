@@ -6,8 +6,8 @@ from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.template.loader import render_to_string
 
-from .forms import BenefitCategoriesForm, BenefitSchemeForm, BenefitsForm, DetailEmployeeBenefitsForm
-from .models import BenefitAdjustments, BenefitCategories, BenefitScheme, Benefits, DetailEmployeeBenefits
+from .forms import BenefitCategoriesForm, BenefitSchemeForm, BenefitsForm, DetailEmployeeBenefitsForm, PTKPTypeForm
+from .models import BenefitAdjustments, BenefitCategories, BenefitScheme, Benefits, DetailEmployeeBenefits, PTKPType
 from employees.models import Employees
 from departments.models import DepartmentMembers, Departments
 
@@ -91,7 +91,6 @@ class CreateBenefitsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return redirect(reverse_lazy('main_app:login'))
         
     def get(self, request):
-        print('benefit get create')
         benefits_form = BenefitsForm()
 
         context = {
@@ -114,18 +113,13 @@ class CreateBenefitsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return JsonResponse(response)
 
     def post(self, request):
-        print(request.POST)
-
         benefits_form = BenefitsForm(request.POST or None)
 
         if benefits_form.is_valid():
-            print('Benefits Form is Valid')
-            
             try:
-                print('SAVING TO DB')
                 benefits_data = benefits_form.cleaned_data
 
-                # Add Additional Benefits Field to Database
+                # Add Additional Field to Database
                 benefits_data['created_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
                 benefits_data['created_by'] = request.user
                 benefits_data['updated_at'] = None
@@ -133,12 +127,9 @@ class CreateBenefitsView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 benefits_data['deleted_at'] = None
                 benefits_data['deleted_by'] = None
 
-                print(benefits_data)
-
                 Benefits(**benefits_data).save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False, 
                     'errors': [], 
@@ -171,9 +162,6 @@ class CreateBenefitsView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
             for field, error_list in benefits_form.errors.items():
                 errors[field] = error_list
-
-            print('ERRORS')
-            print(errors)
 
             response = {
                 'success': False, 
@@ -233,15 +221,11 @@ class UpdateBenefitsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return JsonResponse(response)
 
     def post(self, request, benefit_uuid):
-        print(request.POST)
         benefit = get_object_or_404(Benefits, hash_uuid=benefit_uuid)
         benefit_form = BenefitsForm(request.POST or None, instance=benefit)
 
         if benefit_form.is_valid():
-            print('Form is Valid')
-            
             try:
-                print('SAVING TO DB')
 
                 # Add Additional Field to Database
                 benefit_form.cleaned_data['updated_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
@@ -251,7 +235,6 @@ class UpdateBenefitsView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 benefit_form.save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False,
                     'errors': [],
@@ -271,8 +254,6 @@ class UpdateBenefitsView(LoginRequiredMixin, PermissionRequiredMixin, View):
             return JsonResponse(response)
 
         else:
-            print('ERRORS')
-            print(benefit_form.errors)
             messages.error(request,'Please Correct The Errors Below')
             
             modal_messages = []
@@ -322,7 +303,6 @@ class DetailBenefitsView(LoginRequiredMixin, PermissionRequiredMixin, View):
             'benefit_category_id':benefit.benefit_category_id
         }
         benefits_form = BenefitsForm(instance=benefit, initial=initial_data)
-        
 
         for key in benefits_form.fields:
             benefits_form.fields[key].widget.attrs['disabled'] = True
@@ -470,7 +450,10 @@ class ListBenefitCategoriesView(LoginRequiredMixin, PermissionRequiredMixin, Vie
         return JsonResponse(response)
 
     def post(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
+
+        return redirect(reverse_lazy('main_app:login'))
 
 
 class CreateBenefitCategoriesView(LoginRequiredMixin, PermissionRequiredMixin, View):
@@ -493,7 +476,6 @@ class CreateBenefitCategoriesView(LoginRequiredMixin, PermissionRequiredMixin, V
         return redirect(reverse_lazy('main_app:login'))
     
     def get(self, request):
-        print('benefit categories get create')
         benefit_categories_form = BenefitCategoriesForm()
 
         context = {
@@ -513,20 +495,17 @@ class CreateBenefitCategoriesView(LoginRequiredMixin, PermissionRequiredMixin, V
             'is_view_only': False,
             
         }
+
         return JsonResponse(response)
 
     def post(self, request):
-        print(request.POST)
         benefit_categories_form = BenefitCategoriesForm(request.POST or None)
 
         if benefit_categories_form.is_valid():
-            print('Benefits Categories Form is Valid')
-            
             try:
-                print('SAVING TO DB')
                 benefit_categories_data = benefit_categories_form.cleaned_data
 
-                # Add Additional Benefits Field to Database
+                # Add Additional Field to Database
                 benefit_categories_data['created_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
                 benefit_categories_data['created_by'] = request.user
                 benefit_categories_data['updated_at'] = None
@@ -534,12 +513,9 @@ class CreateBenefitCategoriesView(LoginRequiredMixin, PermissionRequiredMixin, V
                 benefit_categories_data['deleted_at'] = None
                 benefit_categories_data['deleted_by'] = None
 
-                print(benefit_categories_data)
-
                 BenefitCategories(**benefit_categories_data).save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False, 
                     'errors': [], 
@@ -573,9 +549,6 @@ class CreateBenefitCategoriesView(LoginRequiredMixin, PermissionRequiredMixin, V
             for field, error_list in benefit_categories_form.errors.items():
                 errors[field] = error_list
 
-            print('ERRORS')
-            print(errors)
-
             response = {
                 'success': False, 
                 'errors': errors, 
@@ -607,7 +580,6 @@ class UpdateBenefitCategoriesView(LoginRequiredMixin, PermissionRequiredMixin, V
     
     def get(self, request, benefit_category_uuid):
         benefit_category = get_object_or_404(BenefitCategories, hash_uuid=benefit_category_uuid)
-
         benefit_categories_form = BenefitsForm(instance=benefit_category)
 
         context = {
@@ -631,25 +603,20 @@ class UpdateBenefitCategoriesView(LoginRequiredMixin, PermissionRequiredMixin, V
         return JsonResponse(response)
 
     def post(self, request, benefit_category_uuid):
-        print(request.POST)
         benefit_category = get_object_or_404(BenefitCategories, hash_uuid=benefit_category_uuid)
         benefit_categories_form = BenefitCategoriesForm(request.POST or None, instance=benefit_category)
 
         if benefit_categories_form.is_valid():
-            print('Form is Valid')
-            
             try:
-                print('SAVING TO DB')
 
                 # Add Additional Field to Database
                 benefit_categories_form.cleaned_data['updated_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
                 benefit_categories_form.cleaned_data['updated_by'] = request.user
 
-                # Saving Benefits to Database
+                # Saving Data to Database
                 benefit_categories_form.save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False,
                     'errors': [],
@@ -669,8 +636,6 @@ class UpdateBenefitCategoriesView(LoginRequiredMixin, PermissionRequiredMixin, V
             return JsonResponse(response)
 
         else:
-            print('ERRORS')
-            print(benefit_categories_form.errors)
             messages.error(request,'Please Correct The Errors Below')
             
             modal_messages = []
@@ -707,7 +672,6 @@ class DetailBenefitCategoriesView(LoginRequiredMixin, PermissionRequiredMixin, V
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -734,7 +698,6 @@ class DetailBenefitCategoriesView(LoginRequiredMixin, PermissionRequiredMixin, V
             'success':True,
             'form': form,
             'is_view_only': True,
-            
         }
 
         return JsonResponse(response)
@@ -758,7 +721,6 @@ class DeleteBenefitCategoriesView(LoginRequiredMixin, PermissionRequiredMixin, V
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -798,7 +760,6 @@ class BenefitCategoriesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -830,7 +791,6 @@ class ListBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -885,7 +845,6 @@ class CreateBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View)
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -912,7 +871,6 @@ class CreateBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View)
             'success':True,
             'form': form,
             'is_view_only': False,
-            
         }
 
         return JsonResponse(response)
@@ -966,7 +924,6 @@ class CreateBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View)
                         DetailEmployeeBenefits(**detail_employee_benefits_data).save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False, 
                     'errors': [], 
@@ -1002,9 +959,6 @@ class CreateBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View)
 
             for field, error_list in detail_employee_benefits_form.errors.items():
                 errors[field] = error_list
-
-            print('ERRORS')
-            print(errors)
 
             response = {
                 'success': False, 
@@ -1109,6 +1063,7 @@ class UpdateBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View)
                 </span>
             </div>
         '''
+
         employees_data = []
         for emp in detail_employees:
             employee = get_object_or_404(Employees, id=emp)
@@ -1196,13 +1151,11 @@ class UpdateBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View)
 
         if benefit_scheme_form.is_valid():
             try:
-                print('SAVING TO DB')
-
                 # Add Additional Field to Database
                 benefit_scheme_form.cleaned_data['updated_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
                 benefit_scheme_form.cleaned_data['updated_by'] = request.user
 
-                # Saving Benefits to Database
+                # Saving Data to Database
                 benefit_scheme_form.save()
 
                 if added_employee_benefits:
@@ -1217,6 +1170,7 @@ class UpdateBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View)
                     }
                     
                     for emp_ben in added_employee_benefits:
+                        # emp_ben = [employee.id, benefit.id]
                         benefit_object = get_object_or_404(Benefits, id=emp_ben[1])
                         employee_object = get_object_or_404(Employees, id=emp_ben[0])
 
@@ -1227,6 +1181,7 @@ class UpdateBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View)
 
                 if removed_employee_benefits:
                     for emp_ben in removed_employee_benefits:
+                        # emp_ben = [employee.id, benefit.id]
                         detail_emp_ben = get_object_or_404(DetailEmployeeBenefits, 
                                                             benefit_scheme_id = benefit_scheme, 
                                                             employee_id=emp_ben[0], 
@@ -1239,6 +1194,7 @@ class UpdateBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View)
 
                 if reactivated_employee_benefits:
                     for emp_ben in reactivated_employee_benefits:
+                        # emp_ben = [employee.id, benefit.id]
                         detail_emp_ben = get_object_or_404(DetailEmployeeBenefits, 
                                                             benefit_scheme_id = benefit_scheme, 
                                                             employee_id=emp_ben[0], 
@@ -1309,7 +1265,6 @@ class UpdateBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View)
 
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False,
                     'errors': [],
@@ -1329,8 +1284,6 @@ class UpdateBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View)
             return JsonResponse(response)
 
         else:
-            print('ERRORS')
-            print(benefit_scheme_form.errors)
             messages.error(request,'Please Correct The Errors Below')
             
             modal_messages = []
@@ -1427,8 +1380,6 @@ class DetailBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View)
                                     .values_list('employee_id', flat=True)\
                                     .distinct()
         
-        print('detail_employees')
-        print(detail_employees)
 
         employees_data = []
         for emp in detail_employees:
@@ -1572,11 +1523,9 @@ class AddBenefitDetailView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return redirect(reverse_lazy('main_app:login'))
 
     def post(self, request):
-        print(request.POST)
         benefit = request.POST['benefit']
         try:
             if uuid.UUID(benefit, version=4):
-                print('WORKS')
                 benefit = get_object_or_404(Benefits, hash_uuid=benefit)
 
                 icons = '''
@@ -1648,13 +1597,9 @@ class ShowEmployeesDepartmentView(LoginRequiredMixin, PermissionRequiredMixin, V
         return redirect(reverse_lazy('main_app:login'))
 
     def post(self, request):
-        print('SHOW EMPLOYEE DEPARTMENT')
-        print(request.POST)
-
         department = request.POST['department']
         try:
             if uuid.UUID(department, version=4):
-                print('WORKS')
                 department = get_object_or_404(Departments, hash_uuid=department)
                 employees = DepartmentMembers.objects.filter(department_id = department)
 
@@ -1713,3 +1658,286 @@ class ShowEmployeesDepartmentView(LoginRequiredMixin, PermissionRequiredMixin, V
             }
                 
             return JsonResponse(response)
+        
+
+class ListPTKPTypeView(LoginRequiredMixin, View):
+    login = '/login/'
+
+    def get(self, request):
+        context = {
+            'view_link':str(reverse_lazy('benefits:detail-ptkp-type', args=["@@"])),
+            'update_link': str(reverse_lazy('benefits:update-ptkp-type', args=["@@"])),
+            'delete_link':str(reverse_lazy('benefits:delete-ptkp-type', args=["@@"])),
+        }
+
+        ptkp_object = PTKPType.objects.all()
+        ptkp_type_data = []
+
+        for ptkp in ptkp_object:
+            context['hash'] = ptkp.hash_uuid
+            form_action = render_to_string('benefits/includes/ptkp_type_form_action_button.html', context, request=request)
+            
+            ptkp_type_data.append({
+                'name':ptkp.name,
+                'value':ptkp.value,
+                'status':ptkp.status,
+                'uq': form_action, 
+            })
+
+        response = {
+            'success':True,
+            'ptkp_type_data': ptkp_type_data
+        }
+
+        return JsonResponse(response)
+
+    def post(self, request):
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
+
+        return redirect(reverse_lazy('main_app:login'))
+
+class CreatePTKPTypeView(LoginRequiredMixin, View):
+    login = '/login/'
+
+    def get(self, request):
+        ptkp_type_form = PTKPTypeForm()
+
+        context = {
+            'success':True,
+            'mode':'create',
+            'modal_title':'create ptkp type',
+            'ptkp_type_form':ptkp_type_form,
+            'uq':{
+                'create_link':str(reverse_lazy('benefits:create-ptkp-type')),
+            }
+        }
+        
+        form = render_to_string('benefits/includes/ptkp_type_form.html', context, request=request)
+        response = {
+            'success':True,
+            'form': form,
+            'is_view_only': False,
+            
+        }
+        return JsonResponse(response)
+
+    def post(self, request):
+        ptkp_type_form = PTKPTypeForm(request.POST or None)
+
+        if ptkp_type_form.is_valid():
+            
+            try:
+                ptkp_type_data = ptkp_type_form.cleaned_data
+
+                # Add Additional PTKP Type Field to Database
+                ptkp_type_data['created_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
+                ptkp_type_data['created_by'] = request.user
+                ptkp_type_data['updated_at'] = None
+                ptkp_type_data['updated_by'] = None
+                ptkp_type_data['deleted_at'] = None
+                ptkp_type_data['deleted_by'] = None
+
+                PTKPType(**ptkp_type_data).save()
+
+            except Exception as e:
+                response = {
+                    'success': False, 
+                    'errors': [], 
+                    'modal_messages':[],
+                    'toast_message':'We\'re sorry, but something went wrong on our end. Please try again later.',
+                    'is_close_modal':False,
+                }
+
+                return JsonResponse(response)
+            
+            response = {
+                'success': True, 
+                'toast_message':'PTKP Type Added Successfuly',
+                'is_close_modal':True
+            }
+
+            return JsonResponse(response)
+
+        else:
+            messages.error(request,'Please Correct The Errors Below')
+            
+            modal_messages = []
+            for message in messages.get_messages(request):
+                modal_messages.append({
+                    'message':str(message),
+                    'tags': message.tags
+                })
+
+            errors = {}
+
+            for field, error_list in ptkp_type_form.errors.items():
+                errors[field] = error_list
+
+            
+            response = {
+                'success': False, 
+                'errors': errors, 
+                'modal_messages':modal_messages,
+                'toast_message':'Please review the form and correct any errors before resubmitting',
+                'is_close_modal':False
+            }
+
+            return JsonResponse(response)
+
+class UpdatePTKPTypeView(LoginRequiredMixin, View):
+    login = '/login/'
+
+    def get(self, request, ptkp_type_uuid):
+        ptkp = get_object_or_404(PTKPType, hash_uuid=ptkp_type_uuid)
+        ptkp_type_form = PTKPTypeForm(instance=ptkp)
+
+        context = {
+            'mode':'update',
+            'ptkp_type_form':ptkp_type_form,
+            'modal_title':'update ptkp type',
+            'uq':{
+                'hash': ptkp_type_uuid,
+                'update_link':str(reverse_lazy('benefits:update-ptkp-type', args=["@@"])),
+            }
+        }
+        
+        form = render_to_string('benefits/includes/ptkp_type_form.html', context, request=request)
+
+        response = {
+            'success':True,
+            'form': form,
+            'is_view_only': False,
+        }
+
+        return JsonResponse(response)
+
+    def post(self, request, ptkp_type_uuid):
+        ptkp = get_object_or_404(PTKPType, hash_uuid=ptkp_type_uuid)
+        ptkp_type_form = PTKPTypeForm(request.POST or None, instance=ptkp)
+
+        if ptkp_type_form.is_valid():
+            try:
+                # Add Additional Field to Database
+                ptkp_type_form.cleaned_data['updated_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
+                ptkp_type_form.cleaned_data['updated_by'] = request.user
+
+                # Saving PTKP Type to Database
+                ptkp_type_form.save()
+
+            except Exception as e:
+                response = {
+                    'success': False,
+                    'errors': [],
+                    'modal_messages':[],
+                    'toast_message':'We\'re sorry, but something went wrong on our end. Please try again later.',
+                    'is_close_modal':False,
+                }
+
+                return JsonResponse(response)
+            
+            response = {
+                'success': True, 
+                'toast_message':'PTKP Type Updated Successfuly',
+                'is_close_modal':True
+            }
+
+            return JsonResponse(response)
+
+        else:
+            messages.error(request,'Please Correct The Errors Below')
+            
+            modal_messages = []
+            for message in messages.get_messages(request):
+                modal_messages.append({
+                    'message':str(message),
+                    'tags': message.tags
+                })
+
+            errors = {}
+            for field, error_list in ptkp_type_form.errors.items():
+                errors[field] = error_list
+
+            response = {
+                'success': False, 
+                'errors': errors, 
+                'modal_messages':modal_messages,
+                'toast_message':'Please review the form and correct any errors before resubmitting',
+                'is_close_modal':False
+            }
+
+            return JsonResponse(response)
+
+class DetailPTKPTypeView(LoginRequiredMixin, View):
+    login = '/login/'
+
+    def get(self, request, ptkp_type_uuid):
+        ptkp = get_object_or_404(Benefits, hash_uuid=ptkp_type_uuid)
+        ptkp_type_form = PTKPTypeForm(instance=ptkp)
+        
+
+        for key in ptkp_type_form.fields:
+            ptkp_type_form.fields[key].widget.attrs['disabled'] = True
+            ptkp_type_form.fields[key].widget.attrs['placeholder'] = ''
+
+        context = {
+            'mode':'view',
+            'ptkp_type_form':ptkp_type_form,
+            'modal_title':'view ptkp type',
+        }
+        
+        form = render_to_string('benefits/includes/ptkp_type_form.html', context, request=request)
+
+        response = {
+            'success':True,
+            'form': form,
+            'is_view_only': True,
+            
+        }
+        return JsonResponse(response)
+
+    def post(self, request):
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
+
+        return redirect(reverse_lazy('main_app:login'))
+
+class DeletePTKPTypeView(LoginRequiredMixin, View):
+    login = '/login/'
+
+    def get(self, request):
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
+
+        return redirect(reverse_lazy('main_app:login'))
+
+    def post(self, request, ptkp_type_uuid):
+        ptkp = get_object_or_404(PTKPType, hash_uuid=ptkp_type_uuid)
+        ptkp.status = 0
+        ptkp.deleted_at = datetime.now(ZoneInfo('Asia/Bangkok'))
+        ptkp.deleted_by = request.user
+        ptkp.save()
+
+        response = {
+            'success': True, 
+            'toast_message':'PTKP Type Deactivated Successfuly',
+            'is_close_modal':True
+        }
+
+        return JsonResponse(response)
+
+class PTKPTypeView(LoginRequiredMixin, View):
+    login = '/login/'
+
+    def get(self, request):
+        context = {
+            'title':'PTKP Type',
+        }
+
+        return render(request, 'benefits/ptkp_type.html', context)
+
+    def post(self, request):
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
+
+        return redirect(reverse_lazy('main_app:login'))

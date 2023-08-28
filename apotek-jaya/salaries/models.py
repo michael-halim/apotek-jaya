@@ -1,14 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-from datetime import date, timedelta, datetime
-from zoneinfo import ZoneInfo
-import uuid
-from benefits.models import BenefitAdjustments, BenefitScheme, Benefits, DetailEmployeeBenefits
-
+from benefits.models import BenefitAdjustments, BenefitScheme, DetailEmployeeBenefits
 from employees.models import Employees
 from overtimes.models import OvertimeUsers
-from presences.models import Presences
+
+import uuid
 
 class PayrollPeriods(models.Model):
     # If null=True, in forms is allowed to enter None, if not validators will come into play

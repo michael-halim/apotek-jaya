@@ -52,6 +52,7 @@ $(function () {
             }
         });
     }
+
     function initSalaryComponentsDataTable(options = { columnDefs :{}}) {
 		$('#salary-components-table').DataTable().destroy();
 		let salary_components_datatable = $('#salary-components-table').DataTable({
@@ -385,7 +386,6 @@ $(function () {
                 salary_uuid: salary_uuid,
             }, 
             success:function(result){
-                console.log(result);
                 if (result.success === true) {
                     for(const key in result.salary_components_data){
                         salary_components_datatable.row

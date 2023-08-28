@@ -57,7 +57,6 @@ class CreateUserForm(UserCreationForm):
                 )  
     
     def clean_username(self):  
-        print('Enter Clean Username')
         cleaned_data = super().clean()
         username = cleaned_data.get('username')
         errors = []
@@ -84,7 +83,6 @@ class CreateUserForm(UserCreationForm):
         return username  
   
     def clean_email(self):  
-        print('Enter Clean Email')
         cleaned_data = super().clean()
         email = cleaned_data.get('email')
         errors = []
@@ -108,7 +106,6 @@ class CreateUserForm(UserCreationForm):
         return email  
   
     def clean_password2(self):  
-        print('Enter Clean Password')
         password1 = self.cleaned_data['password1']  
         password2 = self.cleaned_data['password2']  
         errors = []

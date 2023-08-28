@@ -51,7 +51,6 @@ class CreatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return JsonResponse(response)
     
     def post(self, request):
-        print(request.POST)
         permission_form = PermissionForm(request.POST or None)
 
         if permission_form.is_valid():
@@ -65,7 +64,6 @@ class CreatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 user.user_permissions.set(user_perms)
                 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False, 
                     'errors': [], 
@@ -97,9 +95,6 @@ class CreatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
             for field, error_list in permission_form.errors.items():
                 errors[field] = error_list
 
-            print('form not valid')
-            print(errors)
-            print(modal_messages)
             response = {
                 'success': False, 
                 'errors': errors, 
@@ -163,16 +158,10 @@ class UpdatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return JsonResponse(response)
 
     def post(self, request, employee_uuid):
-        print(request.POST)
-        print('employee_uuid')
-        print(employee_uuid)
-
         permission_form = PermissionForm(request.POST or None, is_updating=True)
 
         if permission_form.is_valid():
-            print('Permission Form is Valid')
             try:
-                print('saving to DB')
                 employees = permission_form.cleaned_data['employees']
                 user = get_object_or_404(User, id=employees.auth_user_id.id)
 
@@ -194,7 +183,6 @@ class UpdatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
                     user.user_permissions.remove(*removed_perms)
                 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False, 
                     'errors': [], 
@@ -226,9 +214,6 @@ class UpdatePermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
             for field, error_list in permission_form.errors.items():
                 errors[field] = error_list
 
-            print('form not valid')
-            print(errors)
-            print(modal_messages)
             response = {
                 'success': False, 
                 'errors': errors, 
@@ -251,7 +236,6 @@ class DetailPermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -287,6 +271,7 @@ class DetailPermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
             'permission_data':permission_data,
             'is_view_only': True,
         }
+
         return JsonResponse(response)
 
     def post(self, request):
@@ -345,7 +330,6 @@ class ListPermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -353,7 +337,6 @@ class ListPermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return redirect(reverse_lazy('main_app:login'))
     
     def get(self, request):
-        print('ENTER PERMISSION')
         context = {
             'view_link':str(reverse_lazy('permission:detail-permission', args=["@@"])),
             'update_link': str(reverse_lazy('permission:update-permission', args=["@@"])),
@@ -406,7 +389,10 @@ class ListPermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return JsonResponse(response)
     
     def post(self, request):
-        pass
+        if self.request.user.is_authenticated:
+            return redirect(reverse_lazy('main_app:home'))
+
+        return redirect(reverse_lazy('main_app:login'))
 
 class PermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
@@ -452,7 +438,6 @@ class CreatePermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, Vie
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -480,7 +465,6 @@ class CreatePermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, Vie
         return JsonResponse(response)
 
     def post(self, request):
-        print(request.POST)
         permission_group_form = PermissionGroupForm(request.POST or None)
 
         if permission_group_form.is_valid():
@@ -494,7 +478,6 @@ class CreatePermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, Vie
                 group_object.permissions.set(permissions)
                 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False, 
                     'errors': [], 
@@ -526,9 +509,6 @@ class CreatePermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, Vie
             for field, error_list in permission_group_form.errors.items():
                 errors[field] = error_list
 
-            print('form not valid')
-            print(errors)
-            print(modal_messages)
             response = {
                 'success': False, 
                 'errors': errors, 
@@ -551,7 +531,6 @@ class UpdatePermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, Vie
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -591,17 +570,14 @@ class UpdatePermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, Vie
             'form': form,
             'is_view_only': False,
         }
+
         return JsonResponse(response)
 
     def post(self, request, group_id):
-        print(request.POST)
-
         permission_group_form = PermissionGroupForm(request.POST or None, is_updating=True)
 
         if permission_group_form.is_valid():
-            print('Permission Group Form is Valid')
             try:
-                print('saving to DB')
                 group = get_object_or_404(Group, id=group_id)
                 permissions = permission_group_form.cleaned_data['permissions']
 
@@ -622,7 +598,6 @@ class UpdatePermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, Vie
                     group.permissions.remove(*removed_perms)
                 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False, 
                     'errors': [], 
@@ -654,9 +629,6 @@ class UpdatePermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, Vie
             for field, error_list in permission_group_form.errors.items():
                 errors[field] = error_list
 
-            print('form not valid')
-            print(errors)
-            print(modal_messages)
             response = {
                 'success': False, 
                 'errors': errors, 
@@ -679,7 +651,6 @@ class DetailPermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, Vie
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -734,7 +705,6 @@ class DeletePermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, Vie
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -748,7 +718,6 @@ class DeletePermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, Vie
         return redirect(reverse_lazy('main_app:login'))
 
     def post(self, request, group_id):
-        print('ENTER DELETE PERMISSION GROUP')
         group = get_object_or_404(Group, id=group_id)
         group.delete()
 
@@ -772,7 +741,6 @@ class ListPermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, View)
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -780,7 +748,6 @@ class ListPermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, View)
         return redirect(reverse_lazy('main_app:login'))
     
     def get(self, request):
-        print('ENTER PERMISSION GROUP')
         context = {
             'view_link':str(reverse_lazy('permission:detail-permission-group', args=["@@"])),
             'update_link': str(reverse_lazy('permission:update-permission-group', args=["@@"])),
@@ -824,7 +791,6 @@ class PermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -835,6 +801,7 @@ class PermissionGroupView(LoginRequiredMixin, PermissionRequiredMixin, View):
         context = {
             'title':'Permission Group'
         }
+        
         return render(request, 'permission/permission_group.html', context)
 
     def post(self, request):

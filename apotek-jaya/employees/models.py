@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from .constants import PROVINCE
 
-from datetime import date, timedelta, datetime
+from datetime import timedelta, datetime
 from zoneinfo import ZoneInfo
 import uuid
 
@@ -53,6 +53,12 @@ class Employees(models.Model):
     npwp = models.CharField(max_length=25, default='', null=True, blank=True)
     education = models.CharField(max_length=10, default='SD', null=True)
     resigned_at = models.DateTimeField(null=True, blank=True, default=None)
+    ptkp_type_id = models.ForeignKey('benefits.PTKPType', 
+                                        on_delete=models.CASCADE,
+                                        related_name='ptkp_type_id',
+                                        null=True, 
+                                        blank=True)
+
     status = models.IntegerField(default=1)
     
     def __str__(self):

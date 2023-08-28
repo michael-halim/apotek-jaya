@@ -1,4 +1,4 @@
-env
+env/
 apotek-jaya/.env.dev
 apotek-jaya/.env.dev.db
 apotek-jaya/create_boilerfiles.sh

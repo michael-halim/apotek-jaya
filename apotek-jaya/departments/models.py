@@ -2,8 +2,6 @@ from employees.models import Employees
 from django.db import models
 from django.contrib.auth.models import User
 
-from datetime import date, timedelta, datetime
-from zoneinfo import ZoneInfo
 import uuid
 
 class Departments(models.Model):

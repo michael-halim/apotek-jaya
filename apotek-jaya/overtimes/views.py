@@ -27,7 +27,6 @@ class ListOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -84,7 +83,6 @@ class CreateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -111,7 +109,6 @@ class CreateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             'success':True,
             'form': form,
             'is_view_only': False,
-            
         }
         
         return JsonResponse(response)
@@ -138,10 +135,9 @@ class CreateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
         if overtimes_form.is_valid():
             try:
-                print('SAVING TO DB')
                 overtime_data = overtimes_form.cleaned_data
 
-                # Add Additional Overtime Field to Database
+                # Add Additional Field to Database
                 overtime_data['created_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
                 overtime_data['created_by'] = request.user
                 overtime_data['updated_at'] = None
@@ -167,7 +163,6 @@ class CreateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                     OvertimeUsers(**overtime_users_data).save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False, 
                     'errors': [], 
@@ -201,9 +196,6 @@ class CreateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             for field, error_list in overtimes_form.errors.items():
                 errors[field] = error_list
 
-            print('ERRORS')
-            print(errors)
-
             response = {
                 'success': False, 
                 'errors': errors, 
@@ -226,7 +218,6 @@ class UpdateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -356,13 +347,11 @@ class UpdateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 return JsonResponse(failed_response)
 
             try:
-                print('SAVING TO DB')
-
                 # Add Additional Field to Database
                 overtimes_form.cleaned_data['updated_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
                 overtimes_form.cleaned_data['updated_by'] = request.user
 
-                # Saving Overtimes to Database
+                # Saving Data to Database
                 overtimes_form.save()
 
                 if added_overtime_users:
@@ -374,8 +363,8 @@ class UpdateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                         'updated_by': None,
                         'deleted_at': None,
                         'deleted_by': None,
-
                     }
+                    
                     for ovt_user in added_overtime_users:
                         overtime_users_data['employee_id'] = get_object_or_404(Employees, id=ovt_user)
                         OvertimeUsers(**overtime_users_data).save()
@@ -401,7 +390,6 @@ class UpdateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                         overtime_user.save()
 
             except Exception as e:
-                print(e)
                 response = {
                     'success': False,
                     'errors': [],
@@ -421,8 +409,6 @@ class UpdateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             return JsonResponse(response)
 
         else:
-            print('ERRORS')
-            print(overtimes_form.errors)
             messages.error(request,'Please Correct The Errors Below')
             
             modal_messages = []
@@ -597,7 +583,6 @@ class AddOvertimesUsersView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -611,10 +596,8 @@ class AddOvertimesUsersView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return redirect(reverse_lazy('main_app:login'))
 
     def post(self, request):
-        print(request.POST)
         try:
             if uuid.UUID(request.POST['employee'], version=4):
-                print('WORKS')
                 employee_object = get_object_or_404(Employees, hash_uuid=request.POST['employee'])
                 
                 department_members_object = DepartmentMembers.objects.filter(employee_id=employee_object.id, status=1)

@@ -1,10 +1,6 @@
 from django.db import models
 
-# Create your models here.
-from django.contrib.auth.models import User, Permission, Group
-
-from departments.models import Departments
-from employees.models import Employees
+from django.contrib.auth.models import User, Group
 
 class AuthGroupExtended(models.Model):
     auth_group_id = models.OneToOneField(Group, 

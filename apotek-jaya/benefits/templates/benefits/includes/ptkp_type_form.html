@@ -1,0 +1,45 @@
+<div class="modal-header">
+    <h5 class="modal-title">{{modal_title|title}}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+    <ul class="modal-messages"></ul>
+    <form id="ptkp_type_form" method="POST">
+        <div class="row">
+            <div class="col-12">
+                <div class="mb-3">
+                    <label for="{{ptkp_type_form.name.id_for_label}}" class="form-label">
+                        <b>{{ ptkp_type_form.name.label }}</b>
+                    </label>
+                    {{ ptkp_type_form.name }}
+                    <span class="form-error text-danger"></span>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="mb-3">
+                    <label for="{{ptkp_type_form.value.id_for_label}}" class="form-label">
+                        <b>{{ ptkp_type_form.value.label }}</b>
+                    </label>
+                    {{ ptkp_type_form.value }}
+                    <span class="form-error text-danger"></span>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="mb-3">
+                    <label for="{{ptkp_type_form.status.id_for_label}}" class="form-label">
+                        <b>{{ ptkp_type_form.status.label }}</b>
+                    </label>
+                    {{ ptkp_type_form.status }}
+                    <span class="form-error text-danger"></span>
+                </div>
+            </div>
+        </div>
+        <div class="mb-3 d-flex justify-content-end">
+            {% if mode == 'create' %}
+                <input type="button" value="Create PTKP Type" data-link="{{uq.create_link}}" class="btn btn-success" id="submit-form-ptkp-type">
+            {% elif mode == 'update' %}
+                <input type="button" value="Update PTKP Type" data-uq="{{uq.hash}}" data-link="{{uq.update_link}}" class="btn btn-success" id="submit-form-ptkp-type">
+            {% endif %}
+        </div>
+    </form>
+</div>

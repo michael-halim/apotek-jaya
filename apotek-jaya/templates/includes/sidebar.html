@@ -36,7 +36,6 @@
     border-radius: 6px;
     cursor: pointer;
     background-color: #BBE1FA;
-    /* color: #000; */
     color: #212529;
     font-weight: bold;
 }
@@ -212,7 +211,7 @@
             </div>
         {% endif %}
 
-        {% if perms.benefits.read_benefits or perms.benefits.read_benefit_scheme or perms.benefits.read_benefit_categories %}
+        {% if perms.benefits.read_benefits or perms.benefits.read_benefit_scheme or perms.benefits.read_benefit_categories or perms.benefits.read_ptkp_type %}
             <div class="row menu dropdown-parent" id="benefits">
                 <div class="col-2">
                     <i class="fa-solid fa-user-plus"></i>
@@ -260,6 +259,19 @@
                             </div>
                             <div class="col-10">
                                 Benefit Scheme
+                            </div>
+                        </div>
+                    </a>
+                {% endif %}
+
+                {% if perms.benefits.read_ptkp_type %}
+                    <a class="dropdown-item" href="{% url 'benefits:ptkp-type' %}">
+                        <div class="row menu dropdown-child-benefits">
+                            <div class="col-2">
+                                <i class="fa-solid fa-user-tag"></i>
+                            </div>
+                            <div class="col-10">
+                                PTKP Type
                             </div>
                         </div>
                     </a>

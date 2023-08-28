@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import Salaries, SalaryAdjustments, SalaryComponents
 
-# Register your models here.
+admin.site.register(Salaries)
+admin.site.register(SalaryAdjustments)
+admin.site.register(SalaryComponents)

@@ -38,7 +38,6 @@ SECRET_KEY = 'django-insecure-quwyhd_bu9arjsw1h-)wd73o!0qhw$ww!2r$#ugl2jfx=0uds&
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS').split(' ')
 
-
 # Application definition
 
 INSTALLED_APPS = [

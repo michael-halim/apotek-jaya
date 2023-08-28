@@ -1,9 +1,7 @@
 from django import forms
-from django.contrib.auth.models import Group
-
-from employees.models import Employees
 
 from .models import Leaves, LeaveBalances
+from employees.models import Employees
 
 
 class LeavesForm(forms.ModelForm):
@@ -90,8 +88,7 @@ class LeaveBalancesForm(forms.ModelForm):
                    'deleted_at', 'deleted_by', 'status']
         
         # Error Messages Here's Defined Because in models.py it is set to null=False implicitly
-        error_messages = {
-        }
+        error_messages = {}
 
         # If you specify 'id', tags 'id_for_label' is also set
         widgets= {

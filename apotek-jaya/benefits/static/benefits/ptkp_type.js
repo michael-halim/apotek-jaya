@@ -1,7 +1,17 @@
 $(function () {
-	function initLeavesDataTable() {
-		$('#leaves-table').DataTable().destroy();
-		let leaves_datatable = $('#leaves-table').DataTable({
+    function format_number(num) {
+        // Add a '.' after every 3 digits from the end of the input
+        num = num.toString().replace(/\D/g, '');
+        num = num.toString().replace(/^(0{1,})(\d+)/g, '$2');
+        num = num.replace(/(\d)(?=(\d{3})+$)/g, '$1.')
+        if (num == '') num = '0';
+            
+        return num
+    }
+
+	function initPTKPTypesDataTable() {
+		$('#ptkp-type-table').DataTable().destroy();
+		let ptkp_type_datatable = $('#ptkp-type-table').DataTable({
             initComplete: function () {
                 // Apply the search
                 this.api()
@@ -17,47 +27,57 @@ $(function () {
                 });
             },
             ajax: {
-                url: 'fetch-leaves/',
-                dataSrc: 'leaves_data',
+                url: 'ptkp/fetch-ptkp-type/',
+                dataSrc: 'ptkp_type_data',
             },
             responsive: true,
-            columnDefs: [{ targets: -1, width: '90px' }],
+            columnDefs: [
+                { targets: -1, width: '90px' },
+                { targets: 1, type:'currency' },
+            ],
             columns: [
                 {
                     data: 'name',
                     defaultContent: '-',
                 },
                 {
-                    data: 'description',
+                    data: 'value',
                     defaultContent: '-',
-                },
-                {
-                    data: 'max_duration',
-                    defaultContent: '-',
-                },
-                {
-                    data: 'created_at',
-                    defaultContent: '-',
+                    render: function(data, type, row){
+                        return 'Rp. ' + format_number(data);
+                    }
                 },
                 {
                     data: 'status',
-                        render: function (data, type, row) {
-                            if (data === 1) {
-                                return '<span class="badge bg-success">Active</span>';
-                            } else if (data === 0) {
-                                return '<span class="badge bg-danger">Inactive</span>';
-                            } else {
-                                return '<span class="badge bg-secondary">Unknown</span>';
-                            }
-                        },
+                    render: function (data, type, row) {
+                        if (data === 1) {
+                            return '<span class="badge bg-success">Active</span>';
+                        } else if (data === 0) {
+                            return '<span class="badge bg-danger">Inactive</span>';
+                        } else {
+                            return '<span class="badge bg-secondary">Unknown</span>';
+                        }
+                    },
                 },
                 {
                     data: 'uq',
                 },
             ],
+            // Custom sorting plug-in for currency values
+            oSort: {
+                'currency-pre': function (a) {
+                    return a.replace(/\D/g, '');
+                },
+                'currency-asc': function (a, b) {
+                    return a - b;
+                },
+                'currency-desc': function (a, b) {
+                    return b - a;
+                },
+            },
 		});
 
-        return leaves_datatable;
+        return ptkp_type_datatable;
 	}
 
 	toastr.options = {
@@ -78,14 +98,13 @@ $(function () {
 		hideMethod: 'fadeOut',
 	};
 
-    let leaves_datatable = initLeavesDataTable();
-    let overtime_users_datatable = null;
-
-	$('body').on('click', '.delete-leaves', function () {
-		if (confirm('Do You Want to Deactivate this Overtime ?')) {
-            let leave_uuid = $(this).data('uq');
+	let ptkp_type_datatable =  initPTKPTypesDataTable();
+	
+    $('body').on('click', '.delete-ptkp-type', function () {
+		if (confirm('Do You Want to Deactivate this PTKP Type ?')) {
+            let ptkp_type_uuid = $(this).data('uq');
             let url = $(this).data('link');
-            url = url.replace('@@', leave_uuid);
+            url = url.replace('@@', ptkp_type_uuid);
 
             $.ajax({
                 url: url,
@@ -95,6 +114,7 @@ $(function () {
                 },
                 success: function (result) {
                     if (result.success === true) {
+                        ptkp_type_datatable = initPTKPTypesDataTable();
                     } else if (result.success === false) {
                         toastr['error'](result.toast_message);
                     }
@@ -104,19 +124,21 @@ $(function () {
 		}
 	});
 
-	$('body').on('click','.update-leaves, .view-leaves, #add-leaves', function () {
-		let leave_uuid = $(this).data('uq');
+	$('body').on('click','.update-ptkp-type, .view-ptkp-type, #add-ptkp-type', function () {
+		let ptkp_type_uuid = $(this).data('uq');
 		let url = $(this).data('link');
-		url = url.replace('@@', leave_uuid);
+		url = url.replace('@@', ptkp_type_uuid);
 
 		$.ajax({
 			url: url,
 			method: 'GET',
 			success: function (result) {
 				if (result.success === true) {
-					$('#form-leaves-modal .modal-content').html(result.form);
+					$('#form-ptkp-type-modal .modal-content').html(result.form);
 
-					$('#form-leaves-modal').modal('show');
+                    $('input#value').val('Rp. ' + format_number($('input#value').val()));
+
+                    $('#form-ptkp-type-modal').modal('show');
 				
 				} else if (result.success === false) {
 					toastr['error'](result.toast_message);
@@ -126,15 +148,18 @@ $(function () {
 		});
 	});
 
-	$('body').on('click', '#submit-form-leaves', function () {
-		let form = document.getElementById('leaves_form');
+	$('body').on('click', '#submit-form-ptkp-type', function () {
+        
+        let form = document.getElementById('ptkp_type_form');
 		let form_data = new FormData(form);
+        
         form_data.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val());
-		
-        let leave_uuid = $(this).data('uq');
-		let url = $(this).data('link');
-		url = url.replace('@@', leave_uuid);
+        form_data.delete('value');
+        form_data.append('value', $('input#value').val().replace(/\D/g, ''));
 
+		let ptkp_type_uuid = $(this).data('uq');
+		let url = $(this).data('link');
+		url = url.replace('@@', ptkp_type_uuid);
 		$.ajax({
             url: url,
             method: 'POST',
@@ -146,10 +171,13 @@ $(function () {
                 $('.is-invalid').removeClass('is-invalid');
 
                 if (result.success === true) {
+
                     $('.modal-messages').css({ display: 'none' }).html('');
+
                     toastr['success'](result.toast_message);
 
-                    leaves_datatable = initLeavesDataTable();
+                    ptkp_type_datatable = initPTKPTypesDataTable();
+
                 } else if (result.success === false) {
                     for (const keys in result.errors) {
                         $('#' + keys).addClass('is-invalid');
@@ -172,14 +200,19 @@ $(function () {
                     toastr['error'](result.toast_message);
                 }
                 
-                $('#form-leaves-modal').modal(result.is_close_modal === true ? 'hide' : 'show');
+                $('#form-ptkp-type-modal').modal(result.is_close_modal === true ? 'hide' : 'show');
             },
             error: function (result) {},
 		});
 	});
+    
+    $('body').on('keyup','input#value',function(){
+        let current_value = $(this).val();
+        $(this).val('Rp. ' + format_number(current_value));
+    
+    });
 
-
-	$('#leaves-table tfoot th.search-text').each(function () {
+	$('#ptkp-type-table tfoot th.search-text').each(function () {
 		var title = $(this).text();
 		$(this).html('<input class="form-control" type="text" placeholder="Search ' + title + '" />');
 	});

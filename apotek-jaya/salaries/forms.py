@@ -1,5 +1,4 @@
 from django import forms
-from django.contrib.auth.models import Group
 
 from employees.models import Employees
 from .models import PayrollPeriods, Salaries, SalaryAdjustments
@@ -233,7 +232,6 @@ class SalariesForm(forms.ModelForm):
 
 class PayrollPeriodsForm(forms.ModelForm):
     def clean_name(self):
-        print('Enter Clean Payroll Periods Name')
         cleaned_data = super().clean()
         name = cleaned_data.get('name')
         errors = []
@@ -253,7 +251,6 @@ class PayrollPeriodsForm(forms.ModelForm):
         return name
     
     def clean_description(self):
-        print('Enter Clean Payroll Period Description')
         cleaned_data = super().clean()
         description = cleaned_data.get('description')
         errors = []
@@ -270,7 +267,6 @@ class PayrollPeriodsForm(forms.ModelForm):
         return description
     
     def clean_status(self):
-        print('Enter Clean Status')
         cleaned_data = super().clean()
         status = cleaned_data.get('status')
         errors = []
@@ -287,7 +283,6 @@ class PayrollPeriodsForm(forms.ModelForm):
         return status
     
     def clean_end_at(self):
-        print('Enter Clean End At')
         cleaned_data = super().clean()
         end_at = cleaned_data.get('end_at')
         errors = []

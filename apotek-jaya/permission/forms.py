@@ -30,14 +30,11 @@ class PermissionForm(forms.Form):
     )
     
     def clean(self):
-        print('Enter Clean All')
         cleaned_data = super().clean()
-        print(cleaned_data)
 
         return cleaned_data
     
     def clean_employees(self):
-        print('Enter Clean Employees')
         cleaned_data = super().clean()
         employees = cleaned_data.get('employees')
         errors = []
@@ -51,7 +48,6 @@ class PermissionForm(forms.Form):
         return employees
     
     def clean_permissions(self):
-        print('Enter Clean Permissions')
         cleaned_data = super().clean()
         permissions = cleaned_data.get('permissions')
         errors = []
@@ -88,8 +84,6 @@ class PermissionForm(forms.Form):
             if initial_data:
                 employees = Employees.objects.filter(id__in = initial_data['employees'])
 
-            print('employees form')
-            print(employees)
             self.fields['employees'].queryset = employees
 
         if self.is_updating:
@@ -136,14 +130,11 @@ class PermissionGroupForm(forms.Form):
     field_order = ['group', 'status', 'permissions']
 
     def clean(self):
-        print('Enter Clean All')
         cleaned_data = super().clean()
-        print(cleaned_data)
 
         return cleaned_data
     
     def clean_group(self):
-        print('Enter Clean Group')
         cleaned_data = super().clean()
         group = cleaned_data.get('group')
         errors = []
@@ -162,7 +153,6 @@ class PermissionGroupForm(forms.Form):
         return group
     
     def clean_status(self):
-        print('Enter Clean Status')
         cleaned_data = super().clean()
         status = cleaned_data.get('status')
         errors = []
@@ -182,7 +172,6 @@ class PermissionGroupForm(forms.Form):
         return status
     
     def clean_permissions(self):
-        print('Enter Clean Permissions')
         cleaned_data = super().clean()
         permissions = cleaned_data.get('permissions')
         errors = []

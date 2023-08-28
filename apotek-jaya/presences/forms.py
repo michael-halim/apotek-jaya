@@ -1,7 +1,7 @@
 from django import forms
 
-from employees.models import Employees
 from .models import Presences
+from employees.models import Employees
 
 class PresenceBulkInputForm(forms.Form):
     file_upload = forms.FileField(
@@ -72,6 +72,7 @@ class PresencesForm(forms.ModelForm):
                 'id':'status',
             }),
         }
+        
         labels = {
             'start_at': 'Start At',
             'end_at': 'End At',

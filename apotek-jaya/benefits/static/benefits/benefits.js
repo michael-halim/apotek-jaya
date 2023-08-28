@@ -129,7 +129,6 @@ $(function () {
 			method: 'GET',
 			success: function (result) {
 				if (result.success === true) {
-                    console.log(result);
 					$('#form-benefits-modal .modal-content').html(result.form);
 
                     let value = $('input#value').val();
