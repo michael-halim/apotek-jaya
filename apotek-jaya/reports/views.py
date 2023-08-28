@@ -10,9 +10,25 @@ from salaries.models import PayrollPeriods, Salaries
 from zoneinfo import ZoneInfo
 import uuid
 
-class ListReportsSalaryView(LoginRequiredMixin, View):
+class ListReportsSalaryView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['salaries.read_salaries']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         period_uuid = request.GET.get('pu', None)
         dept_uuid = request.GET.get('du', None)
@@ -79,9 +95,25 @@ class ListReportsSalaryView(LoginRequiredMixin, View):
 
         return redirect(reverse_lazy('main_app:login'))
 
-class ReportsSalaryView(LoginRequiredMixin, View):
+class ReportsSalaryView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['salaries.read_salaries']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         context = {
             'title':'Reports Salary',
@@ -95,9 +127,25 @@ class ReportsSalaryView(LoginRequiredMixin, View):
 
         return redirect(reverse_lazy('main_app:login'))
 
-class ListReportsPresenceView(LoginRequiredMixin, View):
+class ListReportsPresenceView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['salaries.read_salaries']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         period_uuid = request.GET.get('pu', None)
         dept_uuid = request.GET.get('du', None)
@@ -160,9 +208,25 @@ class ListReportsPresenceView(LoginRequiredMixin, View):
 
         return redirect(reverse_lazy('main_app:login'))
 
-class ReportsPresenceView(LoginRequiredMixin, View):
+class ReportsPresenceView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['salaries.read_salaries']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         context = {
             'title':'Reports Salary',

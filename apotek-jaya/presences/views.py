@@ -459,7 +459,25 @@ class PresencesView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
         return redirect(reverse_lazy('main_app:login'))
 
-class CreatePresencesBulkView(LoginRequiredMixin, View):
+class CreatePresencesBulkView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    login_url = '/login/'
+    permission_required = ['presences.read_presences']
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         presences_bulk_form = PresenceBulkInputForm()
 
@@ -586,5 +604,5 @@ class CreatePresencesBulkView(LoginRequiredMixin, View):
             'modal_messages':[],
             'is_close_modal':False,
         }
-        
+
         return JsonResponse(failed_response)

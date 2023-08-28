@@ -914,7 +914,6 @@ class LeavesBalancesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'modal_messages':[],
                 'toast_message':'You Are Not Authorized',
                 'is_close_modal':False,
-
             }
 
             return JsonResponse(response)
@@ -934,8 +933,24 @@ class LeavesBalancesView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
         return redirect(reverse_lazy('main_app:login'))
 
-class AddLeavesBalancesView(LoginRequiredMixin, View):
+class AddLeavesBalancesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'
+    permission_required = ['leaves.read_leave_balances', 'leaves.create_leave_balances']
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         if self.request.user.is_authenticated:
             return redirect(reverse_lazy('main_app:home'))
@@ -994,5 +1009,5 @@ class AddLeavesBalancesView(LoginRequiredMixin, View):
             'is_close_modal':False,
             'leaves_data': leaves_data,
         }
-        
+
         return JsonResponse(response)

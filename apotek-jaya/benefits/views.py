@@ -1660,9 +1660,25 @@ class ShowEmployeesDepartmentView(LoginRequiredMixin, PermissionRequiredMixin, V
             return JsonResponse(response)
         
 
-class ListPTKPTypeView(LoginRequiredMixin, View):
+class ListPTKPTypeView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login = '/login/'
+    permission_required = ['benefits.read_ptkp_type']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         context = {
             'view_link':str(reverse_lazy('benefits:detail-ptkp-type', args=["@@"])),
@@ -1697,9 +1713,25 @@ class ListPTKPTypeView(LoginRequiredMixin, View):
 
         return redirect(reverse_lazy('main_app:login'))
 
-class CreatePTKPTypeView(LoginRequiredMixin, View):
+class CreatePTKPTypeView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login = '/login/'
+    permission_required = ['benefits.read_ptkp_type', 'benefits.create_ptkp_type']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         ptkp_type_form = PTKPTypeForm()
 
@@ -1785,9 +1817,25 @@ class CreatePTKPTypeView(LoginRequiredMixin, View):
 
             return JsonResponse(response)
 
-class UpdatePTKPTypeView(LoginRequiredMixin, View):
+class UpdatePTKPTypeView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login = '/login/'
+    permission_required = ['benefits.read_ptkp_type', 'benefits.update_ptkp_type']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request, ptkp_type_uuid):
         ptkp = get_object_or_404(PTKPType, hash_uuid=ptkp_type_uuid)
         ptkp_type_form = PTKPTypeForm(instance=ptkp)
@@ -1868,9 +1916,25 @@ class UpdatePTKPTypeView(LoginRequiredMixin, View):
 
             return JsonResponse(response)
 
-class DetailPTKPTypeView(LoginRequiredMixin, View):
+class DetailPTKPTypeView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login = '/login/'
+    permission_required = ['benefits.read_ptkp_type']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request, ptkp_type_uuid):
         ptkp = get_object_or_404(Benefits, hash_uuid=ptkp_type_uuid)
         ptkp_type_form = PTKPTypeForm(instance=ptkp)
@@ -1902,9 +1966,25 @@ class DetailPTKPTypeView(LoginRequiredMixin, View):
 
         return redirect(reverse_lazy('main_app:login'))
 
-class DeletePTKPTypeView(LoginRequiredMixin, View):
+class DeletePTKPTypeView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login = '/login/'
+    permission_required = ['benefits.read_ptkp_type', 'benefits.delete_ptkp_type']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         if self.request.user.is_authenticated:
             return redirect(reverse_lazy('main_app:home'))
@@ -1926,9 +2006,25 @@ class DeletePTKPTypeView(LoginRequiredMixin, View):
 
         return JsonResponse(response)
 
-class PTKPTypeView(LoginRequiredMixin, View):
+class PTKPTypeView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login = '/login/'
+    permission_required = ['benefits.read_ptkp_type']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
     def get(self, request):
         context = {
             'title':'PTKP Type',
