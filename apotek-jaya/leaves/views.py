@@ -425,6 +425,7 @@ class ListLeavesBalancesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             departments_name = [ x.department_id.name for x in department_object ]
             departments_name = ', '.join(departments_name)
             nik = lb.employee_id.nik if lb.employee_id.nik else '-'
+            nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
             nik_name = nik + '<br>' + lb.employee_id.name
 
             leaves_balances_data.append({

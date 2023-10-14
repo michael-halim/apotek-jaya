@@ -7,7 +7,7 @@ $(function () {
                 this.api()
                 .columns()
                 .every(function () {
-                    var that = this;
+                    let that = this;
 
                     $('input', this.footer()).on('keyup change clear', function () {
                         if (that.search() !== this.value) {
@@ -164,7 +164,7 @@ $(function () {
 		let presence_uuid = $(this).data('uq');
 		let url = $(this).data('link');
 		url = url.replace('@@', presence_uuid);
-
+        alert(url);
 		$.ajax({
             url: url,
             method: 'POST',
@@ -222,7 +222,7 @@ $(function () {
     });
 
 	$('#presences-table tfoot th.search-text').each(function () {
-		var title = $(this).text();
+		let title = $(this).text();
 		$(this).html('<input class="form-control" type="text" placeholder="Search ' + title + '" />');
 	});
   

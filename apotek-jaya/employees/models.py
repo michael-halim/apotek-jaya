@@ -5,7 +5,8 @@ from .constants import PROVINCE
 from datetime import timedelta, datetime
 from zoneinfo import ZoneInfo
 import uuid
-
+# TODO:
+# BUAT WEBSITE INI BISA DIAKSES OFFLINE
 class Employees(models.Model):
     # If null=True, in forms is allowed to enter None, if not validators will come into play
     auth_user_id = models.OneToOneField(User, 

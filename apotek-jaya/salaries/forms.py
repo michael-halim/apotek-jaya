@@ -60,7 +60,7 @@ class SalariesForm(forms.ModelForm):
                             'id':'employee_id',
                             'class':'form-control',
                         }),
-                    required=True,
+                    required=False,
                     label='Employee',
                     to_field_name='hash_uuid')
     
@@ -71,7 +71,7 @@ class SalariesForm(forms.ModelForm):
                             'id':'period_id',
                             'class':'form-control',
                         }),
-                    required=True,
+                    required=False,
                     label='Period',
                     to_field_name='hash_uuid')
     
@@ -80,11 +80,16 @@ class SalariesForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['employee_id'].initial = kwargs.pop('initial_employee_id', None)
         self.fields['period_id'].initial = kwargs.pop('initial_period_id', None)
+        self.fields['bonus'].initial = kwargs.pop('initial_bonus', None)
+        self.fields['overtime_hours_count'].initial = kwargs.pop('initial_overtime_hours_count', None)
+        self.fields['leave_count'].initial = kwargs.pop('initial_leave_count', None)
+        self.fields['sick_count'].initial = kwargs.pop('initial_sick_count', None)
+        self.fields['permit_count'].initial = kwargs.pop('initial_permit_count', None)
 
     class Meta:
         model = Salaries
         exclude = ['updated_at', 'updated_by', 'created_by', 'created_at', 
-                   'deleted_at', 'deleted_by']
+                   'deleted_at', 'deleted_by', 'status']
         
         # Error Messages Here's Defined Because in models.py it is set to null=False implicitly
         error_messages = {
@@ -220,7 +225,7 @@ class SalariesForm(forms.ModelForm):
             'status': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'placeholder':'1',
-                'required': True,
+                'required': False,
                 'id':'status',
             }),
         }

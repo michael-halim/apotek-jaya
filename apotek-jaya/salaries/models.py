@@ -69,23 +69,23 @@ class Salaries(models.Model):
                                     on_delete=models.CASCADE,
                                     db_column='period_id')
 
-    presence_count = models.IntegerField(db_column='presence_count')
+    presence_count = models.IntegerField(db_column='presence_count', default=0, null=True, blank=True)
 
 
 
-    total_work_hours = models.IntegerField(db_column='total_work_hours')
+    total_work_hours = models.IntegerField(db_column='total_work_hours', default=0, null=True, blank=True)
 
     ptkp = models.IntegerField(db_column='ptkp')
 
-    overtime_hours_count = models.IntegerField(db_column='overtime_hours_count')
+    overtime_hours_count = models.IntegerField(db_column='overtime_hours_count', default=0, null=True, blank=True)
     
     overtime_hours_nominal = models.IntegerField(db_column='overtime_hours_nominal')
 
-    leave_count = models.IntegerField(db_column='leave_count')
+    leave_count = models.IntegerField(db_column='leave_count', default=0, null=True, blank=True)
     
-    sick_count = models.IntegerField(db_column='sick_count')
+    sick_count = models.IntegerField(db_column='sick_count', default=0, null=True, blank=True)
     
-    permit_count = models.IntegerField(db_column='permit_count')
+    permit_count = models.IntegerField(db_column='permit_count', default=0, null=True, blank=True)
 
     pph21 = models.IntegerField(db_column='pph21')
     

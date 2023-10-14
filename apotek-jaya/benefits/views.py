@@ -1069,6 +1069,7 @@ class UpdateBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View)
             employee = get_object_or_404(Employees, id=emp)
             
             nik = employee.nik if employee.nik != '' else '-'
+            nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
             nik_email = nik + '<br>' + employee.auth_user_id.email
 
             department = DepartmentMembers.objects.filter(employee_id = emp).values_list('department_id')
@@ -1393,6 +1394,7 @@ class DetailBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View)
                 department_data += dept + '<br>'
 
             nik = employee.nik if employee.nik != '' else '-'
+            nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
             nik_email = nik + '<br>' + employee.auth_user_id.email
 
             employees_data.append({
@@ -1614,6 +1616,7 @@ class ShowEmployeesDepartmentView(LoginRequiredMixin, PermissionRequiredMixin, V
                 employees_data = []
                 for emp in employees:
                     nik = emp.employee_id.nik if emp.employee_id.nik != '' else '-'
+                    nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
                     nik_email = nik + '<br>' + emp.employee_id.auth_user_id.email
 
                     department = DepartmentMembers.objects.filter(employee_id = emp.employee_id).values_list('department_id')

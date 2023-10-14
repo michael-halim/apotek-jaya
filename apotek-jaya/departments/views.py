@@ -104,6 +104,7 @@ class AddEmployeeDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, Vi
                 permission_group = get_object_or_404(Group, id=permission_group)
 
             nik = employee.nik if employee.nik != '' else '-'
+            nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
             nik_email = nik + '<br>' + employee.auth_user_id.email
             trash_icon = '''
                 <div class="d-flex justify-content-center">
@@ -343,6 +344,7 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         employee_data = []
         for member in department_members:
             nik = member.employee_id.nik if member.employee_id.nik != '' else '-'
+            nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
             nik_email = nik + '<br>' + member.employee_id.auth_user_id.email
             
             permission_object = member.employee_id.auth_user_id.groups.all()
@@ -568,6 +570,7 @@ class DetailDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         employee_data = []
         for member in department_members:
             nik = member.employee_id.nik if member.employee_id.nik != '' else '-'
+            nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
             nik_email = nik + '<br>' + member.employee_id.auth_user_id.email
 
             permission_object = member.employee_id.auth_user_id.groups.all()

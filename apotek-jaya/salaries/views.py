@@ -182,7 +182,11 @@ def calculate_salary(request, employees, period):
             elif 'thr' in name:
                 thr += sc_data['value']
 
-            gross_salary += sc_data['value']
+            if sc_data['is_deduction']:
+                gross_salary -= sc_data['value']
+            else:
+                gross_salary += sc_data['value']
+            
         
         # Calculate PPH21
         # PKP Tax Bracket
@@ -343,6 +347,7 @@ class ListSalariesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             form_action = render_to_string('salaries/includes/salaries_form_action_button.html', context, request=request)
             
             nik = salary.employee_id.nik if salary.employee_id.nik else '---'
+            nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
             nik_name = nik + '<br>' + salary.employee_id.name
             department_object = DepartmentMembers.objects.filter(employee_id = salary.employee_id)
 
@@ -452,10 +457,9 @@ class UpdateSalariesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     
     def get(self, request, salary_uuid):
         salary_object = get_object_or_404(Salaries, hash_uuid=salary_uuid)
-        
         initial_data = {
             'employee_id':salary_object.employee_id,
-            'period_id':salary_object.period_id
+            'period_id':salary_object.period_id,
         }
 
         salaries_form = SalariesForm(instance=salary_object, initial=initial_data)
@@ -463,7 +467,6 @@ class UpdateSalariesView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
         for key in salaries_form.fields:
             salaries_form.fields[key].widget.attrs['disabled'] = True
-            salaries_form.fields[key].widget.attrs['placeholder'] = ''
 
         context = {
             'mode':'update',
@@ -531,8 +534,9 @@ class UpdateSalariesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                     return JsonResponse(response)
             
         salary = get_object_or_404(Salaries, hash_uuid=salary_uuid)
-        salaries_form = SalariesForm(request.POST or None, instance=salary)
-        
+        salary.updated_at = datetime.now(ZoneInfo('Asia/Bangkok'))
+        salary.updated_by = request.user
+
         active_salary_components = SalaryComponents.objects.filter(salary_id=salary.id, status=1)\
                                                             .values_list('hash_uuid', flat=True)
         
@@ -540,97 +544,67 @@ class UpdateSalariesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             try: added_salary_components.remove(str(comp))
             except ValueError as ve: removed_salary_components.append(str(comp))
 
-        if salaries_form.is_valid():
-            try:
-                # Add Additional Field to Database
-                salaries_form.cleaned_data['updated_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
-                salaries_form.cleaned_data['updated_by'] = request.user
-
-                # Saving Salary to Database
-                salaries_form.save()
-                # TODO: PERHITUNGAN PAJAK
-                # TODO: PERHITUNGAN POTONG GAJI BILA TIDAK MASUK KERJA DAN BELUM PUNYA CUTI
-                
-                if removed_salary_components:
-                    for salary_comp_uuid in removed_salary_components:
-                        salary_component = get_object_or_404(SalaryComponents, hash_uuid=salary_comp_uuid)
-                        salary_component.status = 0
-                        salary_component.deleted_at = datetime.now(ZoneInfo('Asia/Bangkok'))
-                        salary_component.deleted_by = request.user
-                        salary_component.save()
-                    
-                        if salary_component.is_salary_adjustment:
-                            salary_adjustment = get_object_or_404(SalaryAdjustments, id=salary_component.salary_adjustments_id.id)
-                            salary_adjustment.status = 0
-                            salary_adjustment.deleted_at = datetime.now(ZoneInfo('Asia/Bangkok'))
-                            salary_adjustment.deleted_by = request.user
-                            salary_adjustment.save()
-
-                        elif salary_component.is_overtime:
-                            overtime = get_object_or_404(OvertimeUsers, id=salary_component.overtime_id.id)
-                            overtime.status = 0
-                            overtime.deleted_at = datetime.now(ZoneInfo('Asia/Bangkok'))
-                            overtime.deleted_by = request.user
-                            overtime.save()
-
-                        elif salary_component.is_benefit_adjustment:
-                            benefit_adjustment = get_object_or_404(BenefitAdjustments, id=salary_component.benefit_adjustments_id.id)
-                            benefit_adjustment.status = 0
-                            benefit_adjustment.deleted_at = datetime.now(ZoneInfo('Asia/Bangkok'))
-                            benefit_adjustment.deleted_by = request.user
-                            benefit_adjustment.save()
-
-                        else:
-                            benefit = get_object_or_404(DetailEmployeeBenefits, id=salary_component.benefit_id.id)
-                            benefit.status = 0
-                            benefit.deleted_at = datetime.now(ZoneInfo('Asia/Bangkok'))
-                            benefit.deleted_by = request.user
-                            benefit.save()
-
-                calculate_salary(request, employees=Employees.objects.filter(id=salary.employee_id.id), period=salary.period_id)
-                
-            except Exception as e:
-                response = {
-                    'success': False,
-                    'errors': [],
-                    'modal_messages':[],
-                    'toast_message':'We\'re sorry, but something went wrong on our end. Please try again later.',
-                    'is_close_modal':False,
-                }
-
-                return JsonResponse(response)
+        try:
+            # Saving Salary to Database
+            salary.save()
             
+            if removed_salary_components:
+                for salary_comp_uuid in removed_salary_components:
+                    salary_component = get_object_or_404(SalaryComponents, hash_uuid=salary_comp_uuid)
+                    salary_component.status = 0
+                    salary_component.deleted_at = datetime.now(ZoneInfo('Asia/Bangkok'))
+                    salary_component.deleted_by = request.user
+                    salary_component.save()
+                
+                    if salary_component.is_salary_adjustment:
+                        salary_adjustment = get_object_or_404(SalaryAdjustments, id=salary_component.salary_adjustments_id.id)
+                        salary_adjustment.status = 0
+                        salary_adjustment.deleted_at = datetime.now(ZoneInfo('Asia/Bangkok'))
+                        salary_adjustment.deleted_by = request.user
+                        salary_adjustment.save()
+
+                    elif salary_component.is_overtime:
+                        overtime = get_object_or_404(OvertimeUsers, id=salary_component.overtime_id.id)
+                        overtime.status = 0
+                        overtime.deleted_at = datetime.now(ZoneInfo('Asia/Bangkok'))
+                        overtime.deleted_by = request.user
+                        overtime.save()
+
+                    elif salary_component.is_benefit_adjustment:
+                        benefit_adjustment = get_object_or_404(BenefitAdjustments, id=salary_component.benefit_adjustments_id.id)
+                        benefit_adjustment.status = 0
+                        benefit_adjustment.deleted_at = datetime.now(ZoneInfo('Asia/Bangkok'))
+                        benefit_adjustment.deleted_by = request.user
+                        benefit_adjustment.save()
+
+                    else:
+                        benefit = get_object_or_404(DetailEmployeeBenefits, id=salary_component.benefit_id.id)
+                        benefit.status = 0
+                        benefit.deleted_at = datetime.now(ZoneInfo('Asia/Bangkok'))
+                        benefit.deleted_by = request.user
+                        benefit.save()
+
+            calculate_salary(request, employees=Employees.objects.filter(id=salary.employee_id.id), period=salary.period_id)
+            
+        except Exception as e:
             response = {
-                'success': True, 
-                'toast_message':'Salary Updated and Recalculated Successfuly',
-                'is_close_modal':True
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'We\'re sorry, but something went wrong on our end. Please try again later.',
+                'is_close_modal':False,
             }
 
             return JsonResponse(response)
+        
+        response = {
+            'success': True, 
+            'toast_message':'Salary Updated and Recalculated Successfuly',
+            'is_close_modal':True
+        }
 
-        else:
-            messages.error(request,'Please Correct The Errors Below')
-            
-            modal_messages = []
-            for message in messages.get_messages(request):
-                modal_messages.append({
-                    'message':str(message),
-                    'tags': message.tags
-                })
+        return JsonResponse(response)
 
-            errors = {}
-            for field, error_list in salaries_form.errors.items():
-                errors[field] = error_list
-
-            response = {
-                'success': False, 
-                'errors': errors, 
-                'modal_messages':modal_messages,
-                'toast_message':'Please review the form and correct any errors before resubmitting',
-                'is_close_modal':False
-            }
-
-            return JsonResponse(response)
   
 class DetailSalariesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'

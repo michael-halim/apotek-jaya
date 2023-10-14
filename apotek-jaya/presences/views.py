@@ -48,6 +48,7 @@ class ListPresencesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             form_action = render_to_string('presences/includes/presences_form_action_button.html', context, request=request)
             employee = get_object_or_404(Employees, id=presence.employee_id.id)
             nik = employee.nik if employee.nik else '-'
+            nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
             nik_name = nik + '<br>' + employee.name
             presences_data.append({
                 'nik_name':nik_name,
@@ -501,7 +502,7 @@ class CreatePresencesBulkView(LoginRequiredMixin, PermissionRequiredMixin, View)
         
         return JsonResponse(response)
 
-    def post(self, request):
+    def post(self, request):    
         if request.method == 'POST' and request.FILES['file_upload']:
             failed_response = {
                 'success': False,
@@ -531,13 +532,13 @@ class CreatePresencesBulkView(LoginRequiredMixin, PermissionRequiredMixin, View)
                     current_nik = updated_row[0]
 
                     # Change Date and Time to Datetime Object
-                    if type(updated_row[1]) == str:
+                    if isinstance(updated_row[1], str):
                         updated_row[1] = datetime.strptime(updated_row[1], '%Y/%m/%d')
                     
-                    if type(updated_row[2]) == str:
+                    if isinstance(updated_row[2], str):
                         updated_row[2] = datetime.strptime(updated_row[2], '%H:%M:%S').time()
 
-                    if type(updated_row[3]) == str:
+                    if isinstance(updated_row[3], str):
                         updated_row[3] = datetime.strptime(updated_row[3], '%H:%M:%S').time()
                         
                     updated_row[2] = datetime.combine(updated_row[1], updated_row[2]) 
@@ -551,7 +552,11 @@ class CreatePresencesBulkView(LoginRequiredMixin, PermissionRequiredMixin, View)
 
                 presence_data = []
                 for co, row in enumerate(excel_data, start=1):
-                    employee = get_object_or_404(Employees, nik=row['nik'])
+                    employee =  Employees.objects.filter(nik=row['nik']).first()
+                    if employee is None:
+                        failed_response['toast_message'] = 'Employee with NIK {nik} in line {line} Not Found'.format(nik = row['nik'], line=co)
+                        return JsonResponse(failed_response)
+
                     presence_object = Presences.objects.filter(employee_id = employee,
                                                                start_at__gte=row['start_at'].astimezone(ZoneInfo('Asia/Bangkok')),
                                                                end_at__lte=row['end_at'].replace(hour=23, minute=59, second=59).astimezone(ZoneInfo('Asia/Bangkok')))
@@ -582,7 +587,6 @@ class CreatePresencesBulkView(LoginRequiredMixin, PermissionRequiredMixin, View)
                     'success':True,
                     'toast_message':'Presence Created Successfuly',
                     'is_close_modal': True,
-                    
                 }
 
                 return JsonResponse(response)
@@ -592,7 +596,6 @@ class CreatePresencesBulkView(LoginRequiredMixin, PermissionRequiredMixin, View)
                     'success':False,
                     'toast_message':'There are error with NIK {nik} in line {line}'.format(nik = current_nik, line=current_line),
                     'is_close_modal': True,
-                    
                 }
 
                 return JsonResponse(response)

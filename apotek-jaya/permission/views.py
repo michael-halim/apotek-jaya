@@ -358,6 +358,7 @@ class ListPermissionView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 group_object = user.groups.all()
 
                 nik = employee.nik if employee.nik != '' else '-'
+                nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
                 nik_email = nik + '<br>' + employee.auth_user_id.email
                 
                 departments = DepartmentMembers.objects.filter(employee_id=employee.id)

@@ -61,6 +61,7 @@ class ListReportsSalaryView(LoginRequiredMixin, PermissionRequiredMixin, View):
         reports_data = []
         for salary in salaries_object:
             nik = salary.employee_id.nik if salary.employee_id.nik else '---'
+            nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
             nik_name = nik + '<br>' + salary.employee_id.name
 
             department_object = DepartmentMembers.objects.filter(employee_id=salary.employee_id)
@@ -178,6 +179,7 @@ class ListReportsPresenceView(LoginRequiredMixin, PermissionRequiredMixin, View)
         reports_data = []
         for salary in salaries_object:
             nik = salary.employee_id.nik if salary.employee_id.nik else '---'
+            nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
             nik_name = nik + '<br>' + salary.employee_id.name
 
             department_object = DepartmentMembers.objects.filter(employee_id=salary.employee_id)

@@ -254,6 +254,7 @@ class UpdateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
         overtime_users_object = OvertimeUsers.objects.filter(overtime_id = overtimes_object, status=1)
         for ou in overtime_users_object:
             nik = ou.employee_id.nik if ou.employee_id.nik else '-'
+            nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
             nik_name = nik + '<br>' + ou.employee_id.name
             department_members_object = DepartmentMembers.objects.filter(employee_id=ou.employee_id.id, status=1)
             departments = [ x.department_id.name for x in department_members_object ]
@@ -471,6 +472,7 @@ class DetailOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
         overtime_users_object = OvertimeUsers.objects.filter(overtime_id = overtimes_object)
         for ou in overtime_users_object:
             nik = ou.employee_id.nik if ou.employee_id.nik else '-'
+            nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
             nik_name = nik + '<br>' + ou.employee_id.name
             department_members_object = DepartmentMembers.objects.filter(employee_id=ou.employee_id.id, status=1)
             departments = [ x.department_id.name for x in department_members_object ]
@@ -613,6 +615,7 @@ class AddOvertimesUsersView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 '''
 
                 nik = employee_object.nik if employee_object.nik else '-'
+                nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
                 nik_name = nik + '<br>' + employee_object.name
                 employee_data = {
                     'uq_employee':  employee_object.hash_uuid,
