@@ -1,0 +1,54 @@
+@media screen and (max-width: 480px) {
+    .offcanvas{
+        max-width: 75%;
+    }
+}
+
+.offcanvas{
+    max-width: 330px;
+    border-top-right-radius: 24px;
+    border-bottom-right-radius: 24px;
+    background: #0F4C75;
+    color: white;
+}
+
+.menu{
+    margin: 20px 0;
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.menu:hover{
+    background: #fff;
+    color: #0F4C75;
+}
+
+
+.logout-menu{
+    margin: 20px 0;
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: #BBE1FA;
+    color: #212529;
+    font-weight: bold;
+}
+
+.hr-sidebar{
+    border-top: 5px solid #fff;
+    border-radius: 24px;
+}
+.selected{
+    background: #fff;
+    border-radius: 6px;
+    color: #0F4C75;
+}
+
+[class*="dropdown-child-"] {
+  margin: 10px 20px;
+}
+
+.rotate {
+  transform: rotate(180deg);
+}
