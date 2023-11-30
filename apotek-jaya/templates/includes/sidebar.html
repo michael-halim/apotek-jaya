@@ -97,16 +97,6 @@
             
         </div>
         <hr class="hr-sidebar">
-        <a class="dropdown-item {% if request.path == '/' %} selected {% endif %}" href="{% url 'main_app:home' %}">
-            <div class="row menu">
-                <div class="col-2" style="padding-left: 9px;">
-                    <i class="fa-solid fa-house"></i>
-                </div>
-                <div class="col-10">
-                    Home
-                </div>
-            </div>
-        </a>
 
         {% if perms.employees.read_employees %}
             <div class="row menu dropdown-parent" id="employees">

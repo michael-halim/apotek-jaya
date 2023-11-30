@@ -17,12 +17,6 @@ def error_500_view(request):
     """Handles Server Error"""
     return render(request, '500.html')
 
-class HomeView(LoginRequiredMixin, TemplateView):
-    """Handles Home Page"""
-
-    template_name = 'main_app/index.html'
-    login_url = '/login/'
-
 class LoginPageView(View):
     login_url = '/login/'
 
