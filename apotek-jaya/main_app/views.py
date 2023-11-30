@@ -28,7 +28,7 @@ class LoginPageView(View):
 
     def get(self, request):
         if request.user.is_authenticated:
-            return redirect('main_app:home')
+            return redirect('main_app:employees')
         
         form = CreateUserForm()
         context = {
