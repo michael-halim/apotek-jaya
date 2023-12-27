@@ -63,6 +63,15 @@
                     </div>
                     <div class="col-md-12">
                         <div class="mb-3">
+                            <label for="{{overtimes_form.is_overtime.id_for_label}}" class="form-label">
+                                <b>{{ overtimes_form.is_overtime.label }}</b>
+                            </label>
+                            {{ overtimes_form.is_overtime }}
+                            <span class="form-error text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="mb-3">
                             <label for="{{overtimes_form.status.id_for_label}}" class="form-label">
                                 <b>{{ overtimes_form.status.label }}</b>
                             </label>

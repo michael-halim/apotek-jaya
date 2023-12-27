@@ -1,3 +1,4 @@
+import re
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views.generic import View
@@ -50,10 +51,13 @@ class ListPresencesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             nik = employee.nik if employee.nik else '-'
             nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
             nik_name = nik + '<br>' + employee.name
+            start_at = presence.start_at.astimezone(ZoneInfo('Asia/Bangkok')).strftime("%H:%M") if presence.start_at is not None else '-'
+            end_at = presence.end_at.astimezone(ZoneInfo('Asia/Bangkok')).strftime("%H:%M") if presence.end_at is not None else '-'
             presences_data.append({
                 'nik_name':nik_name,
-                'start_at': presence.start_at.astimezone(ZoneInfo('Asia/Bangkok')).strftime("%d %B %Y %H:%M"),
-                'end_at': presence.end_at.astimezone(ZoneInfo('Asia/Bangkok')).strftime("%d %B %Y %H:%M"),
+                'date': presence.date.strftime("%d %B %Y"),
+                'start_at': start_at,
+                'end_at': end_at,
                 'status':presence.status,
                 'uq': form_action, 
             })
@@ -517,38 +521,48 @@ class CreatePresencesBulkView(LoginRequiredMixin, PermissionRequiredMixin, View)
                 return JsonResponse(failed_response)
             
             # Add Current NIK and Line in Excel Code for Error Message
-            current_nik = None
             current_line = None
             try:
                 workbook = openpyxl.load_workbook(uploaded_file)
                 sheet = workbook.active
                 
                 excel_data = []
+                dates = []
                 for co, row in enumerate(sheet.iter_rows(values_only=True), start=1):
-                    updated_row = [x for x in row]
-                    # updated_row = [ 'NIK', 'YYYY/MM/DD', HH:MM:SS, HH:MM:SS ]
-
-                    current_line = co
-                    current_nik = updated_row[0]
-
-                    # Change Date and Time to Datetime Object
-                    if isinstance(updated_row[1], str):
-                        updated_row[1] = datetime.strptime(updated_row[1], '%Y/%m/%d')
+                    print('co')
+                    print(co)
+                    print('row')
+                    print(row)
                     
-                    if isinstance(updated_row[2], str):
-                        updated_row[2] = datetime.strptime(updated_row[2], '%H:%M:%S').time()
+                    if co == 1:
+                        string_row = ' '.join(str(x) for x in row)
+                        dates = re.findall(r'\d+\/\d+\/\d+', string_row)
+                        continue
 
-                    if isinstance(updated_row[3], str):
-                        updated_row[3] = datetime.strptime(updated_row[3], '%H:%M:%S').time()
+                    if co == 2:
+                        continue
+                    
+                    print('dates')
+                    print(dates)
+                    current_line = co
+                    nik = row[1]
+                    for co, i in enumerate(range(7, 7 + (len(dates) * 2), 2)):
+                        time_pattern = r'^\d{2}:\d{2}$'
+                        start, end = row[i].strip() if row[i] is not None else '', row[i+1].strip() if row[i+1] is not None else ''
                         
-                    updated_row[2] = datetime.combine(updated_row[1], updated_row[2]) 
-                    updated_row[3] = datetime.combine(updated_row[1], updated_row[3])
-                    excel_data.append({
-                        'nik':updated_row[0],
-                        'date':updated_row[1],
-                        'start_at':updated_row[2],
-                        'end_at':updated_row[3],
-                    })
+                        start = None if start == '' else start
+                        end = None if end == '' else end
+                        if start is not None and end is not None:
+                            if not re.match(time_pattern, start) or not re.match(time_pattern, end) and (start != '' or end != ''):
+                                failed_response['toast_message'] = 'error in line {line}. Doesn\'t have hh:mm pattern'.format(line=co)
+                                return JsonResponse(failed_response)
+
+                        excel_data.append({
+                            'nik':nik,
+                            'date': datetime.strptime(dates[co], '%d/%m/%Y'),
+                            'start_at': datetime.strptime(str(dates[co]) + ' ' +  str(start), '%d/%m/%Y %H:%M') if start is not None else None,
+                            'end_at': datetime.strptime(str(dates[co]) + ' ' + str(end), '%d/%m/%Y %H:%M') if end is not None else None,
+                        })
 
                 presence_data = []
                 for co, row in enumerate(excel_data, start=1):
@@ -557,20 +571,10 @@ class CreatePresencesBulkView(LoginRequiredMixin, PermissionRequiredMixin, View)
                         failed_response['toast_message'] = 'Employee with NIK {nik} in line {line} Not Found'.format(nik = row['nik'], line=co)
                         return JsonResponse(failed_response)
 
-                    presence_object = Presences.objects.filter(employee_id = employee,
-                                                               start_at__gte=row['start_at'].astimezone(ZoneInfo('Asia/Bangkok')),
-                                                               end_at__lte=row['end_at'].replace(hour=23, minute=59, second=59).astimezone(ZoneInfo('Asia/Bangkok')))
-
-                    if presence_object.count() > 0:
-                        failed_response['toast_message'] = 'Employee {employee} Already Has an Active Presence in line {line}'.format(employee=employee.name, line=co)
-                        return JsonResponse(failed_response)
-                    
-                    if row['start_at'] > row['end_at']:
-                        failed_response['toast_message'] = 'Start At from Employee {employee} Cannot Be Greater Than End At in line {line}'.format(employee=employee.name, line=co)
-                        return JsonResponse(failed_response)
 
                     presence_data.append(Presences(
                         employee_id=employee,
+                        date= row['date'],
                         start_at=row['start_at'],
                         end_at=row['end_at'],
                         status=1,
@@ -592,9 +596,11 @@ class CreatePresencesBulkView(LoginRequiredMixin, PermissionRequiredMixin, View)
                 return JsonResponse(response)
             
             except ValueError as ve:
+                print('ve')
+                print(ve)
                 response = {
                     'success':False,
-                    'toast_message':'There are error with NIK {nik} in line {line}'.format(nik = current_nik, line=current_line),
+                    'toast_message':'There are error in line {line}'.format(line=current_line),
                     'is_close_modal': True,
                 }
 

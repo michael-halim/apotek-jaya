@@ -5,6 +5,16 @@ from departments.models import Departments
 
 from .models import BenefitCategories, BenefitScheme, Benefits, DetailEmployeeBenefits, PTKPType
 
+class PtkpTypeBulkInputForm(forms.Form):
+    file_upload = forms.FileField(
+        widget=forms.ClearableFileInput(attrs={
+            'id':'file_upload',
+            'class': 'form-control',
+            'accept': '.xls, .xlsx',
+        }),
+        label= 'Upload File Ptkp Type',
+    )
+
 class BenefitsForm(forms.ModelForm):
     benefit_category_id = forms.ModelChoiceField(
                     queryset = BenefitCategories.objects.all(),
@@ -445,9 +455,8 @@ class PTKPTypeForm(forms.ModelForm):
 
     class Meta:
         model = PTKPType
-        exclude = ['updated_at', 'updated_by', 'created_by', 'created_at', 
-                   'deleted_at', 'deleted_by']
-        
+        fields = '__all__'
+
         # Error Messages Here's Defined Because in models.py it is set to null=False implicitly
         error_messages = {
             'name': {
@@ -474,16 +483,9 @@ class PTKPTypeForm(forms.ModelForm):
                 'id':'value',
                 
             }),
-            'status': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder':'1',
-                'required': True,
-                'id':'status',
-            }),
         }
         
         labels = {
             'name': 'PTKP Type Name',
             'value': 'PTKP Value',
-            'status': 'Status',
         }

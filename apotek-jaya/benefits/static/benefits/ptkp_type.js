@@ -39,6 +39,9 @@ $(function () {
                 {
                     data: 'name',
                     defaultContent: '-',
+                    render: function(data, type, row){
+                        return data.toUpperCase();
+                    }
                 },
                 {
                     data: 'value',
@@ -46,18 +49,6 @@ $(function () {
                     render: function(data, type, row){
                         return 'Rp. ' + format_number(data);
                     }
-                },
-                {
-                    data: 'status',
-                    render: function (data, type, row) {
-                        if (data === 1) {
-                            return '<span class="badge bg-success">Active</span>';
-                        } else if (data === 0) {
-                            return '<span class="badge bg-danger">Inactive</span>';
-                        } else {
-                            return '<span class="badge bg-secondary">Unknown</span>';
-                        }
-                    },
                 },
                 {
                     data: 'uq',
@@ -101,7 +92,7 @@ $(function () {
 	let ptkp_type_datatable =  initPTKPTypesDataTable();
 	
     $('body').on('click', '.delete-ptkp-type', function () {
-		if (confirm('Do You Want to Deactivate this PTKP Type ?')) {
+		if (confirm('Do You Want to Delete this PTKP Type For Good ?')) {
             let ptkp_type_uuid = $(this).data('uq');
             let url = $(this).data('link');
             url = url.replace('@@', ptkp_type_uuid);
@@ -148,14 +139,37 @@ $(function () {
 		});
 	});
 
+    $('body').on('click','#import-ptkp-type', function () {
+		let ptkp_type_id = $(this).data('uq');
+		let url = $(this).data('link');
+		url = url.replace('@@', ptkp_type_id);
+        alert(url);
+        $.ajax({
+			url: url,
+			method: 'GET',
+			success: function (result) {
+				if (result.success === true) {
+					$('#form-ptkp-type-modal .modal-content').html(result.form);
+
+					$('#form-ptkp-type-modal').modal('show');
+				
+				} else if (result.success === false) {
+					toastr['error'](result.toast_message);
+				}
+			},
+			error: function (result) {},
+		});
+	});
+
 	$('body').on('click', '#submit-form-ptkp-type', function () {
-        
         let form = document.getElementById('ptkp_type_form');
 		let form_data = new FormData(form);
         
         form_data.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val());
-        form_data.delete('value');
-        form_data.append('value', $('input#value').val().replace(/\D/g, ''));
+        if ($('input#value').val() !== undefined) {
+            form_data.delete('value');
+            form_data.append('value', $('input#value').val().replace(/\D/g, ''));
+        }
 
 		let ptkp_type_uuid = $(this).data('uq');
 		let url = $(this).data('link');

@@ -9,42 +9,41 @@ class Overtimes(models.Model):
     # If null=True, in forms is allowed to enter None, if not validators will come into play
     hash_uuid = models.UUIDField(default=uuid.uuid4, editable=False)
 
-    name = models.CharField(max_length=200, default='')
+    name = models.CharField(max_length=200, default='', null=True, blank=True)
 
     description = models.TextField(max_length=400, default='', null=True, blank=True)
 
+    date = models.DateField()
     start_at = models.DateTimeField()
     end_at = models.DateTimeField()
 
     created_at = models.DateTimeField()
     created_by = models.ForeignKey(User,
-                                    on_delete=models.CASCADE, 
+                                    on_delete=models.SET_NULL, 
                                     related_name='created_by_overtimes',
                                     db_column='created_by',
+                                    null=True,
                                     blank=True)
     
     updated_at = models.DateTimeField(null=True, blank=True, default=None)
     updated_by = models.ForeignKey(User,
-                                    on_delete=models.CASCADE, 
+                                    on_delete=models.SET_NULL, 
                                     related_name='updated_by_overtimes',
                                     db_column='updated_by',
                                     null=True, 
                                     blank=True)
-    
-    deleted_at = models.DateTimeField(null=True, blank=True, default=None)
-    deleted_by = models.ForeignKey(User,
-                                    on_delete=models.CASCADE, 
-                                    related_name='deleted_by_overtimes',
-                                    db_column='deleted_by',
-                                    null=True,
-                                    blank=True)
+
+    # is_overtime = true -> overtime (tambah jam kerja)
+    # is_overtime = false -> lembur (hari libur tapi masuk)
+    is_overtime = models.BooleanField(default=True)
 
     status = models.IntegerField(default=1)
 
     def __str__(self):
-        return self.employee.username
+        return self.name
     
     class Meta:
+        unique_together = ('name', 'date', 'start_at', 'end_at', 'is_overtime' , )
         db_table = 'overtimes'
         verbose_name_plural = 'Overtimes'
         default_permissions = ()
@@ -81,14 +80,6 @@ class OvertimeUsers(models.Model):
                                     related_name='updated_by_overtime_users',
                                     db_column='updated_by',
                                     null=True, 
-                                    blank=True)
-    
-    deleted_at = models.DateTimeField(null=True, blank=True, default=None)
-    deleted_by = models.ForeignKey(User,
-                                    on_delete=models.CASCADE, 
-                                    related_name='deleted_by_overtime_users',
-                                    db_column='deleted_by',
-                                    null=True,
                                     blank=True)
 
     status = models.IntegerField(default=1)

@@ -88,12 +88,12 @@ $(function () {
                     defaultContent: '-',
                 },
                 {
-                    data: 'status',
+                    data: 'is_overtime',
                         render: function (data, type, row) {
-                            if (data === 1) {
-                                return '<span class="badge bg-success">Active</span>';
-                            } else if (data === 0) {
-                                return '<span class="badge bg-danger">Inactive</span>';
+                            if (data === true) {
+                                return '<span class="badge bg-success">Overtime</span>';
+                            } else if (data === false) {
+                                return '<span class="badge bg-danger">Lembur</span>';
                             } else {
                                 return '<span class="badge bg-secondary">Unknown</span>';
                             }
@@ -209,13 +209,38 @@ $(function () {
 		});
 	});
 
+    $('body').on('click','#import-overtimes', function () {
+		let overtimes_uuid = $(this).data('uq');
+		let url = $(this).data('link');
+		url = url.replace('@@', overtimes_uuid);
+
+		$.ajax({
+			url: url,
+			method: 'GET',
+			success: function (result) {
+				if (result.success === true) {
+					$('#form-overtimes-modal .modal-content').html(result.form);
+
+					$('#form-overtimes-modal').modal('show');
+				
+				} else if (result.success === false) {
+					toastr['error'](result.toast_message);
+				}
+			},
+			error: function (result) {},
+		});
+	});
+
 	$('body').on('click', '#submit-form-overtimes', function () {
 		let form = document.getElementById('overtimes_form');
 		let form_data = new FormData(form);
         let overtime_users = [];
         
-        for (const data of overtime_users_datatable.rows().data().toArray()){
-            overtime_users.push(data[0]);
+        
+        if (overtime_users_datatable !== null) {
+            for (const data of overtime_users_datatable.rows().data().toArray()){
+                overtime_users.push(data[0]);
+            }
         }
         
         form_data.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val());
@@ -329,24 +354,6 @@ $(function () {
 
     $('body').on('click', '.delete-overtime-users', function () {
         overtime_users_datatable.row($(this).parents('tr')).remove().draw();
-    });
-
-    $('body').on('change','input#start_at, input#end_at',function(){
-        let start_at = $('input#start_at').val();
-        let end_at = $('input#end_at').val();
-        if (start_at !== '' && end_at === '') {
-            $('input#end_at').val(start_at);
-        } else if (start_at === '' && end_at !== '') {
-            $('input#start_at').val(end_at);
-
-        } else if (start_at !== '' && end_at !== '') {
-            let start_at_date = new Date(start_at);
-            let end_at_date = new Date(end_at);
-            if (start_at_date > end_at_date) $('input#end_at').val(start_at);
-            else $('input#start_at').val(end_at);
-          
-        } 
-        
     });
 
 	$('#overtimes-table tfoot th.search-text').each(function () {

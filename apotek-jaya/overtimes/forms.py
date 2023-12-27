@@ -3,6 +3,17 @@ from django import forms
 from .models import Overtimes, OvertimeUsers
 from employees.models import Employees
 
+class OvertimesBulkInputForm(forms.Form):
+    file_upload = forms.FileField(
+        widget=forms.ClearableFileInput(attrs={
+            'id':'file_upload',
+            'class': 'form-control',
+            'accept': '.xls, .xlsx',
+        }),
+        label= 'Upload File Overtimes',
+    )
+
+
 class OvertimesForm(forms.ModelForm):
     def clean_name(self):
         cleaned_data = super().clean()
@@ -81,7 +92,11 @@ class OvertimesForm(forms.ModelForm):
                 'required': True,
                 'id':'start_at',
             }),
-
+            'is_overtime': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'required': False,
+                'id':'is_overtime',
+            }),
             'end_at': forms.DateTimeInput(attrs={
                 'class': 'form-control',
                 'type': 'datetime-local',
@@ -101,6 +116,7 @@ class OvertimesForm(forms.ModelForm):
             'start_at': 'Start At',
             'end_at': 'End At',
             'status': 'Status',
+            'is_overtime': 'Is Overtime (centang jika overtime, bila tidak centang maka dianggap lembur)',
         }
 
 class OvertimeUsersForm(forms.ModelForm):

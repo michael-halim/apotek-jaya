@@ -5,8 +5,9 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.template.loader import render_to_string
+import openpyxl
 
-from .forms import BenefitCategoriesForm, BenefitSchemeForm, BenefitsForm, DetailEmployeeBenefitsForm, PTKPTypeForm
+from .forms import BenefitCategoriesForm, BenefitSchemeForm, BenefitsForm, DetailEmployeeBenefitsForm, PTKPTypeForm, PtkpTypeBulkInputForm
 from .models import BenefitAdjustments, BenefitCategories, BenefitScheme, Benefits, DetailEmployeeBenefits, PTKPType
 from employees.models import Employees
 from departments.models import DepartmentMembers, Departments
@@ -1699,7 +1700,6 @@ class ListPTKPTypeView(LoginRequiredMixin, PermissionRequiredMixin, View):
             ptkp_type_data.append({
                 'name':ptkp.name,
                 'value':ptkp.value,
-                'status':ptkp.status,
                 'uq': form_action, 
             })
 
@@ -1995,20 +1995,147 @@ class DeletePTKPTypeView(LoginRequiredMixin, PermissionRequiredMixin, View):
         return redirect(reverse_lazy('main_app:login'))
 
     def post(self, request, ptkp_type_uuid):
-        ptkp = get_object_or_404(PTKPType, hash_uuid=ptkp_type_uuid)
-        ptkp.status = 0
-        ptkp.deleted_at = datetime.now(ZoneInfo('Asia/Bangkok'))
-        ptkp.deleted_by = request.user
-        ptkp.save()
+        res = PTKPType.objects.get(hash_uuid=ptkp_type_uuid).delete()
+        print(res)
+        if res[0] == 0:
+            response = {
+                'success': False, 
+                'toast_message':'PTKP Type Failed Deleted',
+                'is_close_modal':True
+            }
+
+            return JsonResponse(response)
 
         response = {
             'success': True, 
-            'toast_message':'PTKP Type Deactivated Successfuly',
+            'toast_message':'PTKP Type Deleted Successfuly',
             'is_close_modal':True
         }
 
         return JsonResponse(response)
+    
+class CreatePTKPTBulkTypeView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    login = '/login/'
+    permission_required = ['benefits.read_ptkp_type', 'benefits.create_ptkp_type']
 
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
+    def get(self, request):
+        ptkp_type_bulk_form = PtkpTypeBulkInputForm()
+
+        context = {
+            'success':True,
+            'mode':'create',
+            'modal_title':'create PTKP Type',
+            'ptkp_type_bulk_form':ptkp_type_bulk_form,
+            'uq':{
+                'create_link':str(reverse_lazy('benefits:create-ptkp-type-bulk')),
+            }
+        }
+        
+        form = render_to_string('benefits/includes/ptkp_type_bulk_form.html', context, request=request)
+        response = {
+            'success':True,
+            'form': form,
+            'is_view_only': False,
+            
+        }
+        
+        return JsonResponse(response)
+
+    def post(self, request):
+        if request.method == 'POST' and request.FILES['file_upload']:
+            failed_response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'is_close_modal':False,
+            }
+
+            uploaded_file = request.FILES['file_upload']
+            if not uploaded_file.name.endswith('.xlsx') and not uploaded_file.name.endswith('.xls'):
+                failed_response['toast_message'] = 'File Must Be in .xlsx or .xls Format'
+                return JsonResponse(failed_response)
+            
+            current_line = None
+            try:
+                workbook = openpyxl.load_workbook(uploaded_file)
+                sheet = workbook.active
+                
+                excel_data = []
+                for co, row in enumerate(sheet.iter_rows(values_only=True), start=1):
+                    print(co)
+                    print(row)
+
+                    current_line = co
+                    ptkp_name = row[0]
+                    ptkp_value = row[1]
+
+                    if ptkp_name is None or ptkp_value is None:
+                        failed_response['toast_message'] = 'PTKP Name and PTKP Value Cannot Be Empty in line {line}'.format(line=co)
+                        return JsonResponse(failed_response)
+
+                    if not isinstance(ptkp_value, int) and not isinstance(ptkp_value, float):
+                        failed_response['toast_message'] = 'PTKP Value Must Be Numeric in line {line}'.format(line=co)
+                        return JsonResponse(failed_response)
+                  
+                    excel_data.append({
+                        'name':ptkp_name,
+                        'value':ptkp_value,
+                    })
+
+                ptkp_data = []
+                for co, row in enumerate(excel_data, start=1):
+                    ptkp_data.append(PTKPType(
+                        name=row['name'],
+                        value=row['value'],
+                    ))
+                
+                # Create Bulk Data
+                PTKPType.objects.bulk_create(ptkp_data)
+
+                response = {
+                    'success':True,
+                    'toast_message':'PTKP Type Created Successfuly',
+                    'is_close_modal': True,
+                }
+
+                return JsonResponse(response)
+            
+            except ValueError as ve:
+                print('ve')
+                print(ve)
+                response = {
+                    'success':False,
+                    'toast_message':'There are error in excel file line {line}'.format(line=current_line),
+                    'is_close_modal': True,
+                }
+
+                return JsonResponse(response)
+        
+        failed_response = {
+            'success': False,
+            'errors': [],
+            'toast_message': 'File Upload Failed',
+            'modal_messages':[],
+            'is_close_modal':False,
+        }
+
+        return JsonResponse(failed_response)
+    
 class PTKPTypeView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login = '/login/'
     permission_required = ['benefits.read_ptkp_type']

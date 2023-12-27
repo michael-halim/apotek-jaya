@@ -2,13 +2,15 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views.generic import View
 from django.contrib import messages
-from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.template.loader import render_to_string
+from django.db.utils import IntegrityError
+import openpyxl
 
-from .forms import EmployeesForm
+from .forms import EmployeesBulkInputForm, EmployeesForm
 from .models import Employees 
+from benefits.models import PTKPType
 from main_app.forms import CreateUserForm
 
 from datetime import datetime
@@ -47,11 +49,9 @@ class ListEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             
             nik = employee.nik if employee.nik != '' else '-'
             nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
-            nik_email = nik + '<br>' + employee.auth_user_id.email
             employees_data.append({
-                'nik_email': nik_email,
+                'nik': nik,
                 'name':employee.name,
-                'address':employee.address,
                 'status':employee.status,
                 'created_at': employee.created_at.date().strftime("%d %B %Y"),
                 'uq': form_action, 
@@ -110,14 +110,11 @@ class CreateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin ,View):
         return JsonResponse(response)
     
     def post(self, request):
-        user_form = CreateUserForm(request.POST or None)
         employees_form = EmployeesForm(request.POST or None)
 
-        if user_form.is_valid() and employees_form.is_valid():
+        if employees_form.is_valid():
             try:
                 # Saving User to Database
-                user = user_form.save()
-
                 employees_data = employees_form.cleaned_data
 
                 # Add Additional Field to Database
@@ -127,13 +124,13 @@ class CreateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin ,View):
                 employees_data['updated_by'] = None
                 employees_data['deleted_at'] = None
                 employees_data['deleted_by'] = None
-                employees_data['resigned_at'] = None
-                employees_data['auth_user_id'] = user
                 
                 # Saving Data to Database
                 Employees(**employees_data).save()
 
             except Exception as e:
+                print('e')
+                print(e)
                 response = {
                     'success': False, 
                     'errors': [], 
@@ -163,9 +160,6 @@ class CreateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin ,View):
                 })
 
             errors = {}
-            for field, error_list in user_form.errors.items():
-                errors[field] = error_list
-
             for field, error_list in employees_form.errors.items():
                 errors[field] = error_list
             
@@ -197,17 +191,14 @@ class UpdateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def get(self, request, employee_uuid):
         employee = get_object_or_404(Employees, hash_uuid=employee_uuid)
-        user = get_object_or_404(User, id=employee.auth_user_id.id)
+        initial_data = {
+            'ptkp_type_id':employee.ptkp_type_id
+        }
 
-        user_form = CreateUserForm(instance=user)
-        employees_form = EmployeesForm(instance=employee)
-
-        user_form.fields.pop('password1', None)
-        user_form.fields.pop('password2', None)
+        employees_form = EmployeesForm(instance=employee, initial=initial_data)
 
         context = {
             'mode':'update',
-            'user_form':user_form,
             'employees_form':employees_form,
             'modal_title':'update employees',
             'uq':{
@@ -226,16 +217,11 @@ class UpdateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def post(self, request, employee_uuid):
         employee = get_object_or_404(Employees, hash_uuid=employee_uuid)
-        user = get_object_or_404(User, id=employee.auth_user_id.id)
-
         employees_form = EmployeesForm(request.POST or None, instance=employee)
-        user_form = CreateUserForm(request.POST or None, instance=user, is_updating=True)
-
-        if user_form.is_valid() and employees_form.is_valid():
+        print('employees_form.is_valid()')
+        print(employees_form.is_valid())
+        if employees_form.is_valid():
             try:
-                # Saving User to Database
-                user_form.save()
-
                 # Add Additional Field to Database
                 employees_form.cleaned_data['updated_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
                 employees_form.cleaned_data['updated_by'] = request.user
@@ -273,12 +259,13 @@ class UpdateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 })
 
             errors = {}
-            for field, error_list in user_form.errors.items():
-                errors[field] = error_list
-
             for field, error_list in employees_form.errors.items():
                 errors[field] = error_list
             
+            print('errors')
+            print(errors)
+            print('modal_messages')
+            print(modal_messages)
             response = {
                 'success': False, 
                 'errors': errors, 
@@ -306,19 +293,11 @@ class DetailEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             return JsonResponse(response)
         
     def get(self, request, employee_uuid):
-
         employee = get_object_or_404(Employees, hash_uuid=employee_uuid)
-        user = get_object_or_404(User, id=employee.auth_user_id.id)
-
-        user_form = CreateUserForm(instance=user)
-        employees_form = EmployeesForm(instance=employee)
-
-        user_form.fields.pop('password1', None)
-        user_form.fields.pop('password2', None)
-
-        for key in user_form.fields:
-            user_form.fields[key].widget.attrs['disabled'] = True
-            user_form.fields[key].widget.attrs['placeholder'] = ''
+        initial_data = {
+            'ptkp_type_id':employee.ptkp_type_id
+        }
+        employees_form = EmployeesForm(instance=employee, initial=initial_data)
 
         for key in employees_form.fields:
             employees_form.fields[key].widget.attrs['disabled'] = True
@@ -326,7 +305,6 @@ class DetailEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
         context = {
             'mode':'view',
-            'user_form':user_form,
             'employees_form':employees_form,
             'modal_title':'view employees',
         }
@@ -377,6 +355,169 @@ class DeleteEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
         }
 
         return JsonResponse(response)
+
+class CreateEmployeesBulkView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    login_url = '/login/'
+    permission_required = ['employees.read_employees', 'employees.create_employees']
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
+    def get(self, request):
+        employees_bulk_form = EmployeesBulkInputForm()
+
+        context = {
+            'success':True,
+            'mode':'create',
+            'modal_title':'create employees',
+            'employees_bulk_form':employees_bulk_form,
+            'uq':{
+                'create_link':str(reverse_lazy('employees:create-employees-bulk')),
+            }
+        }
+        
+        form = render_to_string('employees/includes/employees_bulk_form.html', context, request=request)
+        response = {
+            'success':True,
+            'form': form,
+            'is_view_only': False,
+            
+        }
+        
+        return JsonResponse(response)
+
+    def post(self, request):    
+        if request.method == 'POST' and request.FILES['file_upload']:
+            failed_response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'is_close_modal':False,
+            }
+
+            uploaded_file = request.FILES['file_upload']
+            if not uploaded_file.name.endswith('.xlsx') and not uploaded_file.name.endswith('.xls'):
+                failed_response['toast_message'] = 'File Must Be in .xlsx or .xls Format'
+                return JsonResponse(failed_response)
+            
+            # Add Current NIK and Line in Excel Code for Error Message
+            # current_nik = None
+            current_line = None
+            try:
+                workbook = openpyxl.load_workbook(uploaded_file)
+                sheet = workbook.active
+                
+                excel_data = []
+                for co, row in enumerate(sheet.iter_rows(values_only=True), start=1):
+                    if co == 1:
+                        continue
+                    nik = row[0]
+                    name = row[1]
+
+                    birthdate = None
+                    print('row[2]')
+                    print(row[2])
+                    print(type(row[2]))
+                    if isinstance(row[2], str):
+                        birthdate = datetime.strptime(row[2], '%d/%m/%Y')
+                    elif isinstance(row[2], datetime):
+                        birthdate = datetime.strptime(row[2].strftime('%d/%m/%Y'), '%d/%m/%Y')
+
+                    ptkp_type = row[3]
+
+                    print('nik')
+                    print(nik)
+                    print('name')
+                    print(name)
+                    print('birthdate')
+                    print(birthdate)
+                    print(type(birthdate))
+                    print('ptkp_type')
+                    print(ptkp_type)
+               
+                    ptkp_type_object = PTKPType.objects.filter(name=ptkp_type)
+                    if len(ptkp_type_object) <= 0:
+                        failed_response['toast_message'] = 'PTKP Type {ptkp_type} Not Found in line {line}'.format(ptkp_type = ptkp_type, line=co)
+                        return JsonResponse(failed_response)
+                    
+                    excel_data.append({
+                        'nik':nik,
+                        'name':name,
+                        'birthdate':birthdate,
+                        'ptkp_type':ptkp_type_object[0],
+                        'created_at': datetime.now(ZoneInfo('Asia/Bangkok')),
+                        'created_by': request.user,
+                    })
+
+                employees_data = []
+                for co, row in enumerate(excel_data, start=1):
+                    employees_data.append(Employees(
+                        nik=row['nik'],
+                        name=row['name'],
+                        birthdate=row['birthdate'],
+                        ptkp_type_id=row['ptkp_type'],
+                        created_at=row['created_at'],
+                        created_by=row['created_by'],
+                        updated_at=None,
+                        updated_by=None,
+                        deleted_at=None,
+                        deleted_by=None,
+                    ))
+                
+                # Create Bulk Data
+                Employees.objects.bulk_create(employees_data)
+
+                response = {
+                    'success':True,
+                    'toast_message':'Employee Created Successfuly',
+                    'is_close_modal': True,
+                }
+
+                return JsonResponse(response)
+            
+            except ValueError as ve:
+                response = {
+                    'success':False,
+                    'errors': [],
+                    'toast_message':'There are error in line {line}, error message: {e}'.format(line=current_line, e=ve),
+                    'modal_messages':[],
+                    'is_close_modal': True,
+                }
+
+                return JsonResponse(response)
+            
+            except Exception as e:
+                response = {
+                    'success':False,
+                    'errors': [],
+                    'toast_message':'There are error in line {line}, error message: {e}'.format(line=current_line, e=e),
+                    'modal_messages':[],
+                    'is_close_modal': True,
+                }
+
+                return JsonResponse(response)
+        
+        failed_response = {
+            'success': False,
+            'errors': [],
+            'toast_message': 'File Upload Failed',
+            'modal_messages':[],
+            'is_close_modal':False,
+        }
+
+        return JsonResponse(failed_response)
 
 class EmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """Handles Employees Page"""

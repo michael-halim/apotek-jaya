@@ -7,6 +7,7 @@ urlpatterns = [
     path('',views.OvertimesView.as_view(), name='overtimes'),
     path('fetch-overtimes/',views.ListOvertimesView.as_view(), name='fetch-overtimes'),
     path('create/',views.CreateOvertimesView.as_view(), name='create-overtimes'),
+    path('create/bulk',views.CreateOvertimesBulkView.as_view(), name='create-overtimes-bulk'),
     path('detail/<str:overtime_uuid>',views.DetailOvertimesView.as_view(), name='detail-overtimes'),
     path('delete/<str:overtime_uuid>',views.DeleteOvertimesView.as_view(), name='delete-overtimes'),
     path('update/<str:overtime_uuid>',views.UpdateOvertimesView.as_view(), name='update-overtimes'),

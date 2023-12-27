@@ -28,6 +28,10 @@ $(function () {
                     defaultContent: '-',
                 },
                 {
+                    data: 'date',
+                    defaultContent: '-',
+                },
+                {
                     data: 'start_at',
                     defaultContent: '-',
                 },
@@ -164,7 +168,6 @@ $(function () {
 		let presence_uuid = $(this).data('uq');
 		let url = $(this).data('link');
 		url = url.replace('@@', presence_uuid);
-        alert(url);
 		$.ajax({
             url: url,
             method: 'POST',

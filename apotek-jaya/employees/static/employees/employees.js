@@ -23,20 +23,16 @@ $(function () {
             },
             responsive: true,
             columnDefs: [
-                { targets: 4, width: "80px" },
-                { targets: 5, width: "90px" },
+                { targets: 3, width: "80px" },
+                { targets: 4, width: "90px" },
             ],
             columns: [
                 {
-                    data: 'nik_email',
+                    data: 'nik',
                     defaultContent: '-',
                 },
                 {
                     data: 'name',
-                    defaultContent: '-',
-                },
-                {
-                    data: 'address',
                     defaultContent: '-',
                 },
                 {
@@ -59,9 +55,6 @@ $(function () {
                     data: 'uq',
                 },
             ],
-            dom: 'lBfrtip',
-            buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
-
         });
     }
     
@@ -135,6 +128,29 @@ $(function () {
             },
         });
     });
+
+    $('body').on('click','#import-employees', function () {
+		let employee_uuid = $(this).data('uq');
+		let url = $(this).data('link');
+		url = url.replace('@@', employee_uuid);
+
+        $.ajax({
+			url: url,
+			method: 'GET',
+			success: function (result) {
+				if (result.success === true) {
+					$('#form-employees-modal .modal-content').html(result.form);
+
+					$('#form-employees-modal').modal('show');
+				
+				} else if (result.success === false) {
+					toastr['error'](result.toast_message);
+				}
+			},
+			error: function (result) {},
+		});
+	});
+
     $('body').on('click', '#submit-form-employees', function () {
         let form = document.getElementById('add_employees_form');
         let form_data = new FormData(form);

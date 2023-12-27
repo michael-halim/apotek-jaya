@@ -1,10 +1,4 @@
 <div class="d-flex justify-content-center">
-    {% if perms.benefits.read_ptkp_type %}
-        <span data-uq='{{hash}}' data-link="{{view_link}}" class="view-ptkp-type btn text-primary w-100">
-            <i class="bi bi-eye"></i>
-        </span>
-    {% endif %}
-    
     {% if perms.benefits.update_ptkp_type %}
         <span data-uq='{{hash}}' data-link="{{update_link}}" class="update-ptkp-type btn text-warning w-100">
             <i class="bi bi-pencil"></i>

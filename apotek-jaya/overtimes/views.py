@@ -5,8 +5,10 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.template.loader import render_to_string
+import openpyxl
+from django.db import transaction as db_transaction
 
-from .forms import OvertimeUsersForm, OvertimesForm
+from .forms import OvertimeUsersForm, OvertimesBulkInputForm, OvertimesForm
 from .models import OvertimeUsers, Overtimes
 from departments.models import DepartmentMembers
 from employees.models import Employees
@@ -53,7 +55,7 @@ class ListOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 'start_at':overtime.start_at.astimezone(ZoneInfo('Asia/Bangkok')).strftime("%d %B %Y %H:%M"),
                 'end_at':overtime.end_at.astimezone(ZoneInfo('Asia/Bangkok')).strftime("%d %B %Y %H:%M"),
                 'created_at': overtime.created_at.date().strftime("%d %B %Y"),
-                'status':overtime.status,
+                'is_overtime':overtime.is_overtime,
                 'uq': form_action, 
             })
 
@@ -131,7 +133,10 @@ class CreateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
                 return JsonResponse(response)
             
-        overtimes_form = OvertimesForm(request.POST or None)
+        request_copy = request.POST.copy()
+        request_copy['date'] = datetime.strptime(request.POST['start_at'].split('T')[0], '%Y-%m-%d').date()
+
+        overtimes_form = OvertimesForm(request_copy or None)
 
         if overtimes_form.is_valid():
             try:
@@ -142,8 +147,6 @@ class CreateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 overtime_data['created_by'] = request.user
                 overtime_data['updated_at'] = None
                 overtime_data['updated_by'] = None
-                overtime_data['deleted_at'] = None
-                overtime_data['deleted_by'] = None
 
                 overtime = Overtimes(**overtime_data)
                 overtime.save()
@@ -154,8 +157,6 @@ class CreateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                     'created_by': request.user,
                     'updated_at': None,
                     'updated_by': None,
-                    'deleted_at': None,
-                    'deleted_by': None,
                 }
 
                 for ovt_user in overtime_users:
@@ -163,6 +164,8 @@ class CreateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                     OvertimeUsers(**overtime_users_data).save()
 
             except Exception as e:
+                print('errors')
+                print(e)
                 response = {
                     'success': False, 
                     'errors': [], 
@@ -192,9 +195,11 @@ class CreateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 })
 
             errors = {}
-
             for field, error_list in overtimes_form.errors.items():
                 errors[field] = error_list
+
+            print('errors')
+            print(errors)
 
             response = {
                 'success': False, 
@@ -277,11 +282,16 @@ class UpdateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def post(self, request, overtime_uuid):
         overtimes = get_object_or_404(Overtimes, hash_uuid=overtime_uuid)
-        overtimes_form = OvertimesForm(request.POST or None, instance=overtimes)
+        request_copy = request.POST.copy()
+        request_copy['date'] = datetime.strptime(request.POST['start_at'].split('T')[0], '%Y-%m-%d').date()
+        print("request.POST['start_at']")
+        print(request.POST['start_at'])
+        print(type(request.POST['start_at']))
+        overtimes_form = OvertimesForm(request_copy or None, instance=overtimes)
         
         now = datetime.now().astimezone(ZoneInfo('Asia/Bangkok'))
-        overtimes_start_at = overtimes.start_at.astimezone(ZoneInfo('Asia/Bangkok'))
-        overtimes_end_at = overtimes.end_at.astimezone(ZoneInfo('Asia/Bangkok'))
+        # overtimes_start_at = overtimes.start_at.astimezone(ZoneInfo('Asia/Bangkok'))
+        # overtimes_end_at = overtimes.end_at.astimezone(ZoneInfo('Asia/Bangkok'))
         
         failed_response = {
             'success': False, 
@@ -289,18 +299,6 @@ class UpdateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             'modal_messages':[],
             'is_close_modal':False,
         }
-
-        if overtimes_end_at < now:
-            failed_response['toast_message'] = 'Overtime Already Ended'
-            return JsonResponse(failed_response)
-        
-        if overtimes_start_at < now:
-            failed_response['toast_message'] = 'Overtime Already Started'
-            return JsonResponse(failed_response)
-
-        if overtimes.deleted_at:
-            failed_response['toast_message'] = 'Overtime Already Deleted'
-            return JsonResponse(failed_response)
         
         # Check if overtime users is valid uuid
         added_overtime_users, removed_overtime_users, reactivated_overtime_users = [], [], []
@@ -332,27 +330,18 @@ class UpdateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
 
         if overtimes_form.is_valid():
-            
             # Check if start_at is greater than end_at 
             if overtimes_form.cleaned_data['start_at'] >= overtimes_form.cleaned_data['end_at']:
                 failed_response['toast_message'] = 'End At Must Greater Than Start At'
                 return JsonResponse(failed_response)
             
-            # Check if start_at or end_at is less than current time
-            if overtimes_form.cleaned_data['start_at'] < now:
-                failed_response['toast_message'] = 'Start At Must Greater Than Current Time'
-                return JsonResponse(failed_response)
-            
-            if overtimes_form.cleaned_data['end_at'] < now:
-                failed_response['toast_message'] = 'End At Must Greater Than Current Time'
-                return JsonResponse(failed_response)
-
             try:
                 # Add Additional Field to Database
                 overtimes_form.cleaned_data['updated_at'] = datetime.now(ZoneInfo('Asia/Bangkok'))
                 overtimes_form.cleaned_data['updated_by'] = request.user
 
                 # Saving Data to Database
+                overtimes_form.cleaned_data['date'] = overtimes_form.cleaned_data['start_at'].date()
                 overtimes_form.save()
 
                 if added_overtime_users:
@@ -362,8 +351,6 @@ class UpdateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                         'created_by': request.user,
                         'updated_at': None,
                         'updated_by': None,
-                        'deleted_at': None,
-                        'deleted_by': None,
                     }
                     
                     for ovt_user in added_overtime_users:
@@ -375,8 +362,6 @@ class UpdateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                     for ovt_user in removed_overtime_users:
                         employee = get_object_or_404(Employees, id=ovt_user)
                         overtime_user = get_object_or_404(OvertimeUsers, overtime_id=overtimes, employee_id= employee)
-                        overtime_user.deleted_at = datetime.now(ZoneInfo('Asia/Bangkok'))
-                        overtime_user.deleted_by = request.user
                         overtime_user.status = 0
                         overtime_user.save()
 
@@ -394,7 +379,7 @@ class UpdateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
                 response = {
                     'success': False,
                     'errors': [],
-                    'modal_messages':[],
+                    'modal_messages':[e],
                     'toast_message':'We\'re sorry, but something went wrong on our end. Please try again later.',
                     'is_close_modal':False,
                 }
@@ -423,6 +408,8 @@ class UpdateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             for field, error_list in overtimes_form.errors.items():
                 errors[field] = error_list
 
+            print('errors')
+            print(errors)
             response = {
                 'success': False, 
                 'errors': errors, 
@@ -528,8 +515,6 @@ class DeleteOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     def post(self, request, overtime_uuid):
         overtime = get_object_or_404(Overtimes, hash_uuid=overtime_uuid)
         overtime.status = 0
-        overtime.deleted_at = datetime.now(ZoneInfo('Asia/Bangkok'))
-        overtime.deleted_by = request.user
         overtime.save()
 
         response = {
@@ -539,6 +524,235 @@ class DeleteOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
         }
 
         return JsonResponse(response)
+
+class CreateOvertimesBulkView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    login_url = '/login/'
+    permission_required = ['overtimes.read_overtimes', 'overtimes.create_overtimes']
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':False,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
+
+    def get(self, request):
+        overtimes_bulk_form = OvertimesBulkInputForm()
+
+        context = {
+            'success':True,
+            'mode':'create',
+            'modal_title':'create overtimes',
+            'overtimes_bulk_form':overtimes_bulk_form,
+            'uq':{
+                'create_link':str(reverse_lazy('overtimes:create-overtimes-bulk')),
+            }
+        }
+        
+        form = render_to_string('overtimes/includes/overtimes_bulk_form.html', context, request=request)
+        response = {
+            'success':True,
+            'form': form,
+            'is_view_only': False,
+            
+        }
+        
+        return JsonResponse(response)
+
+    def post(self, request):
+        if request.method == 'POST' and request.FILES['file_upload']:
+            failed_response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'is_close_modal':False,
+            }
+
+            uploaded_file = request.FILES['file_upload']
+            if not uploaded_file.name.endswith('.xlsx') and not uploaded_file.name.endswith('.xls'):
+                failed_response['toast_message'] = 'File Must Be in .xlsx or .xls Format'
+                return JsonResponse(failed_response)
+            
+            # Add Current NIK and Line in Excel Code for Error Message
+            current_line = None
+            try:
+                workbook = openpyxl.load_workbook(uploaded_file)
+                sheet = workbook.active
+                
+                excel_data = []
+                for co, row in enumerate(sheet.iter_rows(values_only=True), start=1):
+                    if co == 1 or (row[0] is None and row[1] is None and row[2] is None and row[3] is None and row[4] is None and row[5] is None and row[6] is None):
+                        continue
+                    
+                    print('row[0]')
+                    print(row[0])
+                    print('row[1]')
+                    print(row[1])
+                    print('row[2]')
+                    print(row[2])
+                    print('row[3]')
+                    print(row[3])
+                    print('row[4]')
+                    print(row[4])
+                    print('row[5]')
+                    print(row[5])
+                    print('row[6]')
+                    print(row[6])
+                    tmp_date = str(row[1]).split(' ')[0]
+                    print('tmp_date')
+                    print(tmp_date)
+                    print(type(tmp_date))
+                    _date = None
+                    for fmt in ('%Y-%m-%d', '%d-%m-%Y', '%d/%m/%Y'):
+                        try:
+                            # datetime.date
+                            _date = datetime.strptime(tmp_date, fmt).date()
+                            _date = _date.strftime('%Y-%m-%d')
+                            print('date in here')
+                            print(_date)
+                            print(type(_date))
+                            break
+                        except ValueError: pass
+
+                    if _date is None:
+                        failed_response['toast_message'] = 'Invalid Date Format in line {line}'.format(line=co)
+                        return JsonResponse(failed_response) 
+                    
+                    current_line = co
+
+                    nik = row[0]
+                    start_at = datetime.strptime(str(_date) + ' ' + str(row[2]), '%Y-%m-%d %H:%M:%S')
+                    end_at = datetime.strptime(str(_date) + ' ' + str(row[3]), '%Y-%m-%d %H:%M:%S')
+                    name = row[4]
+                    description = row[5]
+                    is_overtime = True if row[6].lower() == 'overtime' else False
+
+                    excel_data.append({
+                        'nik':nik,
+                        'date':_date,
+                        'start_at':start_at,
+                        'end_at':end_at,
+                        'name':name,
+                        'description':description,
+                        'is_overtime':is_overtime,
+                    })
+
+                overtimes_data = []
+                overtime_users_data = []
+                for co, row in enumerate(excel_data, start=1):
+                    employee =  Employees.objects.filter(nik=row['nik']).first()
+                    if employee is None:
+                        failed_response['toast_message'] = 'Employee with NIK {nik} in line {line} Not Found'.format(nik = row['nik'], line=co)
+                        return JsonResponse(failed_response)
+
+                    overtimes_data.append(Overtimes(
+                        name=row['name'],
+                        description=row['description'],
+                        date= row['date'],
+                        start_at=row['start_at'],
+                        end_at=row['end_at'],
+                        status=1,
+                        is_overtime=row['is_overtime'],
+                        created_at=datetime.now(ZoneInfo('Asia/Bangkok')),
+                        created_by=request.user,
+                        updated_at=None,
+                        updated_by=None,
+                    ))
+
+                    overtime_users_data.append({
+                        'name':row['name'],
+                        'description':row['description'],
+                        'date': row['date'],
+                        'start_at':row['start_at'],
+                        'end_at':row['end_at'],
+                        'is_overtime':row['is_overtime'],
+                        'overtime_id':None,
+                        'employee_id':employee,
+                        'created_at':datetime.now(ZoneInfo('Asia/Bangkok')),
+                        'created_by':request.user,
+                        'updated_at':None,
+                        'updated_by':None,
+                        'status':1
+                    })                        
+
+           
+                with db_transaction.atomic():
+                    Overtimes.objects.bulk_create(overtimes_data)
+
+                    overtime_users_object_data = []
+                    for ou in overtime_users_data:
+                        overtime_object = Overtimes.objects.filter(name=ou['name'], date=ou['date'], start_at=ou['start_at'], 
+                                                                   end_at=ou['end_at'], is_overtime=ou['is_overtime'])
+                        if len(overtime_object) > 0:
+                            overtime_object = overtime_object.first()
+                        else:
+                            failed_response['toast_message'] = 'Overtime with Name {name} in line {line} Not Found'.format(name = ou['name'], line=co)
+                            return JsonResponse(failed_response)
+                        
+                        overtime_users_object_data.append(OvertimeUsers(
+                            overtime_id=overtime_object,
+                            employee_id=ou['employee_id'],
+                            created_at=datetime.now(ZoneInfo('Asia/Bangkok')),
+                            created_by=request.user,
+                            updated_at=None,
+                            updated_by=None,
+                            status=1
+                        ))
+
+                    OvertimeUsers.objects.bulk_create(overtime_users_object_data)
+
+                response = {
+                    'success':True,
+                    'toast_message':'Overtimes Created Successfuly',
+                    'is_close_modal': True,
+                }
+
+                return JsonResponse(response)
+            
+            except ValueError as ve:
+                print('ve')
+                print(ve)
+                response = {
+                    'success':False,
+                    'errors': [],
+                    'toast_message':'There are error in line {line}'.format(line=current_line),
+                    'modal_messages':[],
+                    'is_close_modal': True,
+                }
+
+                return JsonResponse(response)
+            
+            except Exception as e:
+                print('error')
+                print(e)
+                response = {
+                    'success':False,
+                    'errors': [],
+                    'toast_message':str(e),
+                    'modal_messages':[str(e)],
+                    'is_close_modal': True,
+                }
+
+                return JsonResponse(response)
+        
+        failed_response = {
+            'success': False,
+            'errors': [],
+            'toast_message': 'File Upload Failed',
+            'modal_messages':[],
+            'is_close_modal':False,
+        }
+
+        return JsonResponse(failed_response)
 
 class OvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'

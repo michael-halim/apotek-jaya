@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-from datetime import date, timedelta, datetime
-from zoneinfo import ZoneInfo
 import uuid
 
 from employees.models import Employees
@@ -15,20 +13,21 @@ class Presences(models.Model):
                                     on_delete=models.CASCADE,
                                     db_column='employee_id')
     
-    start_at = models.DateTimeField()
-    end_at = models.DateTimeField()
-
+    date = models.DateField()
+    start_at = models.DateTimeField(null=True, blank=True, default=None)
+    end_at = models.DateTimeField(null=True, blank=True, default=None)
 
     created_at = models.DateTimeField()
     created_by = models.ForeignKey(User,
-                                    on_delete=models.CASCADE, 
+                                    on_delete=models.SET_NULL, 
                                     related_name='created_by_presences',
                                     db_column='created_by',
+                                    null=True,
                                     blank=True)
     
     updated_at = models.DateTimeField(null=True, blank=True, default=None)
     updated_by = models.ForeignKey(User,
-                                    on_delete=models.CASCADE, 
+                                    on_delete=models.SET_NULL, 
                                     related_name='updated_by_presences',
                                     db_column='updated_by',
                                     null=True, 
@@ -40,6 +39,7 @@ class Presences(models.Model):
         return self.name
     
     class Meta:
+        unique_together = ('employee_id', 'date', 'start_at', 'end_at', )
         db_table = 'presences'
         verbose_name_plural = 'Presences'
         default_permissions = ()

@@ -5,22 +5,51 @@
 <div class="modal-body">
     <ul class="modal-messages"></ul>
     <form id="add_employees_form" method="POST">
-        {% for field in user_form %}
-        <div class="mb-3">
-            <label for="{{field.id_for_label}}" class="form-label"><b>{{field.label}}</b></label>
-            {{field}}
-            <span class="form-error text-danger"></span>
+        <div class="col-12">
+            <div class="mb-3">
+                <label for="{{employees_form.nik.id_for_label}}" class="form-label">
+                    <b>{{ employees_form.nik.label }}</b>
+                </label>
+                {{ employees_form.nik }}
+                <span class="form-error text-danger"></span>
+            </div>
         </div>
-        {% endfor %}
-        
-        {% for field in employees_form %}
-        <div class="mb-3">
-            <label for="{{field.id_for_label}}" class="form-label"><b>{{field.label}}</b></label>
-            {{field}}
-            <span class="form-error text-danger"></span>
+        <div class="col-12">
+            <div class="mb-3">
+                <label for="{{employees_form.name.id_for_label}}" class="form-label">
+                    <b>{{ employees_form.name.label }}</b>
+                </label>
+                {{ employees_form.name }}
+                <span class="form-error text-danger"></span>
+            </div>
         </div>
-        {% endfor %}
-
+        <div class="col-12">
+            <div class="mb-3">
+                <label for="{{employees_form.birthdate.id_for_label}}" class="form-label">
+                    <b>{{ employees_form.birthdate.label }}</b>
+                </label>
+                {{ employees_form.birthdate }}
+                <span class="form-error text-danger"></span>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="mb-3">
+                <label for="{{employees_form.ptkp_type_id.id_for_label}}" class="form-label">
+                    <b>{{ employees_form.ptkp_type_id.label }}</b>
+                </label>
+                {{ employees_form.ptkp_type_id }}
+                <span class="form-error text-danger"></span>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="mb-3">
+                <label for="{{employees_form.status.id_for_label}}" class="form-label">
+                    <b>{{ employees_form.status.label }}</b>
+                </label>
+                {{ employees_form.status }}
+                <span class="form-error text-danger"></span>
+            </div>
+        </div>
         <div class="mb-3 d-flex justify-content-end">
             {% if mode == 'create' %}
                 <input type="button" value="Create Employees" data-link="{{uq.create_link}}" class="btn btn-success" id="submit-form-employees">
