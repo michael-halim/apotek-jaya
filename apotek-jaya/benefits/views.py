@@ -1942,7 +1942,6 @@ class DetailPTKPTypeView(LoginRequiredMixin, PermissionRequiredMixin, View):
         ptkp = get_object_or_404(Benefits, hash_uuid=ptkp_type_uuid)
         ptkp_type_form = PTKPTypeForm(instance=ptkp)
         
-
         for key in ptkp_type_form.fields:
             ptkp_type_form.fields[key].widget.attrs['disabled'] = True
             ptkp_type_form.fields[key].widget.attrs['placeholder'] = ''
