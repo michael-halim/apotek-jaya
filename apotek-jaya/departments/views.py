@@ -105,7 +105,6 @@ class AddEmployeeDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, Vi
 
             nik = employee.nik if employee.nik != '' else '-'
             nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
-            nik_email = nik + '<br>' + employee.auth_user_id.email
             trash_icon = '''
                 <div class="d-flex justify-content-center">
                     <span class="delete-departments-employees btn text-danger w-100">
@@ -117,13 +116,9 @@ class AddEmployeeDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, Vi
             employee_data = {
                 'uq':employee.hash_uuid,
                 'uq_group': permission_group.id if permission_group != '' else '',
-                'nik_email':nik_email,
+                'nik':nik,
                 'name': employee.name,
-                'address': employee.address,
                 'permission_group':permission_group.name if permission_group != '' else '',
-                'education': employee.education,
-                'join_date': employee.created_at.date().strftime("%d %B %Y"),
-                'expired_at': employee.expired_at.strftime("%d %B %Y"),
                 'action':trash_icon,
             }
 
@@ -345,25 +340,15 @@ class UpdateDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         for member in department_members:
             nik = member.employee_id.nik if member.employee_id.nik != '' else '-'
             nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
-            nik_email = nik + '<br>' + member.employee_id.auth_user_id.email
             
-            permission_object = member.employee_id.auth_user_id.groups.all()
             permission_group = ''
             group_id = []
-            for perm in permission_object:
-                permission_group += perm.name + '<br>'
-                group_id.append(perm.id)
-
             employee_data.append({
                 'uq':member.employee_id.hash_uuid,
                 'uq_group': group_id,
-                'nik_email':nik_email,
+                'nik':nik,
                 'name': member.employee_id.name,
-                'address': member.employee_id.address,
-                'education': member.employee_id.education,
                 'permission_group': permission_group,
-                'join_date': member.employee_id.created_at.date().strftime("%d %B %Y"),
-                'expired_at': member.employee_id.expired_at.strftime("%d %B %Y"),
                 'action':trash_icon,
             })
 
@@ -571,25 +556,15 @@ class DetailDepartmentsView(LoginRequiredMixin, PermissionRequiredMixin, View):
         for member in department_members:
             nik = member.employee_id.nik if member.employee_id.nik != '' else '-'
             nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
-            nik_email = nik + '<br>' + member.employee_id.auth_user_id.email
 
-            permission_object = member.employee_id.auth_user_id.groups.all()
             permission_group = ''
             group_id = []
-            for perm in permission_object:
-                permission_group += perm.name + '<br>'
-                group_id.append(perm.id)
-
             employee_data.append({
                 'uq':member.employee_id.hash_uuid,
                 'uq_group':group_id,
-                'nik_email':nik_email,
+                'nik':nik,
                 'name': member.employee_id.name,
-                'address': member.employee_id.address,
-                'education': member.employee_id.education,
                 'permission_group': permission_group,
-                'join_date': member.employee_id.created_at.date().strftime("%d %B %Y"),
-                'expired_at': member.employee_id.expired_at.strftime("%d %B %Y"),
                 'action':'',
             })
 

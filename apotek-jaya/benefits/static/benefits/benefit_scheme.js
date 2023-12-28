@@ -274,13 +274,9 @@ $(function () {
 					for(const key in result.employees_data){
 						detail_employees_datatable.row.add([
 							result.employees_data[key]['uq_emp'],
-							result.employees_data[key]['nik_email'],
+							result.employees_data[key]['nik'],
 							result.employees_data[key]['name'],
-							result.employees_data[key]['address'],
-							result.employees_data[key]['education'],
 							result.employees_data[key]['department'],
-							result.employees_data[key]['join_date'],
-							result.employees_data[key]['expired_at'],
 							result.employees_data[key]['status'],
 							result.employees_data[key]['action'],
 
@@ -536,13 +532,9 @@ $(function () {
                             detail_employees_list_datatable.row
                             .add([
                                 result.employees_data[emp]['uq_emp'],
-                                result.employees_data[emp]['nik_email'],
+                                result.employees_data[emp]['nik'],
                                 result.employees_data[emp]['name'],
-                                result.employees_data[emp]['address'],
-                                result.employees_data[emp]['education'],
                                 result.employees_data[emp]['department'],
-                                result.employees_data[emp]['join_date'],
-                                result.employees_data[emp]['expired_at'],
                                 status,
                                 result.employees_data[emp]['action'],
                             ])

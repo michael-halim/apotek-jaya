@@ -5,6 +5,8 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.template.loader import render_to_string
+from django.db import transaction as db_transaction
+
 
 from .models import PayrollPeriods, Salaries, SalaryAdjustments, SalaryComponents
 
@@ -13,8 +15,9 @@ from departments.models import DepartmentMembers, Departments
 from employees.models import Employees
 from overtimes.models import OvertimeUsers
 from presences.models import Presences
-from salaries.forms import PayrollPeriodsForm, SalariesForm, SalaryAdjustmentsForm
-
+from settings.models import Settings
+from salaries.forms import PayrollPeriodBulkInputForm, PayrollPeriodsForm, SalariesForm, SalaryAdjustmentsForm
+import openpyxl
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import uuid
@@ -81,17 +84,29 @@ def calculate_salary(request, employees, period):
         period_end = period.end_at
         period_end = period_end.astimezone(ZoneInfo('Asia/Bangkok'))
 
+        company_settings = Settings.objects.first()
+        overtime_rate = company_settings.overtime_rate
+        lembur_rate = company_settings.lembur_rate
+
         overtime_object = OvertimeUsers.objects.filter(employee_id = employee, status=1)
         for ovt in overtime_object:
             if ovt.overtime_id.start_at >= period_start and ovt.overtime_id.end_at <= period_end:
                 duration = ovt.overtime_id.end_at - ovt.overtime_id.start_at
                 duration_hours = duration.seconds / 3600 if int(duration.seconds / 3600) > 0 else 0
                 duration_minutes = (duration.seconds % 3600) / 60
-                
+
+                # is_overtime true = overtime, false = lembur
+                is_overtime = ovt.overtime_id.is_overtime
+                ovt_value = lembur_rate
+                ovt_name = 'Lembur'
+                if is_overtime:
+                    ovt_value = overtime_rate
+                    ovt_name = 'Overtime'
+
                 salary_components_data.append({
-                    'name': '(Overtime Hours) ' + ovt.overtime_id.name,
+                    'name': '({name} Hours) '.format(name=ovt_name) + ovt.overtime_id.name,
                     'description': '',
-                    'value': (duration_hours * 20000) + (duration_minutes * 100),
+                    'value': duration_hours * ovt_value,
                     'employee_id': employee,
                     'benefit_scheme_id': None,
                     'is_deduction': False,
@@ -107,7 +122,7 @@ def calculate_salary(request, employees, period):
                     'status': 1,
                 })
 
-                overtime_hours_nominal += (duration_hours * 20000) + (duration_minutes * 100)
+                overtime_hours_nominal += duration_hours * ovt_value
                 overtime_hours_count += duration_hours
         
         # Check Employee Presence
@@ -122,10 +137,11 @@ def calculate_salary(request, employees, period):
             duration = duration.seconds / 3600 if int(duration.seconds / 3600) > 0 else 0
             total_work_hours += duration
 
+        value = total_work_hours * 0
         salary_components_data.append({
             'name': '(Presence) ' + str(presence_count) + ' Days Worked',
             'description': 'Total Work Hours: ' + str(round(total_work_hours, 2)),
-            'value': total_work_hours * 40000,
+            'value': value,
             'employee_id': employee,
             'benefit_scheme_id': None,
             'is_deduction': False,
@@ -1320,6 +1336,149 @@ class DeletePayrollPeriodView(LoginRequiredMixin, PermissionRequiredMixin, View)
         }
 
         return JsonResponse(response)
+
+class CreatePayrollPeriodBulkView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    login_url = '/login/'
+    permission_required = ['salaries.read_payroll_period', 'salaries.create_payroll_period']
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'toast_message':'You Are Not Authorized',
+                'is_close_modal':True,
+
+            }
+
+            return JsonResponse(response)
+        
+        return redirect(reverse_lazy('main_app:login'))
+    
+    def get(self, request):
+        payroll_period_bulk_form = PayrollPeriodBulkInputForm()
+
+        context = {
+            'success':True,
+            'mode':'create',
+            'modal_title':'create payroll period',
+            'payroll_period_bulk_form':payroll_period_bulk_form,
+            'uq':{
+                'create_link':str(reverse_lazy('salaries:create-payroll-periods-bulk')),
+            }
+        }
+        
+        form = render_to_string('salaries/includes/payroll_periods_bulk_form.html', context, request=request)
+        response = {
+            'success':True,
+            'form': form,
+            'is_view_only': False,
+            
+        }
+        
+        return JsonResponse(response)
+
+    def post(self, request):
+        if request.method == 'POST' and request.FILES['file_upload']:
+            failed_response = {
+                'success': False,
+                'errors': [],
+                'modal_messages':[],
+                'is_close_modal':False,
+            }
+
+            uploaded_file = request.FILES['file_upload']
+            if not uploaded_file.name.endswith('.xlsx') and not uploaded_file.name.endswith('.xls'):
+                failed_response['toast_message'] = 'File Must Be in .xlsx or .xls Format'
+                return JsonResponse(failed_response)
+            
+            # Add Current NIK and Line in Excel Code for Error Message
+            current_line = None
+            try:
+                workbook = openpyxl.load_workbook(uploaded_file)
+                sheet = workbook.active
+                
+                excel_data = []
+                dates = []
+                for co, row in enumerate(sheet.iter_rows(values_only=True), start=1):
+                    if co == 1 or (row[0] is None and row[1] is None and row[2] is None and row[3] is None):
+                        continue
+                    
+                    start_at = row[2]
+                    end_at = row[3]
+                    for fmt in ('%Y-%m-%d', '%d-%m-%Y', '%d/%m/%Y'):
+                        try:
+                            start_at = datetime.strptime(str(start_at), fmt).date()
+                            break
+                        except ValueError: pass
+                    for fmt in ('%Y-%m-%d', '%d-%m-%Y', '%d/%m/%Y'):
+                        try:
+                            end_at = datetime.strptime(str(end_at), fmt).date()
+                            break
+                        except ValueError: pass
+                    name = row[0]
+                    description = row[1]
+                    
+                    if start_at is None or end_at is None:
+                        failed_response['toast_message'] = 'Date in line {line} is not valid'.format(line=co)
+                        return JsonResponse(failed_response)
+                    
+                    excel_data.append({
+                        'name':name,
+                        'description': description,
+                        'start_at': start_at,
+                        'end_at': end_at,
+                    })
+
+                payroll_period_data = []
+                for co, row in enumerate(excel_data, start=1):
+                    payroll_period_data.append(PayrollPeriods(
+                        name=row['name'],
+                        description=row['description'],
+                        start_at=row['start_at'],
+                        end_at=row['end_at'],
+                        status=1,
+                        created_at=datetime.now(ZoneInfo('Asia/Bangkok')),
+                        created_by=request.user,
+                        updated_at=None,
+                        updated_by=None,
+                        deleted_at=None,
+                        deleted_by=None,
+                    ))
+                
+                # Create Bulk Data
+                with db_transaction.atomic():
+                    PayrollPeriods.objects.bulk_create(payroll_period_data)
+
+                response = {
+                    'success':True,
+                    'toast_message':'Payroll Periods Created Successfuly',
+                    'is_close_modal': True,
+                }
+
+                return JsonResponse(response)
+            
+            except ValueError as ve:
+                print('ve')
+                print(ve)
+                response = {
+                    'success':False,
+                    'toast_message':'There are error in line {line}'.format(line=current_line),
+                    'is_close_modal': True,
+                }
+
+                return JsonResponse(response)
+        
+        failed_response = {
+            'success': False,
+            'errors': [],
+            'toast_message': 'File Upload Failed',
+            'modal_messages':[],
+            'is_close_modal':False,
+        }
+
+        return JsonResponse(failed_response)
 
 class PayrollPeriodView(LoginRequiredMixin, PermissionRequiredMixin, View):
     login_url = '/login/'

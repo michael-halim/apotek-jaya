@@ -18,6 +18,7 @@ urlpatterns = [
     path('payroll-period',views.PayrollPeriodView.as_view(), name='payroll-periods'),
     path('fetch-payroll-period/',views.ListPayrollPeriodView.as_view(), name='fetch-payroll-periods'),
     path('payroll-period/create/',views.CreatePayrollPeriodView.as_view(), name='create-payroll-periods'),
+    path('payroll-period/create/bulk',views.CreatePayrollPeriodBulkView.as_view(), name='create-payroll-periods-bulk'),
     path('payroll-period/detail/<str:period_uuid>',views.DetailPayrollPeriodView.as_view(), name='detail-payroll-periods'),
     path('payroll-period/delete/<str:period_uuid>',views.DeletePayrollPeriodView.as_view(), name='delete-payroll-periods'),
     path('payroll-period/update/<str:period_uuid>',views.UpdatePayrollPeriodView.as_view(), name='update-payroll-periods'),

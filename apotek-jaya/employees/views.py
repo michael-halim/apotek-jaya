@@ -218,8 +218,6 @@ class UpdateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
     def post(self, request, employee_uuid):
         employee = get_object_or_404(Employees, hash_uuid=employee_uuid)
         employees_form = EmployeesForm(request.POST or None, instance=employee)
-        print('employees_form.is_valid()')
-        print(employees_form.is_valid())
         if employees_form.is_valid():
             try:
                 # Add Additional Field to Database
@@ -264,8 +262,6 @@ class UpdateEmployeesView(LoginRequiredMixin, PermissionRequiredMixin, View):
             
             print('errors')
             print(errors)
-            print('modal_messages')
-            print(modal_messages)
             response = {
                 'success': False, 
                 'errors': errors, 
@@ -427,25 +423,12 @@ class CreateEmployeesBulkView(LoginRequiredMixin, PermissionRequiredMixin, View)
                     name = row[1]
 
                     birthdate = None
-                    print('row[2]')
-                    print(row[2])
-                    print(type(row[2]))
                     if isinstance(row[2], str):
                         birthdate = datetime.strptime(row[2], '%d/%m/%Y')
                     elif isinstance(row[2], datetime):
                         birthdate = datetime.strptime(row[2].strftime('%d/%m/%Y'), '%d/%m/%Y')
 
                     ptkp_type = row[3]
-
-                    print('nik')
-                    print(nik)
-                    print('name')
-                    print(name)
-                    print('birthdate')
-                    print(birthdate)
-                    print(type(birthdate))
-                    print('ptkp_type')
-                    print(ptkp_type)
                
                     ptkp_type_object = PTKPType.objects.filter(name=ptkp_type)
                     if len(ptkp_type_object) <= 0:

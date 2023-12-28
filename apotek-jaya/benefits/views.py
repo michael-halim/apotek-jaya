@@ -1071,7 +1071,6 @@ class UpdateBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View)
             
             nik = employee.nik if employee.nik != '' else '-'
             nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
-            nik_email = nik + '<br>' + employee.auth_user_id.email
 
             department = DepartmentMembers.objects.filter(employee_id = emp).values_list('department_id')
             department = Departments.objects.filter(id__in = department).values_list('name', flat=True)
@@ -1082,13 +1081,9 @@ class UpdateBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View)
 
             employees_data.append({
                 'uq_emp': employee.hash_uuid,
-                'nik_email':nik_email,
+                'nik':nik,
                 'name': employee.name,
-                'address': employee.address,
-                'education': employee.education,
                 'department': department_data,
-                'join_date': employee.created_at.date().strftime("%d %B %Y"),
-                'expired_at': employee.expired_at.strftime("%d %B %Y"),
                 'status': employee.status,
                 'action': trash_icon,
             })
@@ -1396,17 +1391,12 @@ class DetailBenefitSchemeView(LoginRequiredMixin, PermissionRequiredMixin, View)
 
             nik = employee.nik if employee.nik != '' else '-'
             nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
-            nik_email = nik + '<br>' + employee.auth_user_id.email
 
             employees_data.append({
                 'uq_emp': employee.hash_uuid,
-                'nik_email':nik_email,
+                'nik':nik,
                 'name': employee.name,
-                'address': employee.address,
-                'education': employee.education,
                 'department': department_data,
-                'join_date': employee.created_at.date().strftime("%d %B %Y"),
-                'expired_at': employee.expired_at.strftime("%d %B %Y"),
                 'status': employee.status,
                 'action':'',
             })
@@ -1618,7 +1608,6 @@ class ShowEmployeesDepartmentView(LoginRequiredMixin, PermissionRequiredMixin, V
                 for emp in employees:
                     nik = emp.employee_id.nik if emp.employee_id.nik != '' else '-'
                     nik = '<span class="badge bg-success">{nik}</span>'.format(nik=nik)
-                    nik_email = nik + '<br>' + emp.employee_id.auth_user_id.email
 
                     department = DepartmentMembers.objects.filter(employee_id = emp.employee_id).values_list('department_id')
                     department = Departments.objects.filter(id__in = department).values_list('name', flat=True)
@@ -1629,13 +1618,9 @@ class ShowEmployeesDepartmentView(LoginRequiredMixin, PermissionRequiredMixin, V
 
                     employees_data.append({
                         'uq_emp':emp.employee_id.hash_uuid,
-                        'nik_email':nik_email,
+                        'nik':nik,
                         'name': emp.employee_id.name,
-                        'address': emp.employee_id.address,
-                        'education': emp.employee_id.education,
                         'department': department_data,
-                        'join_date': emp.employee_id.created_at.date().strftime("%d %B %Y"),
-                        'expired_at': emp.employee_id.expired_at.strftime("%d %B %Y"),
                         'status': emp.employee_id.status,
                         'action':add_icon,
                     })
@@ -1995,7 +1980,6 @@ class DeletePTKPTypeView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
     def post(self, request, ptkp_type_uuid):
         res = PTKPType.objects.get(hash_uuid=ptkp_type_uuid).delete()
-        print(res)
         if res[0] == 0:
             response = {
                 'success': False, 
@@ -2076,9 +2060,6 @@ class CreatePTKPTBulkTypeView(LoginRequiredMixin, PermissionRequiredMixin, View)
                 
                 excel_data = []
                 for co, row in enumerate(sheet.iter_rows(values_only=True), start=1):
-                    print(co)
-                    print(row)
-
                     current_line = co
                     ptkp_name = row[0]
                     ptkp_value = row[1]

@@ -176,13 +176,9 @@ $(function () {
 						employee_datatable.row.add([
 							result.employee_data[emp]['uq'],
 							result.employee_data[emp]['uq_group'],
-							result.employee_data[emp]['nik_email'],
+							result.employee_data[emp]['nik'],
 							result.employee_data[emp]['name'],
-							result.employee_data[emp]['address'],
-							result.employee_data[emp]['education'],
 							result.employee_data[emp]['permission_group'],
-							result.employee_data[emp]['join_date'],
-							result.employee_data[emp]['expired_at'],
 							result.employee_data[emp]['action'],
 						]).draw(true);
 					}
@@ -288,13 +284,9 @@ $(function () {
                     let dept_emp_data = [
                         result.employee_data['uq'],
                         result.employee_data['uq_group'],
-                        result.employee_data['nik_email'],
+                        result.employee_data['nik'],
                         result.employee_data['name'],
-                        result.employee_data['address'],
-                        result.employee_data['education'],
                         result.employee_data['permission_group'],
-                        result.employee_data['join_date'],
-                        result.employee_data['expired_at'],
                         result.employee_data['action'],
                     ];
 

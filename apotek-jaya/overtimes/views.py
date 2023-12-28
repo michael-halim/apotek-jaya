@@ -284,9 +284,6 @@ class UpdateOvertimesView(LoginRequiredMixin, PermissionRequiredMixin, View):
         overtimes = get_object_or_404(Overtimes, hash_uuid=overtime_uuid)
         request_copy = request.POST.copy()
         request_copy['date'] = datetime.strptime(request.POST['start_at'].split('T')[0], '%Y-%m-%d').date()
-        print("request.POST['start_at']")
-        print(request.POST['start_at'])
-        print(type(request.POST['start_at']))
         overtimes_form = OvertimesForm(request_copy or None, instance=overtimes)
         
         now = datetime.now().astimezone(ZoneInfo('Asia/Bangkok'))
@@ -593,33 +590,14 @@ class CreateOvertimesBulkView(LoginRequiredMixin, PermissionRequiredMixin, View)
                     if co == 1 or (row[0] is None and row[1] is None and row[2] is None and row[3] is None and row[4] is None and row[5] is None and row[6] is None):
                         continue
                     
-                    print('row[0]')
-                    print(row[0])
-                    print('row[1]')
-                    print(row[1])
-                    print('row[2]')
-                    print(row[2])
-                    print('row[3]')
-                    print(row[3])
-                    print('row[4]')
-                    print(row[4])
-                    print('row[5]')
-                    print(row[5])
-                    print('row[6]')
-                    print(row[6])
                     tmp_date = str(row[1]).split(' ')[0]
-                    print('tmp_date')
-                    print(tmp_date)
-                    print(type(tmp_date))
+                  
                     _date = None
                     for fmt in ('%Y-%m-%d', '%d-%m-%Y', '%d/%m/%Y'):
                         try:
                             # datetime.date
                             _date = datetime.strptime(tmp_date, fmt).date()
                             _date = _date.strftime('%Y-%m-%d')
-                            print('date in here')
-                            print(_date)
-                            print(type(_date))
                             break
                         except ValueError: pass
 

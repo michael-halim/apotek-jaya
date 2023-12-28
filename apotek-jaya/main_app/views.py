@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
 from django.views.generic import TemplateView, View
 
 from .forms import CreateUserForm
@@ -22,7 +23,7 @@ class LoginPageView(View):
 
     def get(self, request):
         if request.user.is_authenticated:
-            return redirect('main_app:employees')
+            return redirect(reverse_lazy('employees:employees'))
         
         form = CreateUserForm()
         context = {

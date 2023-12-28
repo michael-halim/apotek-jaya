@@ -126,6 +126,26 @@ $(function () {
 		});
 	});
 
+    $('body').on('click','#import-payroll-periods', function () {
+		let url = $(this).data('link');
+
+		$.ajax({
+			url: url,
+			method: 'GET',
+			success: function (result) {
+				if (result.success === true) {
+					$('#form-payroll-periods-modal .modal-content').html(result.form);
+
+					$('#form-payroll-periods-modal').modal('show');
+				
+				} else if (result.success === false) {
+					toastr['error'](result.toast_message);
+				}
+			},
+			error: function (result) {},
+		});
+	});
+
 	$('body').on('click', '#submit-form-payroll-periods', function () {
 		let form = document.getElementById('payroll_periods_form');
 		let form_data = new FormData(form);

@@ -3,6 +3,16 @@ from django import forms
 from employees.models import Employees
 from .models import PayrollPeriods, Salaries, SalaryAdjustments
 
+class PayrollPeriodBulkInputForm(forms.Form):
+    file_upload = forms.FileField(
+        widget=forms.ClearableFileInput(attrs={
+            'id':'file_upload',
+            'class': 'form-control',
+            'accept': '.xls, .xlsx',
+        }),
+        label= 'Upload File Payroll Period',
+    )
+
 class SalaryAdjustmentsForm(forms.ModelForm):
     class Meta:
         model = SalaryAdjustments

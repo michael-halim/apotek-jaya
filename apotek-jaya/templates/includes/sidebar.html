@@ -127,48 +127,6 @@
             </div>
         {% endif %}
 
-        {% if perms.auth.view_permission or perms.auth.view_group %}
-            <div class="row menu dropdown-parent" id="permission">
-                <div class="col-2">
-                    <i class="fa-solid fa-user-lock"></i>
-                </div>
-                <div class="col-8">
-                    Permission
-                </div>
-                <div class="col-2 icon-dropdown">
-                    <i class="fa-solid fa-caret-down"></i>
-                </div>
-            </div>
-        
-            <div class="wrapper-dropdown-employees">
-                {% if perms.auth.view_permission %}
-                    <a class="dropdown-item" href="{% url 'permission:permission' %}">
-                        <div class="row menu dropdown-child-permission">
-                            <div class="col-2">
-                                <i class="fa-solid fa-user-lock"></i>
-                            </div>
-                            <div class="col-10">
-                                Permission
-                            </div>
-                        </div>
-                    </a>
-                {% endif %}
-
-                {% if perms.auth.view_group %}
-                    <a class="dropdown-item" href="{% url 'permission:permission-group' %}">
-                        <div class="row menu dropdown-child-permission">
-                            <div class="col-2">
-                                <i class="fa-solid fa-user-group"></i>
-                            </div>
-                            <div class="col-10">
-                                Group Permission
-                            </div>
-                        </div>
-                    </a>
-                {% endif %}
-            </div>
-        {% endif %}
-
         {% if perms.departments.read_departments %}
             <div class="row menu dropdown-parent" id="departments">
                 <div class="col-2">
@@ -335,19 +293,6 @@
                     </a>
                 {% endif %}
 
-                {% if perms.overtimes.read_leave_balances %}
-                    <a class="dropdown-item" href="{% url 'leaves:leaves-balances' %}">
-                        <div class="row menu dropdown-child-presence">
-                            <div class="col-2">
-                                <i class="fa-solid fa-user-group"></i>
-                            </div>
-                            <div class="col-10">
-                                Leaves Balances
-                            </div>
-                        </div>
-                    </a>
-                {% endif %}
-                
                 {% if perms.overtimes.read_leave %}
                     <a class="dropdown-item" href="{% url 'leaves:leaves' %}">
                         <div class="row menu dropdown-child-presence">

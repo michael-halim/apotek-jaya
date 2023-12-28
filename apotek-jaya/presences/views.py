@@ -529,11 +529,6 @@ class CreatePresencesBulkView(LoginRequiredMixin, PermissionRequiredMixin, View)
                 excel_data = []
                 dates = []
                 for co, row in enumerate(sheet.iter_rows(values_only=True), start=1):
-                    print('co')
-                    print(co)
-                    print('row')
-                    print(row)
-                    
                     if co == 1:
                         string_row = ' '.join(str(x) for x in row)
                         dates = re.findall(r'\d+\/\d+\/\d+', string_row)
@@ -542,8 +537,6 @@ class CreatePresencesBulkView(LoginRequiredMixin, PermissionRequiredMixin, View)
                     if co == 2:
                         continue
                     
-                    print('dates')
-                    print(dates)
                     current_line = co
                     nik = row[1]
                     for co, i in enumerate(range(7, 7 + (len(dates) * 2), 2)):
