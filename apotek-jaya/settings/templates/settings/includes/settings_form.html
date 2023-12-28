@@ -1,0 +1,40 @@
+<div class="modal-header">
+    <h5 class="modal-title">{{modal_title|title}}</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+    <ul class="modal-messages"></ul>
+    <form id="settings_form" method="POST">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="mb-3">
+                    <label for="{{settings_form.overtime_rate.id_for_label}}" class="form-label">
+                        <b>{{ settings_form.overtime_rate.label }}</b>
+                    </label>
+                    {{ settings_form.overtime_rate }}
+                    <span class="form-error text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="mb-3">
+                    <label for="{{settings_form.lembur_rate.id_for_label}}" class="form-label">
+                        <b>{{ settings_form.lembur_rate.label }}</b>
+                    </label>
+                    {{ settings_form.lembur_rate }}
+                    <span class="form-error text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="d-flex justify-content-end">
+                    {% if mode == 'create' %}
+                    <input type="button" value="Create Settings" data-link="{{uq.create_link}}" class="btn btn-success"
+                        id="submit-form-settings">
+                    {% elif mode == 'update' %}
+                    <input type="button" value="Update Settings" data-uq="{{uq.hash}}" data-link="{{uq.update_link}}"
+                        class="btn btn-success" id="submit-form-settings">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
